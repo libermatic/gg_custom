@@ -1,0 +1,101 @@
+{
+ "autoname": "naming_series:",
+ "creation": "2020-07-08 12:41:01.439558",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "booking_party_name",
+  "address_sec",
+  "address_html",
+  "section_break_4",
+  "primary_address",
+  "column_break_7",
+  "phone"
+ ],
+ "fields": [
+  {
+   "depends_on": "eval:doc.__islocal",
+   "fieldname": "booking_party_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Party Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "address_sec",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "address_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "primary_address",
+   "fieldtype": "Link",
+   "label": "Primary Address",
+   "options": "Address"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Naming Series",
+   "options": "BP.YY.",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "primary_address.phone",
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "modified": "2020-07-08 13:26:13.255706",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Booking Party",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Booking User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "search_fields": "booking_party_name,phone",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "booking_party_name",
+ "track_changes": 1
+}
