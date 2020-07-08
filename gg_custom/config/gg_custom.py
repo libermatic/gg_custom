@@ -9,6 +9,11 @@ def get_data():
             "items": [
                 {
                     "type": "doctype",
+                    "name": "Booking Order",
+                    "description": frappe._("Booking Order"),
+                },
+                {
+                    "type": "doctype",
                     "name": "Booking Party",
                     "description": frappe._("Consignor / Consignee Details"),
                 },

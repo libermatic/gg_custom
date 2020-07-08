@@ -1,0 +1,275 @@
+{
+ "autoname": "naming_series:",
+ "creation": "2020-07-08 12:40:20.444173",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "booking_datetime",
+  "column_break_3",
+  "status",
+  "amended_from",
+  "order_sec",
+  "source_station",
+  "consignor",
+  "consignor_name",
+  "consignor_address",
+  "consignor_address_display",
+  "column_break_10",
+  "destination_station",
+  "consignee",
+  "consignee_name",
+  "consignee_address",
+  "consignee_address_display",
+  "details_sec",
+  "no_of_packages",
+  "packing",
+  "item_description",
+  "column_break_21",
+  "weight_actual",
+  "weight_charged",
+  "invoice_no",
+  "goods_value",
+  "fees_and_charges_sec",
+  "booking_order_charge_template",
+  "charges",
+  "section_break_28",
+  "total_amount"
+ ],
+ "fields": [
+  {
+   "default": "Now",
+   "fieldname": "booking_datetime",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Booking Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "consignor",
+   "fieldtype": "Link",
+   "label": "Consignor",
+   "options": "Booking Party",
+   "reqd": 1
+  },
+  {
+   "depends_on": "consignor",
+   "fetch_from": "consignor.booking_party_name",
+   "fieldname": "consignor_name",
+   "fieldtype": "Read Only",
+   "label": "Consignor Name"
+  },
+  {
+   "depends_on": "consignor",
+   "fieldname": "consignor_address",
+   "fieldtype": "Link",
+   "label": "Consignor Address",
+   "options": "Address"
+  },
+  {
+   "depends_on": "consignor_address",
+   "fieldname": "consignor_address_display",
+   "fieldtype": "Small Text",
+   "label": "Consignor Address Display",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consignee",
+   "fieldtype": "Link",
+   "label": "Consignee",
+   "options": "Booking Party",
+   "reqd": 1
+  },
+  {
+   "depends_on": "consignee",
+   "fetch_from": "consignee.booking_party_name",
+   "fieldname": "consignee_name",
+   "fieldtype": "Read Only",
+   "label": "Consignee Name"
+  },
+  {
+   "depends_on": "consignee",
+   "fieldname": "consignee_address",
+   "fieldtype": "Link",
+   "label": "Consignee Address",
+   "options": "Address"
+  },
+  {
+   "depends_on": "consignee_address",
+   "fieldname": "consignee_address_display",
+   "fieldtype": "Small Text",
+   "label": "Consignee Address Display",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "BO.YY.",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "\nDraft\nBooked\nLoaded\nIn Transit\nAt Station\nUnloaded\nCollected\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_station",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Source Station",
+   "options": "Station",
+   "reqd": 1
+  },
+  {
+   "fieldname": "destination_station",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Destination Station",
+   "options": "Station",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "order_sec",
+   "fieldtype": "Section Break",
+   "label": "Order Details"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "details_sec",
+   "fieldtype": "Section Break",
+   "label": "Consignment Details"
+  },
+  {
+   "fieldname": "invoice_no",
+   "fieldtype": "Data",
+   "label": "Invoice No"
+  },
+  {
+   "fieldname": "no_of_packages",
+   "fieldtype": "Int",
+   "label": "No of Packages"
+  },
+  {
+   "fieldname": "packing",
+   "fieldtype": "Data",
+   "label": "Packing"
+  },
+  {
+   "fieldname": "item_description",
+   "fieldtype": "Small Text",
+   "label": "Item Description"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "fees_and_charges_sec",
+   "fieldtype": "Section Break",
+   "label": "Fees and Charges"
+  },
+  {
+   "fieldname": "column_break_21",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "weight_actual",
+   "fieldtype": "Float",
+   "label": "Weight Actual"
+  },
+  {
+   "fieldname": "weight_charged",
+   "fieldtype": "Float",
+   "label": "Weight Charged"
+  },
+  {
+   "fieldname": "goods_value",
+   "fieldtype": "Currency",
+   "label": "Value of Goods",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "charges",
+   "fieldtype": "Table",
+   "options": "Booking Order Charge"
+  },
+  {
+   "fieldname": "section_break_28",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "booking_order_charge_template",
+   "fieldtype": "Link",
+   "label": "Booking Order Charge Template",
+   "options": "Booking Order Charge Template"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Booking Order",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2020-07-08 17:11:22.194632",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Booking Order",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Booking Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Booking User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
