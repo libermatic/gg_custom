@@ -1,0 +1,38 @@
+{
+ "creation": "2020-07-08 16:04:33.126221",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "charge_type",
+  "charge_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "charge_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Charge Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "charge_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Charge Amount",
+   "options": "Company:company:default_currency",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-07-08 16:04:56.521101",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Booking Order Charge",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
