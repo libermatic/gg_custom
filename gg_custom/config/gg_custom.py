@@ -19,9 +19,14 @@ def get_data():
             "items": [
                 {
                     "type": "doctype",
+                    "name": "Booking Order Charge Template",
+                    "description": frappe._("Booking Order Charge Template"),
+                },
+                {
+                    "type": "doctype",
                     "name": "Station",
                     "description": frappe._("Station"),
-                }
+                },
             ],
         },
     ]
