@@ -1,0 +1,30 @@
+{
+ "creation": "2020-07-08 19:02:30.068068",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "station"
+ ],
+ "fields": [
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Station",
+   "options": "Station",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-07-08 19:02:30.068068",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Shipping Order Transit Station",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

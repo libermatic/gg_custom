@@ -20,8 +20,28 @@ def get_data():
             ],
         },
         {
+            "label": frappe._("Shipping"),
+            "items": [
+                {
+                    "type": "doctype",
+                    "name": "Shipping Order",
+                    "description": frappe._("Shipping Order"),
+                },
+                {
+                    "type": "doctype",
+                    "name": "Vehicle",
+                    "description": frappe._("Vehicle"),
+                },
+            ],
+        },
+        {
             "label": frappe._("Setup"),
             "items": [
+                {
+                    "type": "doctype",
+                    "name": "Driver",
+                    "description": frappe._("Driver Detals"),
+                },
                 {
                     "type": "doctype",
                     "name": "Booking Order Charge Template",

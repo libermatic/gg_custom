@@ -1,0 +1,157 @@
+{
+ "autoname": "naming_series:",
+ "creation": "2020-07-08 18:51:13.874745",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "vehicle",
+  "status",
+  "column_break_4",
+  "driver",
+  "driver_name",
+  "amended_from",
+  "journey_sec",
+  "start_datetime",
+  "end_datetime",
+  "column_break_8",
+  "initial_station",
+  "transit_stations",
+  "final_station"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SO.YY."
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Vehicle",
+   "options": "Vehicle",
+   "reqd": 1
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Driver",
+   "options": "Driver",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_datetime",
+   "fieldtype": "Datetime",
+   "label": "Start Datetime"
+  },
+  {
+   "fieldname": "end_datetime",
+   "fieldtype": "Data",
+   "label": "End Datetime"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Shipping Order",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "driver",
+   "fetch_from": "driver.full_name",
+   "fieldname": "driver_name",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Driver Name"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "initial_station",
+   "fieldtype": "Link",
+   "label": "Initial Station",
+   "options": "Station",
+   "reqd": 1
+  },
+  {
+   "fieldname": "final_station",
+   "fieldtype": "Link",
+   "label": "Final Station",
+   "options": "Station",
+   "reqd": 1
+  },
+  {
+   "fieldname": "transit_stations",
+   "fieldtype": "Table MultiSelect",
+   "label": "Transit Stations",
+   "options": "Shipping Order Transit Station"
+  },
+  {
+   "fieldname": "journey_sec",
+   "fieldtype": "Section Break",
+   "label": "Journey"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "\nDraft\nIn Transit\nStopped\nCompleted\nCancelled",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2020-07-08 22:16:26.414961",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Shipping Order",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Shipping Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Shipping User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "vehicle",
+ "track_changes": 1
+}
