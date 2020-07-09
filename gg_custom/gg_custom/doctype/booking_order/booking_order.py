@@ -13,6 +13,7 @@ class BookingOrder(Document):
         self.status = "Draft"
 
     def before_submit(self):
+        self.current_station = self.source_station
         self.status = "Booked"
 
     def before_cancel(self):
@@ -20,3 +21,6 @@ class BookingOrder(Document):
             frappe.throw(frappe._("Cannot cancel an order when it is in progress"))
         self.status = "Cancelled"
 
+    def before_update_after_submit(self):
+        if self.status in ["Loaded", "In Transit", "Collected"]:
+            self.current_station = None

@@ -10,6 +10,7 @@
   "column_break_3",
   "status",
   "last_shipping_order",
+  "current_station",
   "amended_from",
   "order_sec",
   "source_station",
@@ -239,10 +240,16 @@
    "label": "Last Shipping Order",
    "options": "Shipping Order",
    "read_only": 1
+  },
+  {
+   "fieldname": "current_station",
+   "fieldtype": "Link",
+   "label": "Current Station",
+   "options": "Station"
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-09 13:33:41.372827",
+ "modified": "2020-07-09 14:57:11.221486",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",
