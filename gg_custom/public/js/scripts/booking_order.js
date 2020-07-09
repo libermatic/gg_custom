@@ -38,6 +38,13 @@ export function booking_order_charge() {
 
 export function booking_order() {
   return {
+    setup: function (frm) {
+      ['consignor', 'consignee'].forEach((type) =>
+        frm.set_query(`${type}_address`, (doc) => ({
+          filters: { link_doctype: 'Booking Party', link_name: doc[type] },
+        }))
+      );
+    },
     consignor: set_address('consignor'),
     consignee: set_address('consignee'),
     consignor_address: set_address_dispay('consignor'),
