@@ -1,3 +1,5 @@
+import sumBy from 'lodash/sumBy';
+
 function set_address(party_type) {
   const address_field = `${party_type}_address`;
   return async function (frm) {
@@ -23,9 +25,7 @@ function set_address_dispay(party_type) {
 }
 
 function set_total_amount(frm) {
-  const total_amount = frm.doc.charges
-    .map((x) => x.charge_amount)
-    .reduce((a, x) => a + x, 0);
+  const total_amount = sumBy(frm.doc.charges, 'total_amount');
   frm.set_value({ total_amount });
 }
 
