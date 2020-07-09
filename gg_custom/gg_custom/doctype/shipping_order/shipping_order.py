@@ -81,3 +81,14 @@ class ShippingOrder(Document):
     def before_update_after_submit(self):
         if self.status in ["In Transit", "Completed"]:
             self.current_station = None
+
+    def before_cancel(self):
+        if frappe.db.exists(
+            "Loading Operation", {"docstatus": 1, "shipping_order": self.name}
+        ):
+            frappe.throw(
+                frappe._(
+                    "Cannot cancel because Loading Operation already exists for this Shipping Order."
+                )
+            )
+        self.statis = "Cancelled"
