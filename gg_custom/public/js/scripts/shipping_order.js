@@ -28,6 +28,23 @@ export function shipping_order() {
   };
 }
 
+export function shipping_order_listview_settings() {
+  const status_color = {
+    Draft: 'red',
+    'In Transit': 'blue',
+    Stopped: 'orange',
+    Completed: 'green',
+    Cancelled: 'red',
+    Unknown: 'darkgrey',
+  };
+  return {
+    get_indicator: function (doc) {
+      const status = doc.status || 'Unknown';
+      return [__(status), status_color[status] || 'grey', `status,=,${status}`];
+    },
+  };
+}
+
 function handle_movement_action(frm) {
   return async function () {
     const {

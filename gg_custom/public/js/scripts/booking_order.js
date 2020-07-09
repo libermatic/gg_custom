@@ -70,3 +70,22 @@ export function booking_order() {
     },
   };
 }
+
+export function booking_order_listview_settings() {
+  const status_color = {
+    Draft: 'red',
+    Booked: 'darkgrey',
+    Loaded: 'lightblue',
+    'In Transit': 'blue',
+    Unloaded: 'orange',
+    Collected: 'green',
+    Cancelled: 'red',
+    Unknown: 'darkgrey',
+  };
+  return {
+    get_indicator: function (doc) {
+      const status = doc.status || 'Unknown';
+      return [__(status), status_color[status] || 'grey', `status,=,${status}`];
+    },
+  };
+}
