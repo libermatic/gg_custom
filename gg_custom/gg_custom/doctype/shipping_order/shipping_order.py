@@ -79,8 +79,9 @@ class ShippingOrder(Document):
         self.current_station = self.initial_station
 
     def before_update_after_submit(self):
-        if self.status in ["In Transit", "Completed"]:
+        if self.status in ["Completed"]:
             self.current_station = None
+            self.next_station = None
 
     def before_cancel(self):
         if frappe.db.exists(
@@ -107,10 +108,11 @@ class ShippingOrder(Document):
             self.end_datetime = frappe.utils.now()
         self.status = "Stopped"
         self.current_station = station
+        self.next_station = None
         self.save()
         _update_booking_orders(self)
 
-    def start(self, datetime):
+    def start(self, station):
         if self.status != "Stopped":
             frappe.throw(
                 frappe._(
@@ -122,6 +124,7 @@ class ShippingOrder(Document):
         if self.current_station == self.initial_station:
             self.start_datetime = frappe.utils.now()
         self.status = "In Transit"
+        self.next_station = station
         self.current_station = None
         self.save()
         _update_booking_orders(self)

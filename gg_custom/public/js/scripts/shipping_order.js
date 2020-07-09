@@ -8,7 +8,7 @@ export function shipping_order() {
             [
               doc.initial_station,
               doc.final_station,
-              ...doc.transit_stations.map((x) => x.station),
+              ...(doc.transit_stations || []).map((x) => x.station),
             ],
           ],
         },
@@ -31,10 +31,11 @@ export function shipping_order() {
 function handle_movement_action(frm) {
   return async function () {
     const {
-      message: { status: current_status, current_station } = {},
+      message: { status: current_status, current_station, next_station } = {},
     } = await frappe.db.get_value(frm.doc.doctype, frm.doc.name, [
       'status',
       'current_station',
+      'next_station',
     ]);
     if (!['Stopped', 'In Transit'].includes(current_status)) {
       frappe.throw(
@@ -46,37 +47,58 @@ function handle_movement_action(frm) {
       return;
     }
 
-    const choices = [
+    const route = [
+      frm.doc.initial_station,
       ...frm.doc.transit_stations.map((x) => x.station),
       frm.doc.final_station,
     ];
+    function get_fields() {
+      if (current_status === 'In Transit') {
+        const idx = route.findIndex((x) => x === next_station);
+        return [
+          {
+            fieldtype: 'Select',
+            fieldname: 'next_station',
+            label: 'Stop at Station',
+            options: ['', ...route],
+            default: route[idx],
+            reqd: 1,
+          },
+        ];
+      }
+      if (current_status === 'Stopped') {
+        const idx = route.findIndex((x) => x === current_station) + 1;
+        return [
+          {
+            fieldtype: 'Data',
+            fieldname: 'current_station',
+            read_only: 1,
+            label: 'Current Station',
+            default: current_station,
+          },
+          {
+            fieldtype: 'Select',
+            fieldname: 'next_station',
+            label: 'Go to Station',
+            options: ['', ...route.slice(idx)],
+            default: route[idx],
+            reqd: 1,
+          },
+        ];
+      }
+      return [];
+    }
+
     const dialog = new frappe.ui.Dialog({
       title: current_status === 'Stopped' ? 'Start' : 'Stop',
-      fields: [
-        {
-          fieldtype: 'Data',
-          fieldname: 'current_station',
-          read_only: 1,
-          label: 'Current Station',
-          default: current_station,
-          hidden: current_status === 'In Transit',
-        },
-        {
-          fieldtype: 'Select',
-          fieldname: 'next_station',
-          label: 'Stop Station',
-          options: choices,
-          default: choices[0],
-          hidden: current_status === 'Stopped',
-        },
-      ],
+      fields: get_fields(),
     });
     dialog.set_primary_action('OK', async function () {
-      if (current_status === 'Stopped') {
-        await frm.call('start');
-      } else if (current_status === 'In Transit') {
-        const station = dialog.get_value('next_station');
+      const station = dialog.get_value('next_station');
+      if (current_status === 'In Transit') {
         await frm.call('stop', { station });
+      } else if (current_status === 'Stopped') {
+        await frm.call('start', { station });
       }
       frm.reload_doc();
       dialog.hide();

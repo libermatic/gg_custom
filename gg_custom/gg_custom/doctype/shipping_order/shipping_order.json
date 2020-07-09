@@ -9,17 +9,18 @@
   "vehicle",
   "status",
   "current_station",
+  "next_station",
   "column_break_4",
   "driver",
   "driver_name",
   "amended_from",
   "journey_sec",
-  "start_datetime",
-  "end_datetime",
-  "column_break_8",
   "initial_station",
   "transit_stations",
-  "final_station"
+  "final_station",
+  "column_break_8",
+  "start_datetime",
+  "end_datetime"
  ],
  "fields": [
   {
@@ -125,10 +126,18 @@
    "label": "Current Station",
    "options": "Station",
    "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "next_station",
+   "fieldtype": "Link",
+   "label": "Next Station",
+   "options": "Station",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-09 19:29:34.976023",
+ "modified": "2020-07-09 22:41:11.339297",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Shipping Order",
