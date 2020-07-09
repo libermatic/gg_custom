@@ -29,6 +29,11 @@ def get_data():
                 },
                 {
                     "type": "doctype",
+                    "name": "Loading Operation",
+                    "description": frappe._("Loading Operation"),
+                },
+                {
+                    "type": "doctype",
                     "name": "Vehicle",
                     "description": frappe._("Vehicle"),
                 },
