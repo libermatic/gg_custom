@@ -14,5 +14,74 @@ export function shipping_order() {
         },
       }));
     },
+    refresh: function (frm) {
+      if (frm.doc.docstatus === 1) {
+        frm.add_custom_button('Stop / Start', handle_movement_action(frm));
+        frm.add_custom_button('Perform Loading Operation', () => {
+          frappe.new_doc('Loading Operation', {
+            shipping_order: frm.doc.name,
+            station: frm.doc.current_station,
+          });
+        });
+      }
+    },
+  };
+}
+
+function handle_movement_action(frm) {
+  return async function () {
+    const {
+      message: { status: current_status, current_station } = {},
+    } = await frappe.db.get_value(frm.doc.doctype, frm.doc.name, [
+      'status',
+      'current_station',
+    ]);
+    if (!['Stopped', 'In Transit'].includes(current_status)) {
+      frappe.throw(
+        __(
+          'Movement status can only be toggled between ' +
+            '<strong>Stopped</strong> and <strong>In Transit</strong>.'
+        )
+      );
+      return;
+    }
+
+    const choices = [
+      ...frm.doc.transit_stations.map((x) => x.station),
+      frm.doc.final_station,
+    ];
+    const dialog = new frappe.ui.Dialog({
+      title: current_status === 'Stopped' ? 'Start' : 'Stop',
+      fields: [
+        {
+          fieldtype: 'Data',
+          fieldname: 'current_station',
+          read_only: 1,
+          label: 'Current Station',
+          default: current_station,
+          hidden: current_status === 'In Transit',
+        },
+        {
+          fieldtype: 'Select',
+          fieldname: 'next_station',
+          label: 'Stop Station',
+          options: choices,
+          default: choices[0],
+          hidden: current_status === 'Stopped',
+        },
+      ],
+    });
+    dialog.set_primary_action('OK', async function () {
+      if (current_status === 'Stopped') {
+        await frm.call('start');
+      } else if (current_status === 'In Transit') {
+        const station = dialog.get_value('next_station');
+        await frm.call('stop', { station });
+      }
+      frm.reload_doc();
+      dialog.hide();
+    });
+    dialog.onhide = () => dialog.$wrapper.remove();
+    dialog.show();
   };
 }

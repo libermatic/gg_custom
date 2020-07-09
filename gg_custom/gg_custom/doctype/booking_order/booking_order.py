@@ -36,5 +36,5 @@ class BookingOrder(Document):
         self.status = "Cancelled"
 
     def before_update_after_submit(self):
-        if self.status in ["Loaded", "In Transit", "Collected"]:
+        if self.status in ["Collected"]:
             self.current_station = None

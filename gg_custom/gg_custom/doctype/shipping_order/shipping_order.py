@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from toolz.curried import unique
+from toolz.curried import unique, pluck
 
 
 class ShippingOrder(Document):
@@ -45,7 +45,7 @@ class ShippingOrder(Document):
                 frappe._(
                     "{} is already engaged with {}.".format(
                         frappe.get_desk_link("Vehicle", self.vehicle),
-                        frappe.get_desk_link("Shipping", existing),
+                        frappe.get_desk_link("Shipping Order", existing),
                     )
                 )
             )
@@ -92,3 +92,55 @@ class ShippingOrder(Document):
                 )
             )
         self.statis = "Cancelled"
+
+    def stop(self, station):
+        if self.status != "In Transit":
+            frappe.throw(
+                frappe._(
+                    "Cannot stop Shipping Order with status {}".format(
+                        frappe.bold(self.status)
+                    )
+                )
+            )
+
+        if station == self.final_station:
+            self.end_datetime = frappe.utils.now()
+        self.status = "Stopped"
+        self.current_station = station
+        self.save()
+        _update_booking_orders(self)
+
+    def start(self, datetime):
+        if self.status != "Stopped":
+            frappe.throw(
+                frappe._(
+                    "Cannot start Shipping Order with status {}".format(
+                        frappe.bold(self.status)
+                    )
+                )
+            )
+        if self.current_station == self.initial_station:
+            self.start_datetime = frappe.utils.now()
+        self.status = "In Transit"
+        self.current_station = None
+        self.save()
+        _update_booking_orders(self)
+
+
+def _update_booking_orders(shipping_order):
+    for bo in pluck(
+        "name",
+        frappe.get_all(
+            "Booking Order",
+            filters={
+                "docstatus": 1,
+                "status": ("in", ["Loaded", "In Transit"]),
+                "last_shipping_order": shipping_order.name,
+            },
+        ),
+    ):
+        doc = frappe.get_cached_doc("Booking Order", bo)
+        doc.status = "In Transit"
+        doc.current_station = shipping_order.current_station
+        doc.save()
+

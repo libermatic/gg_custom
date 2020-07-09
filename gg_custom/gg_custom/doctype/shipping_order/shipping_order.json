@@ -49,14 +49,18 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "start_datetime",
    "fieldtype": "Datetime",
-   "label": "Start Datetime"
+   "label": "Start Datetime",
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "end_datetime",
-   "fieldtype": "Data",
-   "label": "End Datetime"
+   "fieldtype": "Datetime",
+   "label": "End Datetime",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -105,6 +109,7 @@
    "label": "Journey"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -114,6 +119,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "current_station",
    "fieldtype": "Link",
    "label": "Current Station",
@@ -122,7 +128,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-09 13:30:44.735492",
+ "modified": "2020-07-09 19:29:34.976023",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Shipping Order",
