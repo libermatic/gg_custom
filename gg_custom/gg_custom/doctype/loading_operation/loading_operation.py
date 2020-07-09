@@ -104,7 +104,7 @@ class LoadingOperation(Document):
                     for key, value in state_transition.get("to").items()
                 ]
             ):
-                for key, value in state_transition.get("from"):
+                for key, value in state_transition.get("from").items():
                     doc.set(key, value)
                 doc.save()
 

@@ -29,7 +29,6 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "Naming Series",
    "options": "LO.YY.",
    "reqd": 1
@@ -153,7 +152,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-09 11:34:55.553019",
+ "modified": "2020-07-10 00:04:13.384615",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation",
