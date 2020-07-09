@@ -14,7 +14,9 @@ class LoadingOperation(Document):
         self._validate_shipping_order()
 
     def get_loads(self):
+        self._validate_shipping_order()
         self.on_loads = []
+        # todo: consider destination_station from Shipping Order stations
         for booking_order in frappe.get_all(
             "Booking Order",
             filters={
@@ -115,7 +117,9 @@ class LoadingOperation(Document):
                 frappe._(
                     "Operation can only be performed for a Shipping Order {} at {}".format(
                         frappe.bold("stopped"),
-                        frappe.get_desk_link("Station", current_station),
+                        frappe.get_desk_link("Station", current_station)
+                        if current_station
+                        else frappe.bold("Station"),
                     )
                 )
             )
