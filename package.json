@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/libermatic/gg_custom/issues"
   },
-  "homepage": "https://github.com/libermatic/gg_custom#readme"
+  "homepage": "https://github.com/libermatic/gg_custom#readme",
+  "dependencies": {
+    "lodash": "^4.17.19"
+  }
 }
