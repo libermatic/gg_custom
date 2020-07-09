@@ -9,6 +9,20 @@ from frappe.model.document import Document
 
 
 class BookingOrder(Document):
+    def validate(self):
+        if self.status == "Unloaded" and not self.current_station:
+            frappe.throw(
+                frappe._("Cannot unload without a {}".format(frappe.bold("Station")))
+            )
+        if self.status == "In Transit" and not self.last_shipping_order:
+            frappe.throw(
+                frappe._(
+                    "Cannot move Booking Order without a {}".format(
+                        frappe.bold("Shipping Order")
+                    )
+                )
+            )
+
     def before_insert(self):
         self.status = "Draft"
 
