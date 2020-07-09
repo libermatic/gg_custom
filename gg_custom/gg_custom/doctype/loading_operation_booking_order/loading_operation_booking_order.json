@@ -1,0 +1,81 @@
+{
+ "creation": "2020-07-08 22:29:05.576609",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "booking_order",
+  "no_of_packages",
+  "weight_actual",
+  "goods_value",
+  "column_break_5",
+  "source_station",
+  "destination_station"
+ ],
+ "fields": [
+  {
+   "fieldname": "booking_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Booking Order",
+   "options": "Booking Order",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "booking_order.no_of_packages",
+   "fieldname": "no_of_packages",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "No of Packages",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "booking_order.weight_actual",
+   "fieldname": "weight_actual",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Weight Actual",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "booking_order.goods_value",
+   "fieldname": "goods_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Goods Value",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "booking_order.source_station",
+   "fieldname": "source_station",
+   "fieldtype": "Link",
+   "label": "Source",
+   "options": "Station",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "booking_order.destination_station",
+   "fieldname": "destination_station",
+   "fieldtype": "Link",
+   "label": "Destination",
+   "options": "Station",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-07-09 11:23:50.737606",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Loading Operation Booking Order",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

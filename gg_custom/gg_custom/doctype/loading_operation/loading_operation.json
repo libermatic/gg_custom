@@ -1,0 +1,195 @@
+{
+ "autoname": "naming_series:",
+ "creation": "2020-07-08 22:28:00.129511",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "posting_datetime",
+  "station",
+  "column_break_3",
+  "shipping_order",
+  "vehicle",
+  "amended_from",
+  "on_load_sec",
+  "on_loads",
+  "off_load_sec",
+  "off_loads",
+  "summary_sec",
+  "on_load_no_of_packages",
+  "on_load_weight_actual",
+  "on_load_goods_value",
+  "column_break_15",
+  "off_load_no_of_packages",
+  "off_load_weight_actual",
+  "off_load_goods_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Naming Series",
+   "options": "LO.YY.",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "posting_datetime",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Posting Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Station",
+   "options": "Station",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shipping_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Shipping Order",
+   "options": "Shipping Order",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Loading Operation",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.on_loads && doc.on_loads.length > 0",
+   "fieldname": "on_load_sec",
+   "fieldtype": "Section Break",
+   "label": "On Load"
+  },
+  {
+   "fieldname": "on_loads",
+   "fieldtype": "Table",
+   "options": "Loading Operation Booking Order"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.off_loads && doc.off_loads.length > 0",
+   "fieldname": "off_load_sec",
+   "fieldtype": "Section Break",
+   "label": "Off Load"
+  },
+  {
+   "fieldname": "off_loads",
+   "fieldtype": "Table",
+   "options": "Loading Operation Booking Order"
+  },
+  {
+   "fieldname": "summary_sec",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "on_load_no_of_packages",
+   "fieldtype": "Int",
+   "label": "Total No of Packages Loaded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "on_load_weight_actual",
+   "fieldtype": "Float",
+   "label": "Total Weight Actual Loaded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "on_load_goods_value",
+   "fieldtype": "Currency",
+   "label": "Total Goods Value Loaded",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "off_load_no_of_packages",
+   "fieldtype": "Int",
+   "label": "Total No of Packages Unloaded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "off_load_weight_actual",
+   "fieldtype": "Float",
+   "label": "Total Weight Actual Unloaded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "off_load_goods_value",
+   "fieldtype": "Currency",
+   "label": "Total Goods Value Unloaded",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "default": "vehicle",
+   "fetch_from": "shipping_order.vehicle",
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "label": "Vehicle",
+   "options": "Vehicle",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2020-07-09 11:34:55.553019",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Loading Operation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Shipping Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Shipping User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
