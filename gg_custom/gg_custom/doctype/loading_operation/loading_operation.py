@@ -97,7 +97,10 @@ class LoadingOperation(Document):
             doc = frappe.get_cached_doc("Booking Order", load.booking_order)
             state_transition = json.loads(load.state_transition)
             if doc.docstatus == 1 and all(
-                [doc.get(key) == value for key, value in state_transition.get("to")]
+                [
+                    doc.get(key) == value
+                    for key, value in state_transition.get("to").items()
+                ]
             ):
                 for key, value in state_transition.get("from"):
                     doc.set(key, value)
