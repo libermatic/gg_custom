@@ -92,7 +92,7 @@ class ShippingOrder(Document):
                     "Cannot cancel because Loading Operation already exists for this Shipping Order."
                 )
             )
-        self.statis = "Cancelled"
+        self.status = "Cancelled"
 
     def stop(self, station):
         if self.status != "In Transit":
