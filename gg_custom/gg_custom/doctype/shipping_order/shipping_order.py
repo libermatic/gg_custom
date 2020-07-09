@@ -35,7 +35,7 @@ class ShippingOrder(Document):
             "Shipping Order",
             {
                 "docstatus": 1,
-                "status": ("not in", ["In Transit", "Stopped"]),
+                "status": ("in", ["In Transit", "Stopped"]),
                 "vehicle": self.vehicle,
                 "name": ("!=", self.name),
             },
