@@ -29,7 +29,55 @@ class ShippingOrder(Document):
         if len(list(unique([x.get("station") for x in self.transit_stations]))) != len(
             self.transit_stations
         ):
-            frappe.throw(frappe._("Same Transit Station selected multiple times"))
+            frappe.throw(frappe._("Same Transit Station selected multiple times."))
+
+        existing = frappe.db.exists(
+            "Shipping Order",
+            {
+                "docstatus": 1,
+                "status": ("not in", ["In Transit", "Stopped"]),
+                "vehicle": self.vehicle,
+                "name": ("!=", self.name),
+            },
+        )
+        if existing:
+            frappe.throw(
+                frappe._(
+                    "{} is already engaged with {}.".format(
+                        frappe.get_desk_link("Vehicle", self.vehicle),
+                        frappe.get_desk_link("Shipping", existing),
+                    )
+                )
+            )
+
+        if self.status == "Stopped" and not self.current_station:
+            frappe.throw(
+                frappe._(
+                    "Cannot set status to {} without a {}.".format(
+                        frappe.bold(self.status), frappe.bold("Station")
+                    )
+                )
+            )
+
+        allowed_stations = [self.initial_station, self.final_station] + [
+            x.get("station") for x in self.transit_stations
+        ]
+        if self.current_station and self.current_station not in allowed_stations:
+            frappe.throw(
+                frappe._(
+                    "Current Station {} not present in Shipping Order itinerary".format(
+                        frappe.get_desk_link("Station", self.current_station)
+                    )
+                )
+            )
 
     def before_insert(self):
         self.status = "Draft"
+
+    def before_submit(self):
+        self.status = "Stopped"
+        self.current_station = self.initial_station
+
+    def before_update_after_submit(self):
+        if self.status in ["In Transit", "Completed"]:
+            self.current_station = None
