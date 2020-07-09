@@ -18,6 +18,9 @@
   "initial_station",
   "transit_stations",
   "final_station",
+  "column_break_14",
+  "etd",
+  "eta",
   "column_break_8",
   "start_datetime",
   "end_datetime"
@@ -53,14 +56,14 @@
    "allow_on_submit": 1,
    "fieldname": "start_datetime",
    "fieldtype": "Datetime",
-   "label": "Start Datetime",
+   "label": "Actual Start Datetime",
    "read_only": 1
   },
   {
    "allow_on_submit": 1,
    "fieldname": "end_datetime",
    "fieldtype": "Datetime",
-   "label": "End Datetime",
+   "label": "Actual End Datetime",
    "read_only": 1
   },
   {
@@ -134,10 +137,24 @@
    "label": "Next Station",
    "options": "Station",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_14",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "etd",
+   "fieldtype": "Datetime",
+   "label": "Est Start Datetime"
+  },
+  {
+   "fieldname": "eta",
+   "fieldtype": "Datetime",
+   "label": "Est End Datetime"
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-09 22:41:11.339297",
+ "modified": "2020-07-09 23:36:14.933686",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Shipping Order",
