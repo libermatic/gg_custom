@@ -9,6 +9,7 @@
   "booking_datetime",
   "column_break_3",
   "status",
+  "last_shipping_order",
   "amended_from",
   "order_sec",
   "source_station",
@@ -121,14 +122,16 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
-   "options": "\nDraft\nBooked\nLoaded\nIn Transit\nAt Station\nUnloaded\nCollected\nCancelled",
+   "options": "\nDraft\nBooked\nLoaded\nIn Transit\nUnloaded\nCollected\nCancelled",
    "read_only": 1
   },
   {
    "fieldname": "source_station",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Source Station",
    "options": "Station",
    "reqd": 1
@@ -137,12 +140,12 @@
    "fieldname": "destination_station",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Destination Station",
    "options": "Station",
    "reqd": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "order_sec",
    "fieldtype": "Section Break",
    "label": "Order Details"
@@ -229,10 +232,17 @@
    "options": "Booking Order",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "last_shipping_order",
+   "fieldtype": "Link",
+   "label": "Last Shipping Order",
+   "options": "Shipping Order",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-08 17:11:22.194632",
+ "modified": "2020-07-09 13:33:41.372827",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",

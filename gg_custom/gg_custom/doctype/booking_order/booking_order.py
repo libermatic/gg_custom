@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint:disable=no-member
 # Copyright (c) 2020, Libermatic and contributors
 # For license information, please see license.txt
 
@@ -8,6 +9,9 @@ from frappe.model.document import Document
 
 
 class BookingOrder(Document):
+    def before_insert(self):
+        self.status = "Draft"
+
     def before_submit(self):
         self.status = "Booked"
 
