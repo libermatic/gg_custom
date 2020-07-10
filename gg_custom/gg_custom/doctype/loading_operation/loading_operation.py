@@ -55,6 +55,10 @@ class LoadingOperation(Document):
         ):
             self.append("off_loads", booking_order)
 
+    def before_save(self):
+        self.on_load_no_of_bookings = len(self.on_loads)
+        self.off_load_no_of_bookings = len(self.off_loads)
+
     def on_submit(self):
         for load in self.on_loads:
             doc = frappe.get_cached_doc("Booking Order", load.booking_order)
@@ -90,7 +94,7 @@ class LoadingOperation(Document):
                 "state_transition",
                 json.dumps(state_transition),
             )
-            
+
         so = frappe.get_doc("Shipping Order", self.shipping_order)
         if so.final_station == self.station:
             so.set_as_completed()

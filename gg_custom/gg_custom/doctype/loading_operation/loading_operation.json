@@ -17,10 +17,12 @@
   "off_load_sec",
   "off_loads",
   "summary_sec",
+  "on_load_no_of_bookings",
   "on_load_no_of_packages",
   "on_load_weight_actual",
   "on_load_goods_value",
   "column_break_15",
+  "off_load_no_of_bookings",
   "off_load_no_of_packages",
   "off_load_weight_actual",
   "off_load_goods_value"
@@ -149,10 +151,22 @@
    "label": "Vehicle",
    "options": "Vehicle",
    "read_only": 1
+  },
+  {
+   "fieldname": "on_load_no_of_bookings",
+   "fieldtype": "Int",
+   "label": "Total Bookings Order Loaded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "off_load_no_of_bookings",
+   "fieldtype": "Int",
+   "label": "Total Bookings Order Unloaded",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-10 00:04:13.384615",
+ "modified": "2020-07-10 19:46:31.325594",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation",
