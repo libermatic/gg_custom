@@ -27,6 +27,7 @@ class BookingOrder(Document):
         self.status = "Draft"
 
     def before_submit(self):
+        self.last_shipping_order = None
         self.current_station = self.source_station
         self.status = "Booked"
 

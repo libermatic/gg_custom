@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from toolz.curried import unique, pluck
+from toolz.curried import unique, pluck, merge, keyfilter, concat, keymap, map, compose
 
 
 class ShippingOrder(Document):
@@ -129,6 +129,21 @@ class ShippingOrder(Document):
         self.save()
         _update_booking_orders(self)
 
+    def set_as_completed(self, validate_onboard=False):
+        if self.status != "Stopped":
+            frappe.throw(
+                frappe._("Shipping Order can only be completed when it has stopped.")
+            )
+        if validate_onboard and _current_onboard_bookings(self):
+            frappe.throw(
+                frappe._(
+                    "Shipping Order can only be completed because some "
+                    "Booking Orders are still onboard."
+                )
+            )
+        self.status = "Completed"
+        self.save()
+
 
 def _update_booking_orders(shipping_order):
     for bo in pluck(
@@ -146,4 +161,29 @@ def _update_booking_orders(shipping_order):
         doc.status = "In Transit"
         doc.current_station = shipping_order.current_station
         doc.save()
+
+
+def _current_onboard_bookings(doc):
+    get_booking_orders = compose(
+        list,
+        map(lambda x: x[0]),
+        lambda x: frappe.db.sql(
+            """
+                SELECT lobo.booking_order
+                FROM `tabLoading Operation Booking Order` AS lobo
+                LEFT JOIN `tabLoading Operation` AS lo ON
+                    lo.name = lobo.parent
+                WHERE
+                    lo.docstatus = 1 AND
+                    lo.shipping_order = %(shipping_order)s AND
+                    lobo.parentfield = %(parentfield)s
+            """,
+            values={"shipping_order": doc.name, "parentfield": x},
+        ),
+    )
+    return [
+        x
+        for x in get_booking_orders("on_loads")
+        if x not in get_booking_orders("off_loads")
+    ]
 

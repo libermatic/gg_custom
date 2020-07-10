@@ -90,6 +90,10 @@ class LoadingOperation(Document):
                 "state_transition",
                 json.dumps(state_transition),
             )
+            
+        so = frappe.get_doc("Shipping Order", self.shipping_order)
+        if so.final_station == self.station:
+            so.set_as_completed()
 
     def before_cancel(self):
         self._validate_shipping_order()
