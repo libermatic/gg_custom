@@ -140,8 +140,8 @@ class ShippingOrder(Document):
         if validate_onboard and _current_onboard_bookings(self):
             frappe.throw(
                 frappe._(
-                    "Shipping Order can only be completed because some "
-                    "Booking Orders are still onboard."
+                    "Shipping Order cannot be completed because some Booking Orders "
+                    "are still onboard. Please create a Loading Operation to unload."
                 )
             )
         self.status = "Completed"

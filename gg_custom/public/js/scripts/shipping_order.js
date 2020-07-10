@@ -16,13 +16,36 @@ export function shipping_order() {
     },
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {
-        frm.add_custom_button('Stop / Start', handle_movement_action(frm));
-        frm.add_custom_button('Perform Loading Operation', () => {
-          frappe.new_doc('Loading Operation', {
-            shipping_order: frm.doc.name,
-            station: frm.doc.current_station,
-          });
-        });
+        const { status } = frm.doc;
+        if (status === 'Stopped') {
+          frm.add_custom_button('Move', handle_movement_action(frm));
+          frm
+            .add_custom_button('Perform Loading Operation', () => {
+              frappe.new_doc('Loading Operation', {
+                shipping_order: frm.doc.name,
+                station: frm.doc.current_station,
+              });
+            })
+            .addClass('btn-primary');
+          frappe.confirm;
+          frm.add_custom_button('Complete', () =>
+            frappe.confirm(
+              'Are you sure you want to Complete this Shipping Order?',
+              async function () {
+                try {
+                  await frm.call('set_as_completed', {
+                    validate_onboard: true,
+                  });
+                  frm.reload_doc();
+                } finally {
+                  frm.refresh();
+                }
+              }
+            )
+          );
+        } else if (status === 'In Transit') {
+          frm.add_custom_button('Stop', handle_movement_action(frm));
+        }
       }
       if (!frm.doc.__islocal) {
         const { dashboard_info } = frm.doc.__onload || {};
