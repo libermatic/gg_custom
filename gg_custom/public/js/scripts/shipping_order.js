@@ -30,7 +30,6 @@ export function shipping_order() {
               });
             })
             .addClass('btn-primary');
-          frappe.confirm;
           frm.add_custom_button('Complete', () =>
             frappe.confirm(
               'Are you sure you want to Complete this Shipping Order?',
