@@ -50,8 +50,6 @@ export function shipping_order() {
       if (!frm.doc.__islocal) {
         const { dashboard_info } = frm.doc.__onload || {};
         if (dashboard_info) {
-          console.log(dashboard_info);
-
           render_dashboard(frm, dashboard_info);
         }
       }

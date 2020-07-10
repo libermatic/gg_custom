@@ -6,12 +6,23 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from toolz.curried import unique, pluck, merge, keyfilter, concat, keymap, map, compose
+from toolz.curried import (
+    unique,
+    pluck,
+    merge,
+    keyfilter,
+    concat,
+    keymap,
+    valmap,
+    map,
+    compose,
+)
 
 
 class ShippingOrder(Document):
     def onload(self):
-        self.set_onload("dashboard_info", _get_dashboard_info(self))
+        if self.docstatus == 1:
+            self.set_onload("dashboard_info", _get_dashboard_info(self))
 
     def validate(self):
         if self.initial_station == self.final_station:
@@ -189,10 +200,12 @@ def _get_dashboard_info(doc):
 
     def get_values(_type):
         fields = list(map(lambda x: "{}_{}".format(_type, x), params))
-        return keymap(
-            lambda x: x.replace("{}_".format(_type), ""),
-            keyfilter(lambda x: x in fields, data),
+        _get = compose(
+            valmap(lambda x: x or 0),
+            keymap(lambda x: x.replace("{}_".format(_type), "")),
+            keyfilter(lambda x: x in fields),
         )
+        return _get(data)
 
     on_load = get_values("on_load")
     off_load = get_values("off_load")
