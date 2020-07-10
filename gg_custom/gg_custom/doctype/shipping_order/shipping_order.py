@@ -18,6 +18,8 @@ from toolz.curried import (
     compose,
 )
 
+from gg_custom.api.shipping_order import get_history
+
 
 class ShippingOrder(Document):
     def onload(self):
@@ -215,6 +217,7 @@ def _get_dashboard_info(doc):
         "on_load": on_load,
         "off_load": off_load,
         "current": current,
+        "history": get_history(doc.name),
     }
 
 

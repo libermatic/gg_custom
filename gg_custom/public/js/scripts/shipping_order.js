@@ -1,4 +1,5 @@
 import ShippingOrderLoad from '../vue/ShippingOrderLoad.vue';
+import Timeline from '../vue/Timeline.vue';
 
 export function shipping_order() {
   return {
@@ -49,7 +50,7 @@ export function shipping_order() {
           frm.add_custom_button('Stop', handle_movement_action(frm));
         }
       }
-      if (!frm.doc.__islocal) {
+      if (frm.doc.docstatus > 0) {
         const { dashboard_info } = frm.doc.__onload || {};
         if (dashboard_info) {
           render_dashboard(frm, dashboard_info);
@@ -157,11 +158,15 @@ function handle_movement_action(frm) {
 }
 
 function render_dashboard(frm, dashboard_info) {
-  const $wrapper = frm.dashboard.add_section('<div />');
   const props = { ...dashboard_info };
   new Vue({
-    el: $wrapper.children()[0],
+    el: frm.dashboard.add_section('<div />').children()[0],
     render: (h) => h(ShippingOrderLoad, { props }),
+  });
+
+  new Vue({
+    el: frm.dashboard.add_section('<div />').children()[0],
+    render: (h) => h(Timeline, { props }),
   });
 
   frm.dashboard.transactions_area
