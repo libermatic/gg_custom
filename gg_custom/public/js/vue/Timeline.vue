@@ -80,7 +80,7 @@ export default {
 .timeline-item.notification-content.green::before {
   background-color: #98d85b;
 }
-.timeline-item.notification-content.green::before {
+.timeline-item.notification-content.darkgrey::before {
   background-color: #b8c2cc;
 }
 
