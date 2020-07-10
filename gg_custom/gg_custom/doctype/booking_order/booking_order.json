@@ -123,6 +123,7 @@
    "allow_on_submit": 1,
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
@@ -253,7 +254,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-10 13:46:10.487245",
+ "modified": "2020-07-10 19:53:48.052405",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",
