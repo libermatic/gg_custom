@@ -46,6 +46,21 @@ class BookingOrder(Document):
         if self.status in ["Collected"]:
             self.current_station = None
 
+    def set_as_completed(self):
+        if self.status != "Unloaded":
+            frappe.throw(
+                frappe._("Booking Order can only be delivered when it has stopped.")
+            )
+        if self.current_station != self.destination_station:
+            frappe.throw(
+                frappe._(
+                    "Booking Order can only be delivered when the goods are Unloaded "
+                    "at its Destination Station."
+                )
+            )
+        self.status = "Collected"
+        self.save()
+
 
 def _get_dashboard_info(doc):
     return {

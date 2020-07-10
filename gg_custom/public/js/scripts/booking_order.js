@@ -48,6 +48,26 @@ export function booking_order() {
       );
     },
     refresh: function (frm) {
+      if (frm.doc.docstatus === 1) {
+        const { status, current_station, destination_station } = frm.doc;
+        if (status === 'Unloaded' && current_station === destination_station) {
+          frm.add_custom_button('Deliver', () =>
+            frappe.confirm(
+              'Are you sure you want to Deliver this Booking Order?',
+              async function () {
+                try {
+                  await frm.call('set_as_completed', {
+                    validate_onboard: true,
+                  });
+                  frm.reload_doc();
+                } finally {
+                  frm.refresh();
+                }
+              }
+            )
+          );
+        }
+      }
       if (frm.doc.docstatus > 0) {
         const { dashboard_info } = frm.doc.__onload || {};
         if (dashboard_info) {
