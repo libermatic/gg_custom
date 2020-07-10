@@ -7,8 +7,14 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
+from gg_custom.api.booking_order import get_history
+
 
 class BookingOrder(Document):
+    def onload(self):
+        if self.docstatus == 1:
+            self.set_onload("dashboard_info", _get_dashboard_info(self))
+
     def validate(self):
         if self.status == "Unloaded" and not self.current_station:
             frappe.throw(
@@ -39,3 +45,9 @@ class BookingOrder(Document):
     def before_update_after_submit(self):
         if self.status in ["Collected"]:
             self.current_station = None
+
+
+def _get_dashboard_info(doc):
+    return {
+        "history": get_history(doc.name),
+    }

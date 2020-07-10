@@ -1,5 +1,7 @@
 import sumBy from 'lodash/sumBy';
 
+import Timeline from '../vue/Timeline.vue';
+
 function set_address(party_type) {
   const address_field = `${party_type}_address`;
   return async function (frm) {
@@ -45,6 +47,14 @@ export function booking_order() {
         }))
       );
     },
+    refresh: function (frm) {
+      if (frm.doc.docstatus > 0) {
+        const { dashboard_info } = frm.doc.__onload || {};
+        if (dashboard_info) {
+          render_dashboard(frm, dashboard_info);
+        }
+      }
+    },
     consignor: set_address('consignor'),
     consignee: set_address('consignee'),
     consignor_address: set_address_dispay('consignor'),
@@ -88,4 +98,12 @@ export function booking_order_listview_settings() {
       return [__(status), status_color[status] || 'grey', `status,=,${status}`];
     },
   };
+}
+
+function render_dashboard(frm, dashboard_info) {
+  const props = { ...dashboard_info };
+  new Vue({
+    el: frm.dashboard.add_section('<div />').children()[0],
+    render: (h) => h(Timeline, { props }),
+  });
 }

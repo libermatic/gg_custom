@@ -25,6 +25,19 @@
 </template>
 
 <script>
+const status_color = {
+  Booked: 'darkgrey',
+  Cancelled: 'red',
+  Collected: 'green',
+  Completed: 'green',
+  Draft: 'red',
+  'In Transit': 'blue',
+  Loaded: 'lightblue',
+  Operation: 'lightblue',
+  Stopped: 'orange',
+  Unknown: 'darkgrey',
+  Unloaded: 'orange',
+};
 export default {
   props: ['history'],
   data: function() {
@@ -38,19 +51,7 @@ export default {
       return `${frappe.datetime.obj_to_user(d)} ${frappe.datetime.get_time(d)}`;
     },
     getColor: function(status) {
-      if (status === 'Stopped') {
-        return 'red';
-      }
-      if (status === 'In Transit') {
-        return 'green';
-      }
-      if (status === 'Operation') {
-        return 'orange';
-      }
-      if (status === 'Completed') {
-        return 'blue';
-      }
-      return '';
+      return status_color[status] || '';
     },
   },
 };
@@ -73,8 +74,14 @@ export default {
 .timeline-item.notification-content.blue::before {
   background-color: #5e64ff;
 }
+.timeline-item.notification-content.lightblue::before {
+  background-color: #7cd6fd;
+}
 .timeline-item.notification-content.green::before {
   background-color: #98d85b;
+}
+.timeline-item.notification-content.green::before {
+  background-color: #b8c2cc;
 }
 
 .message {
