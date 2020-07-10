@@ -8,7 +8,7 @@ def get_data():
         {
             "module_name": "GG Custom",
             "color": "grey",
-            "icon": "octicon octicon-file-directory",
+            "icon": "fa fa-truck",
             "type": "module",
             "label": _("GG Custom"),
         }
