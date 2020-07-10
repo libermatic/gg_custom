@@ -24,6 +24,14 @@ export function shipping_order() {
           });
         });
       }
+      if (!frm.doc.__islocal) {
+        const { dashboard_info } = frm.doc.__onload || {};
+        if (dashboard_info) {
+          console.log(dashboard_info);
+
+          render_dashboard(frm, dashboard_info);
+        }
+      }
     },
   };
 }
@@ -123,4 +131,40 @@ function handle_movement_action(frm) {
     dialog.onhide = () => dialog.$wrapper.remove();
     dialog.show();
   };
+}
+
+function render_dashboard(frm, dashboard_info) {
+  function get_item(title, color, body) {
+    return `
+      <div class="col-sm-4 col-xs-12">
+        <h6 class="indicator ${color}">${title}</h6>
+        <div class="row small">
+          <div class="col-xs-8">No of Packages</div>
+          <div class="col-xs-4 bold">${body.no_of_packages}</div>
+        </div>
+        <div class="row small">
+          <div class="col-xs-8">Weight Actual</div>
+          <div class="col-xs-4 bold">${body.weight_actual}</div>
+        </div>
+        <div class="row small">
+          <div class="col-xs-8">Goods Value</div>
+          <div class="col-xs-4 bold">${body.goods_value}</div>
+        </div>
+      </div>
+    `;
+  }
+  const $container = $(`<div class="row" />`);
+  $container.append(
+    $(get_item('On Loaded', 'lightblue', dashboard_info.on_load))
+  );
+  $container.append(
+    $(get_item('Off Loaded', 'orange', dashboard_info.off_load))
+  );
+  $container.append(
+    $(get_item('Currently Onboard', 'blue', dashboard_info.current))
+  );
+  frm.dashboard.add_section($container.html());
+  frm.dashboard.transactions_area
+    .find('.document-link[data-doctype="Booking Order"] > .btn-new')
+    .hide();
 }

@@ -10,6 +10,9 @@ from toolz.curried import unique, pluck, merge, keyfilter, concat, keymap, map, 
 
 
 class ShippingOrder(Document):
+    def onload(self):
+        self.set_onload("dashboard_info", _get_dashboard_info(self))
+
     def validate(self):
         if self.initial_station == self.final_station:
             frappe.throw(frappe._("Initial and Final Stations cannot be same."))
@@ -161,6 +164,45 @@ def _update_booking_orders(shipping_order):
         doc.status = "In Transit"
         doc.current_station = shipping_order.current_station
         doc.save()
+
+
+def _get_dashboard_info(doc):
+    params = ["no_of_packages", "weight_actual", "goods_value"]
+    fields = list(
+        concat(
+            [
+                ["SUM({t}_{p}) AS {t}_{p}".format(t=t, p=p) for p in params]
+                for t in ["on_load", "off_load"]
+            ]
+        )
+    )
+    data = frappe.db.sql(
+        """
+            SELECT {fields} FROM `tabLoading Operation`
+            WHERE docstatus = 1 AND shipping_order = %(shipping_order)s
+        """.format(
+            fields=", ".join(fields)
+        ),
+        values={"shipping_order": doc.name},
+        as_dict=1,
+    )[0]
+
+    def get_values(_type):
+        fields = list(map(lambda x: "{}_{}".format(_type, x), params))
+        return keymap(
+            lambda x: x.replace("{}_".format(_type), ""),
+            keyfilter(lambda x: x in fields, data),
+        )
+
+    on_load = get_values("on_load")
+    off_load = get_values("off_load")
+
+    current = merge({}, *[{x: on_load[x] - off_load[x]} for x in params])
+    return {
+        "on_load": on_load,
+        "off_load": off_load,
+        "current": current,
+    }
 
 
 def _current_onboard_bookings(doc):
