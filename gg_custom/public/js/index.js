@@ -1,4 +1,5 @@
 import * as scripts from './scripts';
+import * as cscripts from './cscripts';
 import * as quick_entry from './quick_entry';
 
 const __version__ = '0.0.1';
@@ -18,4 +19,16 @@ Object.keys(quick_entry).forEach((import_name) => {
   frappe.ui.form[get_qe_classname(import_name)] = extend(
     frappe.ui.form.QuickEntryForm
   );
+});
+
+function get_doctype(import_name) {
+  return import_name
+    .split('_')
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+Object.keys(cscripts).forEach((import_name) => {
+  const get_handler = cscripts[import_name];
+  frappe.ui.form.on(get_doctype(import_name), get_handler());
 });

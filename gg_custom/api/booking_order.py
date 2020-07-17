@@ -143,6 +143,7 @@ def get_history(name):
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None):
     bill_to = frappe.flags.args and frappe.flags.args.get("bill_to")
+    taxes_and_charges = frappe.flags.args and frappe.flags.args.get("taxes_and_charges")
 
     def set_invoice_missing_values(source, target):
         target.customer = _get_or_create_customer(source_name, bill_to)
@@ -160,6 +161,7 @@ def make_sales_invoice(source_name, target_doc=None):
                     "Sales Invoice", "customer_address", target.customer_address
                 )
             )
+        target.taxes_and_charges = taxes_and_charges
         target.ignore_pricing_rule = 1
         target.run_method("set_missing_values")
         target.run_method("calculate_taxes_and_totals")
@@ -238,6 +240,8 @@ def create_customer(booking_party_name):
         address = frappe.get_doc("Address", parent)
         address.append("links", {"link_doctype": doc.doctype, "link_name": doc.name})
         address.save()
+
+    frappe.db.set_value("Booking Party", booking_party_name, "customer", doc.name)
 
     return doc
 
