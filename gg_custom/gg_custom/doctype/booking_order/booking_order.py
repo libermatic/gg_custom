@@ -68,6 +68,18 @@ class BookingOrder(Document):
 
 
 def _get_dashboard_info(doc):
+    invoice = frappe.db.sql(
+        """
+            SELECT
+                SUM(grand_total) AS grand_total,
+                SUM(outstanding_amount) AS outstanding_amount
+            FROM `tabSales Invoice` WHERE
+                docstatus = 1 AND px_booking_order = %(booking_order)s
+        """,
+        values={"booking_order": doc.name},
+        as_dict=1,
+    )[0]
     return {
+        "invoice": invoice,
         "history": get_history(doc.name),
     }

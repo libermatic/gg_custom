@@ -136,6 +136,17 @@ export function booking_order_listview_settings() {
 
 function render_dashboard(frm, dashboard_info) {
   const props = { ...dashboard_info };
+  if (dashboard_info && dashboard_info.invoice) {
+    const { grand_total, outstanding_amount } = dashboard_info.invoice;
+    cur_frm.dashboard.add_indicator(
+      `Total Billed: ${format_currency(grand_total)}`,
+      'green'
+    );
+    cur_frm.dashboard.add_indicator(
+      `Outstanding Amount: ${format_currency(outstanding_amount)}`,
+      'orange'
+    );
+  }
   new Vue({
     el: frm.dashboard.add_section('<div />').children()[0],
     render: (h) => h(Timeline, { props }),
@@ -162,14 +173,21 @@ function create_invoice(frm) {
         ],
         default: 'consignor',
       },
+      {
+        fieldtype: 'Link',
+        fieldname: 'taxes_and_charges',
+        label: __('Sales Taxes and Charges Template'),
+        options: 'Sales Taxes and Charges Template',
+        only_select: 1,
+      },
     ],
   });
   dialog.set_primary_action('OK', async function () {
-    const bill_to = dialog.get_value('bill_to');
+    const args = dialog.get_values();
     frappe.model.open_mapped_doc({
       method: 'gg_custom.api.booking_order.make_sales_invoice',
-      frm: frm,
-      args: { bill_to },
+      frm,
+      args,
     });
     dialog.hide();
   });
