@@ -32,6 +32,9 @@ class BookingOrder(Document):
     def before_insert(self):
         self.status = "Draft"
 
+    def before_save(self):
+        self.total_amount = sum([x.charge_amount for x in self.charges])
+
     def before_submit(self):
         self.last_shipping_order = None
         self.current_station = self.source_station

@@ -27,7 +27,7 @@ function set_address_dispay(party_type) {
 }
 
 function set_total_amount(frm) {
-  const total_amount = sumBy(frm.doc.charges, 'total_amount');
+  const total_amount = sumBy(frm.doc.charges, 'charge_amount');
   frm.set_value({ total_amount });
 }
 
@@ -90,6 +90,7 @@ export function booking_order() {
             parenttype: 'Booking Order Charge Template',
             parent: booking_order_charge_template,
           },
+          order_by: 'idx',
         });
         charges.forEach((row) => {
           frm.add_child('charges', row);
