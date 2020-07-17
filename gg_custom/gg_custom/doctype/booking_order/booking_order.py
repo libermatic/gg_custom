@@ -39,11 +39,13 @@ class BookingOrder(Document):
         self.last_shipping_order = None
         self.current_station = self.source_station
         self.status = "Booked"
+        self.payment_status = "Unbilled"
 
     def before_cancel(self):
         if self.status != "Booked":
             frappe.throw(frappe._("Cannot cancel an order when it is in progress"))
         self.status = "Cancelled"
+        self.payment_status = None
 
     def before_update_after_submit(self):
         if self.status in ["Collected"]:
