@@ -49,6 +49,11 @@ def get_data():
                 },
                 {
                     "type": "doctype",
+                    "name": "Item",
+                    "description": frappe._("Items used as Booking Charge"),
+                },
+                {
+                    "type": "doctype",
                     "name": "Booking Order Charge Template",
                     "description": frappe._("Booking Order Charge Template"),
                 },

@@ -8,7 +8,7 @@
   "template_name",
   "is_default",
   "section_break_2",
-  "table_3"
+  "charges"
  ],
  "fields": [
   {
@@ -22,20 +22,20 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "table_3",
-   "fieldtype": "Table",
-   "options": "Booking Order Charge"
-  },
-  {
    "fieldname": "template_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Template Name",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "charges",
+   "fieldtype": "Table",
+   "options": "Booking Order Charge"
   }
  ],
- "modified": "2020-07-08 16:38:46.413216",
+ "modified": "2020-07-17 21:14:25.709374",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order Charge Template",

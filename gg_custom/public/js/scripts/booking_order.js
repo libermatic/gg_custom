@@ -1,5 +1,6 @@
 import sumBy from 'lodash/sumBy';
 
+import { set_charge_type_query } from './utils';
 import Timeline from '../vue/Timeline.vue';
 
 function set_address(party_type) {
@@ -46,6 +47,7 @@ export function booking_order() {
           filters: { link_doctype: 'Booking Party', link_name: doc[type] },
         }))
       );
+      set_charge_type_query(frm);
     },
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {
