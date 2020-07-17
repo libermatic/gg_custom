@@ -84,7 +84,7 @@ export function booking_order() {
       const { booking_order_charge_template } = frm.doc;
       if (booking_order_charge_template) {
         const charges = await frappe.db.get_list('Booking Order Charge', {
-          fields: ['charge_type'],
+          fields: ['charge_type', 'charge_amount'],
           parent: 'Booking Order Charge Template',
           filters: {
             parenttype: 'Booking Order Charge Template',
