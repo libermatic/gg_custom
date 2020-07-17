@@ -12,6 +12,13 @@ app_color = "grey"
 app_email = "info@libermatic.com"
 app_license = "MIT"
 
+fixtures = [
+    {
+        "doctype": "Custom Field",
+        "filters": {"fieldname": ("like", "gg_%"), "dt": ("in", ["Sales Invoice"])},
+    },
+]
+
 # Includes in <head>
 # ------------------
 
