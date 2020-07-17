@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import frappe
 import json
+from frappe.contacts.doctype.address.address import get_company_address
 from toolz.curried import compose, merge, concatv, map, filter
 
 
@@ -137,3 +138,106 @@ def get_history(name):
         concatv(get_versions(name), get_loadings(name)),
         key=lambda x: frappe.utils.get_datetime(x.get("datetime")),
     )
+
+
+@frappe.whitelist()
+def make_sales_invoice(source_name, target_doc=None):
+    bill_to = frappe.flags.args and frappe.flags.args.get("bill_to")
+
+    def set_invoice_missing_values(source, target):
+        target.customer = _get_or_create_customer(source_name, bill_to)
+        target.update(
+            frappe.model.utils.get_fetch_values(
+                "Sales Invoice", "customer", target.customer
+            )
+        )
+        target.customer_address = frappe.get_cached_value(
+            "Booking Order", source_name, "{}_address".format(bill_to)
+        )
+        if target.customer_address:
+            target.update(
+                frappe.model.utils.get_fetch_values(
+                    "Sales Invoice", "customer_address", target.customer_address
+                )
+            )
+        target.ignore_pricing_rule = 1
+        target.run_method("set_missing_values")
+        target.run_method("calculate_taxes_and_totals")
+        target.update(get_company_address(target.company))
+        if target.company_address:
+            target.update(
+                frappe.model.utils.get_fetch_values(
+                    "Sales Invoice", "company_address", target.company_address
+                )
+            )
+
+    return frappe.model.mapper.get_mapped_doc(
+        "Booking Order",
+        source_name,
+        {
+            "Booking Order": {
+                "doctype": "Sales Invoice",
+                "fieldmap": {"name": "px_booking_order"},
+                "validation": {"docstatus": ["=", 1]},
+            },
+            "Booking Order Charge": {
+                "doctype": "Sales Invoice Item",
+                "field_map": {"charge_type": "item_code", "charge_amount": "rate"},
+            },
+        },
+        target_doc,
+        set_invoice_missing_values,
+    )
+
+
+def _get_or_create_customer(booking_order_name, bill_to):
+    msg = frappe._("Cannot create Invoice without Customer")
+    if not bill_to:
+        frappe.throw(msg)
+
+    booking_party_name = frappe.db.get_value(
+        "Booking Order", booking_order_name, bill_to
+    )
+    if not booking_party_name:
+        frappe.throw(msg)
+
+    customer_name = frappe.get_cached_value(
+        "Booking Party", booking_party_name, "customer"
+    )
+    if customer_name:
+        return customer_name
+
+    customer = create_customer(booking_party_name)
+    return customer.name
+
+
+def create_customer(booking_party_name):
+    booking_party = frappe.get_cached_doc("Booking Party", booking_party_name)
+
+    doc = frappe.get_doc(
+        {
+            "doctype": "Customer",
+            "customer_name": booking_party.booking_party_name,
+            "customer_group": frappe.get_cached_value(
+                "Selling Settings", None, "customer_group"
+            ),
+            "territory": frappe.get_cached_value("Selling Settings", None, "territory"),
+            "customer_primary_address": booking_party.primary_address,
+        }
+    ).insert(ignore_permissions=True, ignore_mandatory=True)
+    for (parent,) in frappe.get_all(
+        "Dynamic Link",
+        filters={
+            "parenttype": "Address",
+            "link_doctype": "Booking Party",
+            "link_name": booking_party_name,
+        },
+        fields=["parent"],
+        as_list=1,
+    ):
+        address = frappe.get_doc("Address", parent)
+        address.append("links", {"link_doctype": doc.doctype, "link_name": doc.name})
+        address.save()
+
+    return doc
+

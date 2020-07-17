@@ -69,6 +69,17 @@ export function booking_order() {
             )
           );
         }
+
+        const { payment_status } = frm.doc;
+        if (payment_status === 'Unbilled') {
+          frm
+            .add_custom_button('Create Invoice', () => create_invoice(frm))
+            .addClass('btn-primary');
+        } else if (payment_status === 'Unpaid') {
+          frm
+            .add_custom_button('Create Payment', () => {})
+            .addClass('btn-primary');
+        }
       }
       if (frm.doc.docstatus > 0) {
         const { dashboard_info } = frm.doc.__onload || {};
@@ -129,4 +140,39 @@ function render_dashboard(frm, dashboard_info) {
     el: frm.dashboard.add_section('<div />').children()[0],
     render: (h) => h(Timeline, { props }),
   });
+}
+
+function create_invoice(frm) {
+  const dialog = new frappe.ui.Dialog({
+    title: 'Create Invoice',
+    fields: [
+      {
+        fieldtype: 'Select',
+        fieldname: 'bill_to',
+        label: __('Bill To'),
+        options: [
+          {
+            label: `Consignor: ${frm.doc.consignor}`,
+            value: 'consignor',
+          },
+          {
+            label: `Consignee: ${frm.doc.consignee}`,
+            value: 'consignee',
+          },
+        ],
+        default: 'consignor',
+      },
+    ],
+  });
+  dialog.set_primary_action('OK', async function () {
+    const bill_to = dialog.get_value('bill_to');
+    frappe.model.open_mapped_doc({
+      method: 'gg_custom.api.booking_order.make_sales_invoice',
+      frm: frm,
+      args: { bill_to },
+    });
+    dialog.hide();
+  });
+  dialog.onhide = () => dialog.$wrapper.remove();
+  dialog.show();
 }
