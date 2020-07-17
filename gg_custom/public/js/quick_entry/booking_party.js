@@ -7,6 +7,11 @@ export function booking_party(QuickEntryForm) {
     get_variant_fields() {
       return [
         {
+          label: __('GSTIN'),
+          fieldname: '_gstin',
+          fieldtype: 'Data',
+        },
+        {
           fieldtype: 'Section Break',
           label: __('Address Details'),
         },

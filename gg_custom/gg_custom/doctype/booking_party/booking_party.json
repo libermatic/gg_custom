@@ -12,7 +12,8 @@
   "section_break_4",
   "primary_address",
   "column_break_7",
-  "phone"
+  "phone",
+  "gstin"
  ],
  "fields": [
   {
@@ -44,7 +45,6 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "Naming Series",
    "options": "BP.YY.",
    "reqd": 1
@@ -53,6 +53,7 @@
    "fetch_from": "primary_address.phone",
    "fieldname": "phone",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Phone",
    "options": "Phone",
    "read_only": 1
@@ -60,9 +61,17 @@
   {
    "fieldname": "column_break_7",
    "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "primary_address.gstin",
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "GSTIN",
+   "read_only": 1
   }
  ],
- "modified": "2020-07-08 13:26:13.255706",
+ "modified": "2020-07-17 20:16:33.848778",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Party",
