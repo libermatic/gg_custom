@@ -87,7 +87,13 @@ app_include_js = ["/assets/js/gg_custom.min.js"]
 # ---------------
 # Hook on document methods and events
 
-doc_events = {"Address": {"on_update": "gg_custom.doc_events.address.on_update"}}
+doc_events = {
+    "Address": {"on_update": "gg_custom.doc_events.address.on_update"},
+    "Sales Invoice": {
+        "on_submit": "gg_custom.doc_events.sales_invoice.on_submit",
+        "on_cancel": "gg_custom.doc_events.sales_invoice.on_cancel",
+    },
+}
 
 # Scheduled Tasks
 # ---------------
