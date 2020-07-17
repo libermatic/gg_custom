@@ -75,10 +75,13 @@ export function booking_order() {
           frm
             .add_custom_button('Create Invoice', () => create_invoice(frm))
             .addClass('btn-primary');
-        } else if (payment_status === 'Unpaid') {
-          frm
-            .add_custom_button('Create Payment', () => {})
-            .addClass('btn-primary');
+        }
+
+        const {
+          dashboard_info: { invoice: { outstanding_amount = 0 } = {} } = {},
+        } = frm.doc.__onload || {};
+        if (outstanding_amount > 0) {
+          frm.add_custom_button('Create Payment', () => {});
         }
       }
       if (frm.doc.docstatus > 0) {
