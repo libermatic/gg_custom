@@ -8,11 +8,16 @@ import frappe
 from frappe.model.document import Document
 from frappe.contacts.address_and_contact import load_address_and_contact
 from erpnext.selling.doctype.customer.customer import make_address
+from erpnext.accounts.party import get_dashboard_info
 
 
 class BookingParty(Document):
     def onload(self):
         load_address_and_contact(self)
+        if self.customer:
+            self.set_onload(
+                "dashboard_info", get_dashboard_info("Customer", self.customer)
+            )
 
     def validate(self):
         self.flags.is_new_doc = self.is_new()

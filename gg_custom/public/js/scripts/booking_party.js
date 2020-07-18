@@ -32,6 +32,9 @@ export function booking_party() {
           }
         });
       }
+      if (!frm.doc.__islocal && frm.doc.__onload) {
+        erpnext.utils.set_party_dashboard_indicators(frm);
+      }
     },
     primary_address: function (frm) {
       if (!frm.doc.primary_address) {
