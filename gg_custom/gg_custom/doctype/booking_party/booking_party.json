@@ -7,13 +7,13 @@
  "field_order": [
   "naming_series",
   "booking_party_name",
-  "address_sec",
-  "address_html",
-  "section_break_4",
   "primary_address",
-  "column_break_7",
+  "column_break_4",
   "phone",
   "gstin",
+  "address_sec",
+  "address_html",
+  "section_break_9",
   "customer"
  ],
  "fields": [
@@ -32,10 +32,6 @@
   {
    "fieldname": "address_html",
    "fieldtype": "HTML"
-  },
-  {
-   "fieldname": "section_break_4",
-   "fieldtype": "Section Break"
   },
   {
    "fieldname": "primary_address",
@@ -60,10 +56,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "column_break_7",
-   "fieldtype": "Column Break"
-  },
-  {
    "fetch_from": "primary_address.gstin",
    "fieldname": "gstin",
    "fieldtype": "Data",
@@ -77,9 +69,17 @@
    "label": "Ref Customer",
    "options": "Customer",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_9",
+   "fieldtype": "Section Break"
   }
  ],
- "modified": "2020-07-17 23:15:04.106304",
+ "modified": "2020-07-18 11:41:58.391435",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Party",
