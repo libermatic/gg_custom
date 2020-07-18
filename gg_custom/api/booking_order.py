@@ -2,7 +2,8 @@ from __future__ import unicode_literals
 import frappe
 import json
 from frappe.contacts.doctype.address.address import get_company_address
-from toolz.curried import compose, merge, concatv, map, filter
+from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+from toolz.curried import compose, merge, concatv, unique, map, filter
 
 
 def query(doctype, txt, searchfield, start, page_len, filters):
@@ -190,6 +191,54 @@ def make_sales_invoice(source_name, target_doc=None):
         target_doc,
         set_invoice_missing_values,
     )
+
+
+@frappe.whitelist()
+def make_payment_entry(source_name, target_doc=None):
+    invoices = [
+        frappe.get_cached_doc("Sales Invoice", x.get("name"))
+        for x in frappe.get_all(
+            "Sales Invoice",
+            filters={
+                "docstatus": 1,
+                "gg_booking_order": source_name,
+                "outstanding_amount": [">", 0],
+            },
+            order_by="posting_date, name",
+        )
+    ]
+
+    if not invoices:
+        frappe.throw(frappe._("No outstanding invoices to create payment"))
+
+    if len(list(unique([x.customer for x in invoices]))) != 1:
+        frappe.throw(
+            frappe._(
+                "Multiple invoices found for separate parties. "
+                "Please create Payment Entry manually from Sales Invoice."
+            )
+        )
+
+    pe = get_payment_entry("Sales Invoice", invoices[0].name)
+    if len(invoices) > 1:
+        outstanding_amount = sum([x.outstanding_amount for x in invoices])
+        pe.paid_amount = outstanding_amount
+        pe.received_amount = outstanding_amount
+        pe.references = []
+        for si in invoices:
+            pe.append(
+                "references",
+                {
+                    "reference_doctype": si.doctype,
+                    "reference_name": si.name,
+                    "bill_no": si.get("bill_no"),
+                    "due_date": si.get("due_date"),
+                    "total_amount": si.grand_total,
+                    "outstanding_amount": si.outstanding_amount,
+                    "allocated_amount": si.outstanding_amount,
+                },
+            )
+    return pe
 
 
 def _get_or_create_customer(booking_order_name, bill_to):

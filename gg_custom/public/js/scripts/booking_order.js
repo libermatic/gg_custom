@@ -81,7 +81,7 @@ export function booking_order() {
           dashboard_info: { invoice: { outstanding_amount = 0 } = {} } = {},
         } = frm.doc.__onload || {};
         if (outstanding_amount > 0) {
-          frm.add_custom_button('Create Payment', () => {});
+          frm.add_custom_button('Create Payment', () => create_payment(frm));
         }
       }
       if (frm.doc.docstatus > 0) {
@@ -196,4 +196,11 @@ function create_invoice(frm) {
   });
   dialog.onhide = () => dialog.$wrapper.remove();
   dialog.show();
+}
+
+function create_payment(frm) {
+  frappe.model.open_mapped_doc({
+    method: 'gg_custom.api.booking_order.make_payment_entry',
+    frm,
+  });
 }
