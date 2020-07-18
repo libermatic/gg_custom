@@ -96,6 +96,10 @@ doc_events = {
         "on_submit": "gg_custom.doc_events.sales_invoice.on_submit",
         "on_cancel": "gg_custom.doc_events.sales_invoice.on_cancel",
     },
+    "Payment Entry": {
+        "on_submit": "gg_custom.doc_events.payment_entry.on_submit",
+        "on_cancel": "gg_custom.doc_events.payment_entry.on_cancel",
+    },
 }
 
 # Scheduled Tasks
