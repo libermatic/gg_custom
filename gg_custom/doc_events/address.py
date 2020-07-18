@@ -18,4 +18,5 @@ def on_update(doc, method):
             bp.primary_address = doc.name
         if bp.primary_address == link.link_name:
             bp.phone = doc.phone
+            bp.gstin = doc.gstin
         bp.save()
