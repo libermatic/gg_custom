@@ -23,3 +23,36 @@ class BookingParty(Document):
             if self._gstin:
                 frappe.db.set_value(address.doctype, address.name, "gstin", self._gstin)
                 frappe.db.set_value(self.doctype, self.name, "gstin", self._gstin)
+
+    def create_customer(self):
+        doc = frappe.get_doc(
+            {
+                "doctype": "Customer",
+                "customer_name": self.booking_party_name,
+                "customer_group": frappe.get_cached_value(
+                    "Selling Settings", None, "customer_group"
+                ),
+                "territory": frappe.get_cached_value(
+                    "Selling Settings", None, "territory"
+                ),
+                "customer_primary_address": self.primary_address,
+            }
+        ).insert(ignore_permissions=True, ignore_mandatory=True)
+        for (parent,) in frappe.get_all(
+            "Dynamic Link",
+            filters={
+                "parenttype": "Address",
+                "link_doctype": "Booking Party",
+                "link_name": self.name,
+            },
+            fields=["parent"],
+            as_list=1,
+        ):
+            address = frappe.get_doc("Address", parent)
+            address.append(
+                "links", {"link_doctype": doc.doctype, "link_name": doc.name}
+            )
+            address.save()
+
+        self.db_set("customer", doc.name)
+        return doc

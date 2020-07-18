@@ -203,45 +203,13 @@ def _get_or_create_customer(booking_order_name, bill_to):
     if not booking_party_name:
         frappe.throw(msg)
 
-    customer_name = frappe.get_cached_value(
-        "Booking Party", booking_party_name, "customer"
-    )
-    if customer_name:
-        return customer_name
-
-    customer = create_customer(booking_party_name)
-    return customer.name
-
-
-def create_customer(booking_party_name):
     booking_party = frappe.get_cached_doc("Booking Party", booking_party_name)
+    if not booking_party:
+        frappe.throw(msg)
 
-    doc = frappe.get_doc(
-        {
-            "doctype": "Customer",
-            "customer_name": booking_party.booking_party_name,
-            "customer_group": frappe.get_cached_value(
-                "Selling Settings", None, "customer_group"
-            ),
-            "territory": frappe.get_cached_value("Selling Settings", None, "territory"),
-            "customer_primary_address": booking_party.primary_address,
-        }
-    ).insert(ignore_permissions=True, ignore_mandatory=True)
-    for (parent,) in frappe.get_all(
-        "Dynamic Link",
-        filters={
-            "parenttype": "Address",
-            "link_doctype": "Booking Party",
-            "link_name": booking_party_name,
-        },
-        fields=["parent"],
-        as_list=1,
-    ):
-        address = frappe.get_doc("Address", parent)
-        address.append("links", {"link_doctype": doc.doctype, "link_name": doc.name})
-        address.save()
+    if booking_party.customer:
+        return booking_party.customer
 
-    frappe.db.set_value("Booking Party", booking_party_name, "customer", doc.name)
-
-    return doc
+    booking_party.create_customer()
+    return booking_party.customer
 
