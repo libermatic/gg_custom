@@ -22,6 +22,16 @@ export function booking_party() {
       } else {
         frappe.contacts.render_address_and_contact(frm);
       }
+      if (!frm.doc.__islocal && !frm.doc.customer) {
+        frm.add_custom_button('Create Customer', async function () {
+          try {
+            await frm.call('create_customer');
+            frm.reload_doc();
+          } finally {
+            frm.refresh();
+          }
+        });
+      }
     },
     primary_address: function (frm) {
       if (!frm.doc.primary_address) {
