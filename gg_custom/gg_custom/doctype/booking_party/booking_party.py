@@ -25,7 +25,7 @@ class BookingParty(Document):
     def on_update(self):
         if self.flags.is_new_doc and self.get("address_line1"):
             address = make_address(self)
-            if self._gstin:
+            if self.get("_gstin"):
                 frappe.db.set_value(address.doctype, address.name, "gstin", self._gstin)
                 frappe.db.set_value(self.doctype, self.name, "gstin", self._gstin)
 
