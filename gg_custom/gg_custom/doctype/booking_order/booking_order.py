@@ -65,6 +65,12 @@ class BookingOrder(Document):
             }
         ).insert()
 
+    def on_cancel(self):
+        for (log_name,) in frappe.get_all(
+            "Booking Log", filters={"booking_order": self.name}, as_list=1
+        ):
+            frappe.delete_doc("Booking Log", log_name)
+
     def deliver(self, posting_datetime, station, no_of_packages):
         if station != self.destination_station:
             frappe.throw(frappe._("Packages can only be delivered at its destination."))

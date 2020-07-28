@@ -121,6 +121,12 @@ class ShippingOrder(Document):
             )
         self.status = "Cancelled"
 
+    def on_cancel(self):
+        for (log_name,) in frappe.get_all(
+            "Shipping Log", filters={"shipping_order": self.name}, as_list=1
+        ):
+            frappe.delete_doc("Shipping Log", log_name)
+
     def stop(self, station):
         if self.status != "In Transit":
             frappe.throw(

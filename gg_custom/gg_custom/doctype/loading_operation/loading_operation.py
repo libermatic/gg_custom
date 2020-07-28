@@ -104,18 +104,11 @@ class LoadingOperation(Document):
         self._validate_shipping_order()
 
     def on_cancel(self):
-        for load in self.on_loads + self.off_loads:
-            doc = frappe.get_cached_doc("Booking Order", load.booking_order)
-            state_transition = json.loads(load.state_transition)
-            if doc.docstatus == 1 and all(
-                [
-                    doc.get(key) == value
-                    for key, value in state_transition.get("to").items()
-                ]
+        for log_type in ["Booking Log", "Shipping Log"]:
+            for (log_name,) in frappe.get_all(
+                log_type, filters={"loading_operation": self.name}, as_list=1
             ):
-                for key, value in state_transition.get("from").items():
-                    doc.set(key, value)
-                doc.save()
+                frappe.delete_doc(log_type, log_name)
 
     def _validate_shipping_order(self):
         status, current_station = frappe.db.get_value(
