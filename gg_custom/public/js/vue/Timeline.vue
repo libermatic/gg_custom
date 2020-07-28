@@ -31,7 +31,7 @@ const status_color = {
   Collected: 'green',
   Completed: 'green',
   Draft: 'red',
-  'In Transit': 'blue',
+  Moving: 'blue',
   Loaded: 'lightblue',
   Operation: 'lightblue',
   Stopped: 'orange',

@@ -108,9 +108,7 @@ export function booking_order_listview_settings() {
   const status_color = {
     Draft: 'red',
     Booked: 'darkgrey',
-    Loaded: 'lightblue',
-    'In Transit': 'blue',
-    Unloaded: 'orange',
+    'In Progress': 'blue',
     Collected: 'green',
     Cancelled: 'red',
     Unknown: 'darkgrey',
