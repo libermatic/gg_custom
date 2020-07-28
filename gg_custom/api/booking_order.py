@@ -11,38 +11,27 @@ def query(doctype, txt, searchfield, start, page_len, filters):
     fields = [
         "name",
         "source_station",
+        "consignor",
+        "consignor_name",
         "destination_station",
+        "consignee",
+        "consignee_name",
     ]
 
     values = {
-        "station": filters.get("station"),
-        "shipping_order": filters.get("shipping_order"),
         "txt": "%%%s%%" % txt,
         "start": start,
         "page_len": page_len,
     }
+
+    conds = [
+        "docstatus = 1",
+        "({})".format(" OR ".join(["{} LIKE %(txt)s".format(x) for x in fields])),
+        "name IN %(booking_orders)s",
+    ]
     if _type == "on_load":
-        conds = [
-            "docstatus = 1",
-            "name LIKE %(txt)s",
-            "status IN ('Booked', 'Unloaded')",
-            "current_station = %(station)s",
-        ]
-        return frappe.db.sql(
-            """
-                SELECT {fields} FROM `tabBooking Order`
-                WHERE {conds} LIMIT %(start)s, %(page_len)s
-            """.format(
-                fields=", ".join(fields), conds=" OR ".join(conds)
-            ),
-            values=values,
-        )
-    if _type == "off_load":
-        conds = [
-            "docstatus = 1",
-            "name LIKE %(txt)s",
-            "status IN ('Loaded', 'In Transit')",
-            "last_shipping_order = %(shipping_order)s",
+        booking_orders = [
+            x.booking_order for x in get_orders_for(station=filters.get("station"))
         ]
         return frappe.db.sql(
             """
@@ -51,7 +40,21 @@ def query(doctype, txt, searchfield, start, page_len, filters):
             """.format(
                 fields=", ".join(fields), conds=" AND ".join(conds)
             ),
-            values=values,
+            values=merge(values, {"booking_orders": booking_orders}),
+        )
+    if _type == "off_load":
+        booking_orders = [
+            x.booking_order
+            for x in get_orders_for(shipping_order=filters.get("shipping_order"))
+        ]
+        return frappe.db.sql(
+            """
+                SELECT {fields} FROM `tabBooking Order`
+                WHERE {conds} LIMIT %(start)s, %(page_len)s
+            """.format(
+                fields=", ".join(fields), conds=" AND ".join(conds)
+            ),
+            values=merge(values, {"booking_orders": booking_orders}),
         )
     return []
 
@@ -262,3 +265,42 @@ def _get_or_create_customer(booking_order_name, bill_to):
     booking_party.create_customer()
     return booking_party.customer
 
+
+def get_orders_for(station=None, shipping_order=None):
+    if station:
+        return frappe.db.sql(
+            """
+                SELECT
+                    booking_order,
+                    SUM(no_of_packages) AS no_of_packages,
+                    SUM(weight_actual) AS weight_actual,
+                    SUM(goods_value) AS goods_value
+                FROM `tabBooking Log`
+                WHERE
+                    station = %(station)s AND
+                    activity IN ('Booked', 'Loaded', 'Unloaded')
+                GROUP BY booking_order HAVING SUM(no_of_packages) > 0
+            """,
+            values={"station": station},
+            as_dict=1,
+        )
+
+    if shipping_order:
+        return frappe.db.sql(
+            """
+                SELECT
+                    booking_order,
+                    -SUM(no_of_packages) AS no_of_packages,
+                    -SUM(weight_actual) AS weight_actual,
+                    -SUM(goods_value) AS goods_value
+                FROM `tabBooking Log`
+                WHERE
+                    shipping_order = %(shipping_order)s AND
+                    activity IN ('Booked', 'Loaded', 'Unloaded')
+                GROUP BY booking_order HAVING SUM(no_of_packages) < 0
+            """,
+            values={"shipping_order": shipping_order,},
+            as_dict=1,
+        )
+
+    return []

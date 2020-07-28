@@ -9,6 +9,8 @@ import frappe
 from frappe.model.document import Document
 from toolz.curried import compose, valmap, first, groupby
 
+from gg_custom.api.booking_order import get_orders_for
+
 
 class LoadingOperation(Document):
     def validate(self):
@@ -19,11 +21,11 @@ class LoadingOperation(Document):
         self._validate_shipping_order()
 
         self.on_loads = []
-        for booking_order in _get_on_load_orders(self.station):
+        for booking_order in get_orders_for(station=self.station):
             self.append("on_loads", booking_order)
 
         self.off_loads = []
-        for booking_order in _get_off_load_orders(self.shipping_order):
+        for booking_order in get_orders_for(shipping_order=self.shipping_order):
             self.append("off_loads", booking_order)
 
     def before_save(self):
@@ -114,7 +116,7 @@ class LoadingOperation(Document):
 
         get_map = compose(valmap(first), groupby("booking_order"))
 
-        on_loads_orders = get_map(_get_on_load_orders(self.station))
+        on_loads_orders = get_map(get_orders_for(station=self.station))
         on_load_rows_with_invalid_packages = [
             x.booking_order
             for x in self.on_loads
@@ -130,7 +132,7 @@ class LoadingOperation(Document):
                 )
             )
 
-        off_loads_orders = get_map(_get_off_load_orders(self.shipping_order))
+        off_loads_orders = get_map(get_orders_for(shipping_order=self.shipping_order))
         off_load_rows_with_invalid_packages = [
             x.booking_order
             for x in self.off_loads
@@ -166,42 +168,3 @@ class LoadingOperation(Document):
                 "goods_value": direction * load.goods_value,
             }
         ).insert()
-
-
-def _get_on_load_orders(station):
-    return frappe.db.sql(
-        """
-            SELECT
-                booking_order,
-                SUM(no_of_packages) AS no_of_packages,
-                SUM(weight_actual) AS weight_actual,
-                SUM(goods_value) AS goods_value
-            FROM `tabBooking Log`
-            WHERE
-                station = %(station)s AND
-                activity IN ('Booked', 'Loaded', 'Unloaded')
-            GROUP BY booking_order HAVING SUM(no_of_packages) > 0
-        """,
-        values={"station": station},
-        as_dict=1,
-    )
-
-
-def _get_off_load_orders(shipping_order):
-    return frappe.db.sql(
-        """
-            SELECT
-                booking_order,
-                -SUM(no_of_packages) AS no_of_packages,
-                -SUM(weight_actual) AS weight_actual,
-                -SUM(goods_value) AS goods_value
-            FROM `tabBooking Log`
-            WHERE
-                shipping_order = %(shipping_order)s AND
-                activity IN ('Booked', 'Loaded', 'Unloaded')
-            GROUP BY shipping_order HAVING SUM(no_of_packages) < 0
-        """,
-        values={"shipping_order": shipping_order,},
-        as_dict=1,
-    )
-
