@@ -30,6 +30,15 @@ class BookingParty(Document):
                 frappe.db.set_value(self.doctype, self.name, "gstin", self._gstin)
 
     def create_customer(self):
+        if self.customer:
+            frappe.throw(
+                frappe._(
+                    "Customer already created for {}".format(
+                        frappe.get_desk_link("Booking Party", self.name)
+                    )
+                )
+            )
+
         doc = frappe.get_doc(
             {
                 "doctype": "Customer",
