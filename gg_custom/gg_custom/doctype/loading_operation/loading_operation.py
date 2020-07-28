@@ -59,6 +59,15 @@ class LoadingOperation(Document):
         for load in self.on_loads + self.off_loads:
             self._create_booking_log(load)
 
+        for load in self.on_loads:
+            if (
+                frappe.get_cached_value("Booking Order", load.booking_order, "status")
+                == "Booked"
+            ):
+                frappe.db.set_value(
+                    "Booking Order", load.booking_order, "status", "In Progress"
+                )
+
         frappe.get_doc(
             {
                 "doctype": "Shipping Log",

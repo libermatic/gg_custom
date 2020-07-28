@@ -34,10 +34,6 @@ class BookingOrder(Document):
         self.status = "Cancelled"
         self.payment_status = None
 
-    def before_update_after_submit(self):
-        if self.status in ["Collected"]:
-            self.current_station = None
-
     def on_submit(self):
         frappe.get_doc(
             {
@@ -94,20 +90,20 @@ class BookingOrder(Document):
             }
         ).insert()
 
+        self.set_as_completed()
+
     def set_as_completed(self):
-        if self.status != "Unloaded":
-            frappe.throw(
-                frappe._("Booking Order can only be delivered when it has stopped.")
-            )
-        if self.current_station != self.destination_station:
-            frappe.throw(
-                frappe._(
-                    "Booking Order can only be delivered when the goods are Unloaded "
-                    "at its Destination Station."
-                )
-            )
-        self.status = "Collected"
-        self.save()
+        no_of_delivered_packages = (
+            frappe.get_all(
+                "Booking Log",
+                filters={"activity": "Collected", "booking_order": self.name},
+                fields=["sum(no_of_packages) as no_of_packages"],
+            )[0][0]
+            or 0
+        )
+        if self.no_of_packages == no_of_delivered_packages:
+            self.status = "Collected"
+            self.save()
 
 
 def _get_dashboard_info(doc):
