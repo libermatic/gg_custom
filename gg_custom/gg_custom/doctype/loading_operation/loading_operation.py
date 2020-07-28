@@ -7,11 +7,13 @@ from __future__ import unicode_literals
 import json
 import frappe
 from frappe.model.document import Document
+from toolz.curried import compose, valmap, first, groupby
 
 
 class LoadingOperation(Document):
     def validate(self):
         self._validate_shipping_order()
+        self._validate_booking_orders()
 
     def get_loads(self):
         self._validate_shipping_order()
@@ -53,7 +55,7 @@ class LoadingOperation(Document):
 
     def on_submit(self):
         for load in self.on_loads + self.off_loads:
-            _create_booking_log(load, self)
+            self._create_booking_log(load)
 
         frappe.get_doc(
             {
@@ -95,27 +97,76 @@ class LoadingOperation(Document):
                 )
             )
 
+    def _validate_booking_orders(self):
+        rows_with_zero_packages = [
+            x.booking_order
+            for x in self.on_loads + self.off_loads
+            if x.no_of_packages <= 0
+        ]
+        if rows_with_zero_packages:
+            frappe.throw(
+                frappe._(
+                    "Booking Orders: {} cannot contain less than 1 package".format(
+                        ", ".join(rows_with_zero_packages)
+                    )
+                )
+            )
 
-def _create_booking_log(child, parent):
-    if child.parentfield not in ["on_loads", "off_loads"]:
-        frappe.throw(frappe._("Invalid Loading Operation child"))
+        get_map = compose(valmap(first), groupby("booking_order"))
 
-    activity = "Loaded" if child.parentfield == "on_loads" else "Unloaded"
-    direction = -1 if child.parentfield == "on_loads" else 1
-    frappe.get_doc(
-        {
-            "doctype": "Booking Log",
-            "posting_datetime": parent.posting_datetime,
-            "booking_order": child.booking_order,
-            "shipping_order": parent.shipping_order,
-            "station": parent.station,
-            "activity": activity,
-            "loading_operation": parent.name,
-            "no_of_packages": direction * child.no_of_packages,
-            "weight_actual": direction * child.weight_actual,
-            "goods_value": direction * child.goods_value,
-        }
-    ).insert()
+        on_loads_orders = get_map(_get_on_load_orders(self.station))
+        on_load_rows_with_invalid_packages = [
+            x.booking_order
+            for x in self.on_loads
+            if x.no_of_packages
+            > on_loads_orders.get(x.booking_order, {}).get("no_of_packages", 0)
+        ]
+        if on_load_rows_with_invalid_packages:
+            frappe.throw(
+                frappe._(
+                    "Booking Orders: {} contain invalid no of packages ".format(
+                        ", ".join(on_load_rows_with_invalid_packages)
+                    )
+                )
+            )
+
+        off_loads_orders = get_map(_get_off_load_orders(self.shipping_order))
+        off_load_rows_with_invalid_packages = [
+            x.booking_order
+            for x in self.off_loads
+            if x.no_of_packages
+            > off_loads_orders.get(x.booking_order, {}).get("no_of_packages", 0)
+        ]
+        print(off_load_rows_with_invalid_packages)
+        if off_load_rows_with_invalid_packages:
+            frappe.throw(
+                frappe._(
+                    "Booking Orders: {} contain invalid no of packages ".format(
+                        ", ".join(off_load_rows_with_invalid_packages)
+                    )
+                )
+            )
+
+    def _create_booking_log(self, load):
+        if load.parentfield not in ["on_loads", "off_loads"]:
+            frappe.throw(frappe._("Invalid Loading Operation load"))
+
+        activity = "Loaded" if load.parentfield == "on_loads" else "Unloaded"
+        direction = -1 if load.parentfield == "on_loads" else 1
+        frappe.get_doc(
+            {
+                "doctype": "Booking Log",
+                "posting_datetime": self.posting_datetime,
+                "booking_order": load.booking_order,
+                "shipping_order": self.shipping_order,
+                "station": self.station,
+                "activity": activity,
+                "loading_operation": self.name,
+                "no_of_packages": direction * load.no_of_packages,
+                "weight_actual": direction * load.weight_actual,
+                "goods_value": direction * load.goods_value,
+            }
+        ).insert()
 
 
 def _get_on_load_orders(station):
