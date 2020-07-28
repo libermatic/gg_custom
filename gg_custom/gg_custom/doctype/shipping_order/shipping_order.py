@@ -101,7 +101,7 @@ class ShippingOrder(Document):
                 "posting_datetime": frappe.utils.now(),
                 "shipping_order": self.name,
                 "station": self.initial_station,
-                "activity": "Not Started",
+                "activity": "Stopped",
             }
         ).insert()
 
@@ -127,7 +127,7 @@ class ShippingOrder(Document):
         ):
             frappe.delete_doc("Shipping Log", log_name)
 
-    def stop(self, station):
+    def stop(self, station, posting_datetime=None):
         if self.status != "In Transit":
             frappe.throw(
                 frappe._(
@@ -137,8 +137,9 @@ class ShippingOrder(Document):
                 )
             )
 
+        _posting_datetime = posting_datetime or frappe.utils.now()
         if station == self.final_station:
-            self.end_datetime = frappe.utils.now()
+            self.end_datetime = _posting_datetime
         self.status = "Stopped"
         self.current_station = station
         self.next_station = None
@@ -148,14 +149,14 @@ class ShippingOrder(Document):
         frappe.get_doc(
             {
                 "doctype": "Shipping Log",
-                "posting_datetime": frappe.utils.now(),
+                "posting_datetime": _posting_datetime,
                 "shipping_order": self.name,
                 "station": station,
                 "activity": "Stopped",
             }
         ).insert()
 
-    def start(self, station):
+    def start(self, station, posting_datetime=None):
         if self.status != "Stopped":
             frappe.throw(
                 frappe._(
@@ -164,8 +165,9 @@ class ShippingOrder(Document):
                     )
                 )
             )
+        _posting_datetime = posting_datetime or frappe.utils.now()
         if self.current_station == self.initial_station:
-            self.start_datetime = frappe.utils.now()
+            self.start_datetime = _posting_datetime
         self.status = "In Transit"
         self.next_station = station
         self.current_station = None
@@ -175,7 +177,7 @@ class ShippingOrder(Document):
         frappe.get_doc(
             {
                 "doctype": "Shipping Log",
-                "posting_datetime": frappe.utils.now(),
+                "posting_datetime": _posting_datetime,
                 "shipping_order": self.name,
                 "station": station,
                 "activity": "Moving",
