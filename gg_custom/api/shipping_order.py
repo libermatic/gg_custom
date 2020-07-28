@@ -61,7 +61,7 @@ def get_history(name):
 
     def get_message(log):
         activity = log.get("activity")
-        if activity == "Loading":
+        if activity == "Operation":
             on_load = log.get("on_load_no_of_packages")
             off_load = log.get("off_load_no_of_packages")
             msg = (

@@ -74,7 +74,7 @@ class LoadingOperation(Document):
                 "posting_datetime": self.posting_datetime,
                 "shipping_order": self.shipping_order,
                 "station": self.station,
-                "activity": "Loading",
+                "activity": "Operation",
                 "loading_operation": self.name,
             }
         ).insert()
