@@ -51,6 +51,48 @@ class BookingOrder(Document):
         if self.status in ["Collected"]:
             self.current_station = None
 
+    def on_submit(self):
+        frappe.get_doc(
+            {
+                "doctype": "Booking Log",
+                "posting_datetime": self.booking_datetime,
+                "booking_order": self.name,
+                "station": self.source_station,
+                "activity": "Booked",
+                "no_of_packages": self.no_of_packages,
+                "weight_actual": self.weight_actual,
+                "goods_value": self.goods_value,
+            }
+        ).insert()
+
+    def deliver(self, posting_datetime, station, no_of_packages):
+        if station != self.destination_station:
+            frappe.throw(frappe._("Packages can only be delivered at its destination."))
+
+        weight_actual = (
+            self.weight_actual / self.no_of_packages * no_of_packages
+            if self.no_of_packages
+            else 0
+        )
+        goods_value = (
+            self.goods_value / self.no_of_packages * no_of_packages
+            if self.no_of_packages
+            else 0
+        )
+
+        frappe.get_doc(
+            {
+                "doctype": "Booking Log",
+                "posting_datetime": posting_datetime,
+                "booking_order": self.name,
+                "station": self.destination_station,
+                "activity": "Collected",
+                "no_of_packages": -no_of_packages,
+                "weight_actual": -weight_actual,
+                "goods_value": -goods_value,
+            }
+        ).insert()
+
     def set_as_completed(self):
         if self.status != "Unloaded":
             frappe.throw(

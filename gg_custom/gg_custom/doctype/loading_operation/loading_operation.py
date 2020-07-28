@@ -56,45 +56,46 @@ class LoadingOperation(Document):
             self.append("off_loads", booking_order)
 
     def before_save(self):
+        for load in self.on_loads + self.off_loads:
+            no_of_packages, weight_actual, goods_value = frappe.get_cached_value(
+                "Booking Order",
+                load.booking_order,
+                ["no_of_packages", "weight_actual", "goods_value"],
+            )
+            load.weight_actual = (
+                weight_actual / no_of_packages * load.no_of_packages
+                if no_of_packages
+                else 0
+            )
+            load.goods_value = (
+                goods_value / no_of_packages * load.no_of_packages
+                if no_of_packages
+                else 0
+            )
+
+        for param in ["no_of_packages", "weight_actual", "goods_value"]:
+            for direction in ["on_load", "off_load"]:
+                field = "{}_{}".format(direction, param)
+                table = self.get("{}s".format(direction))
+                self.set(field, sum([x.get(param) for x in table]))
+
         self.on_load_no_of_bookings = len(self.on_loads)
         self.off_load_no_of_bookings = len(self.off_loads)
 
     def on_submit(self):
-        for load in self.on_loads:
-            doc = frappe.get_cached_doc("Booking Order", load.booking_order)
-            state_transition = {
-                "from": {
-                    "status": doc.status,
-                    "last_shipping_order": doc.last_shipping_order,
-                },
-                "to": {"status": "Loaded", "last_shipping_order": self.shipping_order},
-            }
-            doc.status = "Loaded"
-            doc.last_shipping_order = self.shipping_order
-            doc.save()
-            frappe.db.set_value(
-                "Loading Operation Booking Order",
-                load.name,
-                "state_transition",
-                json.dumps(state_transition),
-            )
+        for load in self.on_loads + self.off_loads:
+            _create_booking_log(load, self)
 
-        for load in self.off_loads:
-            doc = frappe.get_cached_doc("Booking Order", load.booking_order)
-            state_transition = {
-                "from": {"status": doc.status, "current_station": doc.current_station,},
-                "to": {"status": "Unloaded", "current_station": self.station},
+        frappe.get_doc(
+            {
+                "doctype": "Shipping Log",
+                "posting_datetime": self.posting_datetime,
+                "shipping_order": self.shipping_order,
+                "station": self.station,
+                "activity": "Loading",
+                "loading_operation": self.name,
             }
-            doc.status = "Unloaded"
-            doc.current_station = self.station
-            doc.save()
-            frappe.db.set_value(
-                "Loading Operation Booking Order",
-                load.name,
-                "state_transition",
-                json.dumps(state_transition),
-            )
-
+        ).insert()
         so = frappe.get_doc("Shipping Order", self.shipping_order)
         if so.final_station == self.station:
             so.set_as_completed()
@@ -131,3 +132,26 @@ class LoadingOperation(Document):
                     )
                 )
             )
+
+
+def _create_booking_log(child, parent):
+    if child.parentfield not in ["on_loads", "off_loads"]:
+        frappe.throw(frappe._("Invalid Loading Operation child"))
+
+    activity = "Loaded" if child.parentfield == "on_loads" else "Unloaded"
+    direction = -1 if child.parentfield == "on_loads" else 1
+    frappe.get_doc(
+        {
+            "doctype": "Booking Log",
+            "posting_datetime": parent.posting_datetime,
+            "booking_order": child.booking_order,
+            "shipping_order": parent.shipping_order,
+            "station": parent.station,
+            "activity": activity,
+            "loading_operation": parent.name,
+            "no_of_packages": direction * child.no_of_packages,
+            "weight_actual": direction * child.weight_actual,
+            "goods_value": direction * child.goods_value,
+        }
+    ).insert()
+

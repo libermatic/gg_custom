@@ -94,6 +94,17 @@ class ShippingOrder(Document):
         self.status = "Stopped"
         self.current_station = self.initial_station
 
+    def on_submit(self):
+        frappe.get_doc(
+            {
+                "doctype": "Shipping Log",
+                "posting_datetime": frappe.utils.now(),
+                "shipping_order": self.name,
+                "station": self.initial_station,
+                "activity": "Not Started",
+            }
+        ).insert()
+
     def before_update_after_submit(self):
         if self.status in ["Completed"]:
             self.current_station = None
@@ -128,6 +139,16 @@ class ShippingOrder(Document):
         self.save()
         _update_booking_orders(self)
 
+        frappe.get_doc(
+            {
+                "doctype": "Shipping Log",
+                "posting_datetime": frappe.utils.now(),
+                "shipping_order": self.name,
+                "station": station,
+                "activity": "Stopped",
+            }
+        ).insert()
+
     def start(self, station):
         if self.status != "Stopped":
             frappe.throw(
@@ -145,6 +166,16 @@ class ShippingOrder(Document):
         self.save()
         _update_booking_orders(self)
 
+        frappe.get_doc(
+            {
+                "doctype": "Shipping Log",
+                "posting_datetime": frappe.utils.now(),
+                "shipping_order": self.name,
+                "station": station,
+                "activity": "Moving",
+            }
+        ).insert()
+
     def set_as_completed(self, validate_onboard=False):
         if self.status != "Stopped":
             frappe.throw(
@@ -159,6 +190,16 @@ class ShippingOrder(Document):
             )
         self.status = "Completed"
         self.save()
+
+        frappe.get_doc(
+            {
+                "doctype": "Shipping Log",
+                "posting_datetime": frappe.utils.now(),
+                "shipping_order": self.name,
+                "station": self.final_station,
+                "activity": "Completed",
+            }
+        ).insert()
 
 
 def _update_booking_orders(shipping_order):
