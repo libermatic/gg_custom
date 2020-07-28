@@ -56,12 +56,9 @@ export function booking_order() {
           frm.add_custom_button('Deliver', handle_deliver(frm));
         }
 
-        const { payment_status } = frm.doc;
-        if (payment_status === 'Unbilled') {
-          frm
-            .add_custom_button('Create Invoice', () => create_invoice(frm))
-            .addClass('btn-primary');
-        }
+        frm
+          .add_custom_button('Create Invoice', () => create_invoice(frm))
+          .addClass('btn-primary');
 
         const {
           dashboard_info: { invoice: { outstanding_amount = 0 } = {} } = {},
