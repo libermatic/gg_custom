@@ -15,44 +15,13 @@ class LoadingOperation(Document):
 
     def get_loads(self):
         self._validate_shipping_order()
+
         self.on_loads = []
-        # todo: consider destination_station from Shipping Order stations
-        for booking_order in frappe.get_all(
-            "Booking Order",
-            filters={
-                "docstatus": 1,
-                "status": "Booked",
-                "source_station": self.station,
-            },
-            fields=[
-                "name as booking_order",
-                "no_of_packages",
-                "weight_actual",
-                "goods_value",
-                "source_station",
-                "destination_station",
-            ],
-        ):
+        for booking_order in _get_on_load_orders(self.station):
             self.append("on_loads", booking_order)
 
         self.off_loads = []
-        for booking_order in frappe.get_all(
-            "Booking Order",
-            filters={
-                "docstatus": 1,
-                "status": "In Transit",
-                "destination_station": self.station,
-                "last_shipping_order": self.shipping_order,
-            },
-            fields=[
-                "name as booking_order",
-                "no_of_packages",
-                "weight_actual",
-                "goods_value",
-                "source_station",
-                "destination_station",
-            ],
-        ):
+        for booking_order in _get_off_load_orders(self.shipping_order):
             self.append("off_loads", booking_order)
 
     def before_save(self):
@@ -147,4 +116,42 @@ def _create_booking_log(child, parent):
             "goods_value": direction * child.goods_value,
         }
     ).insert()
+
+
+def _get_on_load_orders(station):
+    return frappe.db.sql(
+        """
+            SELECT
+                booking_order,
+                SUM(no_of_packages) AS no_of_packages,
+                SUM(weight_actual) AS weight_actual,
+                SUM(goods_value) AS goods_value
+            FROM `tabBooking Log`
+            WHERE
+                station = %(station)s AND
+                activity IN ('Booked', 'Loaded', 'Unloaded')
+            GROUP BY booking_order HAVING SUM(no_of_packages) > 0
+        """,
+        values={"station": station},
+        as_dict=1,
+    )
+
+
+def _get_off_load_orders(shipping_order):
+    return frappe.db.sql(
+        """
+            SELECT
+                booking_order,
+                -SUM(no_of_packages) AS no_of_packages,
+                -SUM(weight_actual) AS weight_actual,
+                -SUM(goods_value) AS goods_value
+            FROM `tabBooking Log`
+            WHERE
+                shipping_order = %(shipping_order)s AND
+                activity IN ('Booked', 'Loaded', 'Unloaded')
+            GROUP BY shipping_order HAVING SUM(no_of_packages) < 0
+        """,
+        values={"shipping_order": shipping_order,},
+        as_dict=1,
+    )
 
