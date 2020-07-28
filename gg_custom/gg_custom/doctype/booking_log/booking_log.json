@@ -1,0 +1,97 @@
+{
+ "autoname": "format:BL-{YY}{MM}{####}",
+ "creation": "2020-07-28 15:55:45.610793",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "posting_datetime",
+  "booking_order",
+  "shipping_order",
+  "station",
+  "activity",
+  "loading_operation",
+  "no_of_packages",
+  "weight_actual",
+  "goods_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "posting_datetime",
+   "fieldtype": "Datetime",
+   "label": "Posting Datetime"
+  },
+  {
+   "fieldname": "booking_order",
+   "fieldtype": "Link",
+   "label": "Booking Order",
+   "options": "Booking Order"
+  },
+  {
+   "fieldname": "shipping_order",
+   "fieldtype": "Link",
+   "label": "Shipping Order",
+   "options": "Shipping Order"
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station"
+  },
+  {
+   "fieldname": "activity",
+   "fieldtype": "Select",
+   "label": "Activity",
+   "options": "\nBooked\nLoaded\nUnloaded\nCollected"
+  },
+  {
+   "fieldname": "no_of_packages",
+   "fieldtype": "Int",
+   "label": "No of Packages"
+  },
+  {
+   "fieldname": "weight_actual",
+   "fieldtype": "Float",
+   "label": "Weight Actual"
+  },
+  {
+   "fieldname": "goods_value",
+   "fieldtype": "Currency",
+   "label": "Goods Value",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "loading_operation",
+   "fieldtype": "Link",
+   "label": "Loading Operation",
+   "options": "Loading Operation"
+  }
+ ],
+ "in_create": 1,
+ "modified": "2020-07-28 18:46:30.457089",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Booking Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "Shipping User"
+  },
+  {
+   "read": 1,
+   "role": "Shipping Manager"
+  },
+  {
+   "read": 1,
+   "role": "Booking User"
+  },
+  {
+   "read": 1,
+   "role": "Booking Manager"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
