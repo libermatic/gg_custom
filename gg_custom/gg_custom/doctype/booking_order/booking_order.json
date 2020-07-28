@@ -10,8 +10,6 @@
   "status",
   "payment_status",
   "column_break_3",
-  "last_shipping_order",
-  "current_station",
   "amended_from",
   "order_sec",
   "source_station",
@@ -240,22 +238,6 @@
   },
   {
    "allow_on_submit": 1,
-   "fieldname": "last_shipping_order",
-   "fieldtype": "Link",
-   "label": "Last Shipping Order",
-   "options": "Shipping Order",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "current_station",
-   "fieldtype": "Link",
-   "label": "Current Station",
-   "options": "Station",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
    "fieldname": "payment_status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -265,7 +247,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-29 00:19:01.066302",
+ "modified": "2020-07-29 02:03:27.032836",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",

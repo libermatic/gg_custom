@@ -7,11 +7,7 @@
   "booking_order",
   "no_of_packages",
   "weight_actual",
-  "goods_value",
-  "column_break_5",
-  "source_station",
-  "destination_station",
-  "state_transition"
+  "goods_value"
  ],
  "fields": [
   {
@@ -43,38 +39,10 @@
    "label": "Goods Value",
    "options": "Company:company:default_currency",
    "read_only": 1
-  },
-  {
-   "fieldname": "column_break_5",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fetch_from": "booking_order.source_station",
-   "fieldname": "source_station",
-   "fieldtype": "Link",
-   "label": "Source",
-   "options": "Station",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "booking_order.destination_station",
-   "fieldname": "destination_station",
-   "fieldtype": "Link",
-   "label": "Destination",
-   "options": "Station",
-   "read_only": 1
-  },
-  {
-   "fieldname": "state_transition",
-   "fieldtype": "Code",
-   "hidden": 1,
-   "label": "state_transition",
-   "print_hide": 1,
-   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2020-07-28 19:18:37.847819",
+ "modified": "2020-07-29 02:04:36.836836",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation Booking Order",
