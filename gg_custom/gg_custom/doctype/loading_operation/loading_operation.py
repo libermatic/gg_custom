@@ -137,7 +137,6 @@ class LoadingOperation(Document):
             if x.no_of_packages
             > off_loads_orders.get(x.booking_order, {}).get("no_of_packages", 0)
         ]
-        print(off_load_rows_with_invalid_packages)
         if off_load_rows_with_invalid_packages:
             frappe.throw(
                 frappe._(
