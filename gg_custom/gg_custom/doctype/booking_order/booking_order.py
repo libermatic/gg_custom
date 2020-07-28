@@ -93,15 +93,7 @@ class BookingOrder(Document):
         self.set_as_completed()
 
     def set_as_completed(self):
-        no_of_delivered_packages = (
-            frappe.get_all(
-                "Booking Log",
-                filters={"activity": "Collected", "booking_order": self.name},
-                fields=["sum(no_of_packages) as no_of_packages"],
-            )[0][0]
-            or 0
-        )
-        if self.no_of_packages == no_of_delivered_packages:
+        if self.no_of_packages == _get_delivered_packages(self):
             self.status = "Collected"
             self.save()
 
@@ -128,10 +120,21 @@ def _get_deliverable_packages(doc):
     return (
         frappe.get_all(
             "Booking Log",
-            filters={"booking_order": doc.name, "station": doc.destination_station},
+            filters={"booking_order": doc.name, "station": doc.destination_station,},
             fields=["sum(no_of_packages) as no_of_packages"],
             as_list=1,
-            debug=1,
+        )[0][0]
+        or 0
+    )
+
+
+def _get_delivered_packages(doc):
+    return -(
+        frappe.get_all(
+            "Booking Log",
+            filters={"activity": "Collected", "booking_order": doc.name},
+            fields=["sum(no_of_packages) as no_of_packages"],
+            as_list=1,
         )[0][0]
         or 0
     )

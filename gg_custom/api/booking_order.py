@@ -276,9 +276,7 @@ def get_orders_for(station=None, shipping_order=None):
                     SUM(weight_actual) AS weight_actual,
                     SUM(goods_value) AS goods_value
                 FROM `tabBooking Log`
-                WHERE
-                    station = %(station)s AND
-                    activity IN ('Booked', 'Loaded', 'Unloaded')
+                WHERE station = %(station)s
                 GROUP BY booking_order HAVING SUM(no_of_packages) > 0
             """,
             values={"station": station},
@@ -294,9 +292,7 @@ def get_orders_for(station=None, shipping_order=None):
                     -SUM(weight_actual) AS weight_actual,
                     -SUM(goods_value) AS goods_value
                 FROM `tabBooking Log`
-                WHERE
-                    shipping_order = %(shipping_order)s AND
-                    activity IN ('Booked', 'Loaded', 'Unloaded')
+                WHERE shipping_order = %(shipping_order)s
                 GROUP BY booking_order HAVING SUM(no_of_packages) < 0
             """,
             values={"shipping_order": shipping_order,},
