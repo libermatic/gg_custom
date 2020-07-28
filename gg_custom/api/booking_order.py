@@ -3,7 +3,7 @@ import frappe
 import json
 from frappe.contacts.doctype.address.address import get_company_address
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
-from toolz.curried import compose, merge, concatv, unique, map, filter
+from toolz.curried import compose, merge, unique, sliding_window, concat, map, filter
 
 
 def query(doctype, txt, searchfield, start, page_len, filters):
@@ -61,85 +61,85 @@ def query(doctype, txt, searchfield, start, page_len, filters):
 
 @frappe.whitelist()
 def get_history(name):
-    get_changes = compose(
-        merge,
-        map(lambda x: {x[0]: x[2]}),
-        filter(lambda x: x[0] in ["status", "current_station"]),
-        lambda x: x.get("changed", []),
-        json.loads,
-        lambda x: x.get("data"),
+    booking_logs = frappe.get_all(
+        "Booking Log",
+        filters={"booking_order": name},
+        fields=[
+            "'Booking Log' as doctype",
+            "posting_datetime",
+            "booking_order",
+            "shipping_order",
+            "station",
+            "activity",
+            "loading_operation",
+            "no_of_packages",
+        ],
+        order_by="posting_datetime",
     )
 
-    def get_version_message(version):
-        changes = version.get("changes")
-        status = changes.get("status")
-        current_station = changes.get("current_station")
-        if status in ["Draft", "Loaded", "Unloaded"]:
-            return ""
-        if not status and not current_station:
-            return "In Transit"
-        if not status and current_station:
-            return "At {}".format(current_station)
-        if status and not current_station:
-            return status
-        return "{} at {}".format(changes.get("status"), changes.get("current_station"))
-
-    get_versions = compose(
-        filter(lambda x: x.get("message")),
+    get_shipping_logs = compose(
+        concat,
         map(
-            lambda x: {
-                "datetime": x.get("creation"),
-                "status": x.get("changes").get("status", "In Transit"),
-                "message": get_version_message(x),
-            }
+            lambda x: frappe.get_all(
+                "Shipping Log",
+                filters={
+                    "shipping_order": x[0].get("shipping_order"),
+                    "activity": ("in", ["Stopped", "Moving"]),
+                    "posting_datetime": (
+                        "between",
+                        [x[0].get("posting_datetime"), x[1].get("posting_datetime")],
+                    ),
+                },
+                fields=[
+                    "'Shipping Log' as doctype",
+                    "posting_datetime",
+                    "shipping_order",
+                    "station",
+                    "activity",
+                ],
+                order_by="posting_datetime",
+            )
+            if x[0].get("shipping_order")
+            else []
         ),
-        filter(lambda x: x.get("changes")),
-        map(lambda x: merge(x, {"changes": get_changes(x)})),
-        lambda x: frappe.get_all(
-            "Version",
-            filters={"ref_doctype": "Booking Order", "docname": x},
-            fields=["creation", "data"],
-        ),
+        sliding_window(2),
     )
 
-    def get_loading_message(loading):
-        operation = (
-            "Loaded"
-            if loading.get("parentfield") == "on_loads"
-            else "Unloaded"
-            if loading.get("parentfield") == "off_loads"
-            else "Operation"
-        )
+    shipping_logs = get_shipping_logs(
+        booking_logs + [{"posting_datetime": frappe.utils.now()}]
+    )
+
+    def get_message(log):
+        if log.get("doctype") == "Booking Log":
+            return "{} {} packages at {}".format(
+                log.get("activity"), abs(log.get("no_of_packages")), log.get("station")
+            )
+
+        if log.get("doctype") == "Shipping Log":
+            prepo = "to" if log.get("activity") == "Moving" else "at"
+            return "{} {} {}".format(log.get("activity"), prepo, log.get("station"))
+
+        return ""
+
+    def get_link(log):
+        if log.get("doctype") == "Shipping Log":
+            return "#Form/Shipping Order/{}".format(log.get("shipping_order"))
+
+        if log.get("doctype") == "Booking Log" and log.get("loading_operation"):
+            "#Form/Loading Operation/{}".format(log.get("loading_operation"))
+
+        return ""
+
+    def get_event(log):
         return {
-            "datetime": loading.get("posting_datetime"),
-            "status": operation,
-            "message": "{} at {}".format(operation, loading.get("station")),
-            "link": "#Form/Loading Operation/{}".format(loading.get("name")),
+            "datetime": log.get("posting_datetime"),
+            "status": log.get("activity"),
+            "message": get_message(log),
+            "link": get_link(log),
         }
 
-    get_loadings = compose(
-        map(get_loading_message),
-        lambda x: frappe.db.sql(
-            """
-                SELECT
-                    lo.name,
-                    lo.station,
-                    lo.posting_datetime,
-                    lobo.parentfield
-                FROM `tabLoading Operation` AS lo
-                LEFT JOIN `tabLoading Operation Booking Order` AS lobo ON
-                    lobo.parent = lo.name
-                WHERE
-                    lo.docstatus = 1 AND
-                    lobo.booking_order = %(booking_order)s
-            """,
-            values={"booking_order": x},
-            as_dict=1,
-        ),
-    )
-
     return sorted(
-        concatv(get_versions(name), get_loadings(name)),
+        [get_event(x) for x in concat([booking_logs, shipping_logs])],
         key=lambda x: frappe.utils.get_datetime(x.get("datetime")),
     )
 
