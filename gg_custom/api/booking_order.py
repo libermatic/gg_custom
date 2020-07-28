@@ -126,7 +126,7 @@ def get_history(name):
             return "#Form/Shipping Order/{}".format(log.get("shipping_order"))
 
         if log.get("doctype") == "Booking Log" and log.get("loading_operation"):
-            "#Form/Loading Operation/{}".format(log.get("loading_operation"))
+            return "#Form/Loading Operation/{}".format(log.get("loading_operation"))
 
         return ""
 
