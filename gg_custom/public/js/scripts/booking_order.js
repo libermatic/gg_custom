@@ -52,22 +52,8 @@ export function booking_order() {
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {
         const { status, current_station, destination_station } = frm.doc;
-        if (status === 'Unloaded' && current_station === destination_station) {
-          frm.add_custom_button('Deliver', () =>
-            frappe.confirm(
-              'Are you sure you want to Deliver this Booking Order?',
-              async function () {
-                try {
-                  await frm.call('set_as_completed', {
-                    validate_onboard: true,
-                  });
-                  frm.reload_doc();
-                } finally {
-                  frm.refresh();
-                }
-              }
-            )
-          );
+        if (frm.doc.__onload && frm.doc.__onload.no_of_deliverable_packages) {
+          frm.add_custom_button('Deliver', handle_deliver(frm));
         }
 
         const { payment_status } = frm.doc;
@@ -203,4 +189,33 @@ function create_payment(frm) {
     method: 'gg_custom.api.booking_order.make_payment_entry',
     frm,
   });
+}
+
+function handle_deliver(frm) {
+  return async function () {
+    const dialog = new frappe.ui.Dialog({
+      title: 'Deliver',
+      fields: [
+        {
+          fieldtype: 'Int',
+          fieldname: 'no_of_packages',
+          reqd: 1,
+          label: 'No of Packages',
+          default: frm.doc.__onload.no_of_deliverable_packages,
+        },
+      ],
+    });
+    dialog.set_primary_action('OK', async function () {
+      try {
+        const no_of_packages = dialog.get_value('no_of_packages');
+        await frm.call('deliver', { no_of_packages });
+        frm.reload_doc();
+        dialog.hide();
+      } finally {
+        frm.refresh();
+      }
+    });
+    dialog.onhide = () => dialog.$wrapper.remove();
+    dialog.show();
+  };
 }

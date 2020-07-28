@@ -14,19 +14,8 @@ class BookingOrder(Document):
     def onload(self):
         if self.docstatus == 1:
             self.set_onload("dashboard_info", _get_dashboard_info(self))
-
-    def validate(self):
-        if self.status == "Unloaded" and not self.current_station:
-            frappe.throw(
-                frappe._("Cannot unload without a {}".format(frappe.bold("Station")))
-            )
-        if self.status == "In Transit" and not self.last_shipping_order:
-            frappe.throw(
-                frappe._(
-                    "Cannot move Booking Order without a {}".format(
-                        frappe.bold("Shipping Order")
-                    )
-                )
+            self.set_onload(
+                "no_of_deliverable_packages", _get_deliverable_packages(self)
             )
 
     def before_insert(self):
@@ -36,8 +25,6 @@ class BookingOrder(Document):
         self.total_amount = sum([x.charge_amount for x in self.charges])
 
     def before_submit(self):
-        self.last_shipping_order = None
-        self.current_station = self.source_station
         self.status = "Booked"
         self.payment_status = "Unbilled"
 
@@ -71,9 +58,16 @@ class BookingOrder(Document):
         ):
             frappe.delete_doc("Booking Log", log_name)
 
-    def deliver(self, posting_datetime, station, no_of_packages):
-        if station != self.destination_station:
-            frappe.throw(frappe._("Packages can only be delivered at its destination."))
+    def deliver(self, no_of_packages, posting_datetime=None):
+        no_of_deliverable_packages = _get_deliverable_packages(self)
+        if no_of_packages > no_of_deliverable_packages:
+            frappe.throw(
+                frappe._(
+                    "Cannot deliver more than {} packages".format(
+                        no_of_deliverable_packages
+                    )
+                )
+            )
 
         weight_actual = (
             self.weight_actual / self.no_of_packages * no_of_packages
@@ -86,10 +80,11 @@ class BookingOrder(Document):
             else 0
         )
 
+        _posting_datetime = posting_datetime or frappe.utils.now()
         frappe.get_doc(
             {
                 "doctype": "Booking Log",
-                "posting_datetime": posting_datetime,
+                "posting_datetime": _posting_datetime,
                 "booking_order": self.name,
                 "station": self.destination_station,
                 "activity": "Collected",
@@ -131,3 +126,17 @@ def _get_dashboard_info(doc):
         "invoice": invoice,
         "history": get_history(doc.name),
     }
+
+
+def _get_deliverable_packages(doc):
+    return (
+        frappe.get_all(
+            "Booking Log",
+            filters={"booking_order": doc.name, "station": doc.destination_station},
+            fields=["sum(no_of_packages) as no_of_packages"],
+            as_list=1,
+            debug=1,
+        )[0][0]
+        or 0
+    )
+
