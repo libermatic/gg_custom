@@ -77,7 +77,7 @@ class LoadingOperation(Document):
                 "activity": "Operation",
                 "loading_operation": self.name,
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
         so = frappe.get_doc("Shipping Order", self.shipping_order)
         if so.final_station == self.station:
             so.set_as_completed()
@@ -90,7 +90,7 @@ class LoadingOperation(Document):
             for (log_name,) in frappe.get_all(
                 log_type, filters={"loading_operation": self.name}, as_list=1
             ):
-                frappe.delete_doc(log_type, log_name)
+                frappe.delete_doc(log_type, log_name, ignore_permissions=True)
 
     def _validate_shipping_order(self):
         status, current_station = frappe.db.get_value(
@@ -176,4 +176,4 @@ class LoadingOperation(Document):
                 "weight_actual": direction * load.weight_actual,
                 "goods_value": direction * load.goods_value,
             }
-        ).insert()
+        ).insert(ignore_permissions=True)

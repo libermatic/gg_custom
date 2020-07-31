@@ -46,13 +46,13 @@ class BookingOrder(Document):
                 "weight_actual": self.weight_actual,
                 "goods_value": self.goods_value,
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
 
     def on_cancel(self):
         for (log_name,) in frappe.get_all(
             "Booking Log", filters={"booking_order": self.name}, as_list=1
         ):
-            frappe.delete_doc("Booking Log", log_name)
+            frappe.delete_doc("Booking Log", log_name, ignore_permissions=True)
 
     def deliver(self, no_of_packages, posting_datetime=None):
         no_of_deliverable_packages = _get_deliverable_packages(self)
@@ -88,7 +88,7 @@ class BookingOrder(Document):
                 "weight_actual": -weight_actual,
                 "goods_value": -goods_value,
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
 
         self.set_as_completed()
 

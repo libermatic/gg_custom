@@ -103,7 +103,7 @@ class ShippingOrder(Document):
                 "station": self.initial_station,
                 "activity": "Stopped",
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
 
     def before_update_after_submit(self):
         if self.status in ["Completed"]:
@@ -125,7 +125,7 @@ class ShippingOrder(Document):
         for (log_name,) in frappe.get_all(
             "Shipping Log", filters={"shipping_order": self.name}, as_list=1
         ):
-            frappe.delete_doc("Shipping Log", log_name)
+            frappe.delete_doc("Shipping Log", log_name, ignore_permissions=True)
 
     def stop(self, station, posting_datetime=None):
         if self.status != "In Transit":
@@ -154,7 +154,7 @@ class ShippingOrder(Document):
                 "station": station,
                 "activity": "Stopped",
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
 
     def start(self, station, posting_datetime=None):
         if self.status != "Stopped":
@@ -182,7 +182,7 @@ class ShippingOrder(Document):
                 "station": station,
                 "activity": "Moving",
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
 
     def set_as_completed(self, validate_onboard=False):
         if self.status != "Stopped":
@@ -207,7 +207,7 @@ class ShippingOrder(Document):
                 "station": self.final_station,
                 "activity": "Completed",
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
 
 
 def _update_booking_orders(shipping_order):
