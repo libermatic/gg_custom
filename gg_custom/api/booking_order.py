@@ -295,8 +295,41 @@ def get_orders_for(station=None, shipping_order=None):
                 WHERE shipping_order = %(shipping_order)s
                 GROUP BY booking_order HAVING SUM(no_of_packages) < 0
             """,
-            values={"shipping_order": shipping_order,},
+            values={"shipping_order": shipping_order},
             as_dict=1,
         )
 
     return []
+
+
+@frappe.whitelist()
+def get_order_details(name, station=None, shipping_order=None):
+    if station:
+        return frappe.db.sql(
+            """
+                SELECT
+                    SUM(no_of_packages) AS no_of_packages,
+                    SUM(weight_actual) AS weight_actual,
+                    SUM(goods_value) AS goods_value
+                FROM `tabBooking Log`
+                WHERE station = %(station)s AND booking_order=%(booking_order)s
+            """,
+            values={"station": station, "booking_order": name},
+            as_dict=1,
+        )[0]
+
+    if shipping_order:
+        return frappe.db.sql(
+            """
+                SELECT
+                    -SUM(no_of_packages) AS no_of_packages,
+                    -SUM(weight_actual) AS weight_actual,
+                    -SUM(goods_value) AS goods_value
+                FROM `tabBooking Log`
+                WHERE shipping_order = %(shipping_order)s AND booking_order=%(booking_order)s
+            """,
+            values={"shipping_order": shipping_order, "booking_order": name},
+            as_dict=1,
+        )[0]
+
+    return {}

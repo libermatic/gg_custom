@@ -25,8 +25,33 @@ function set_query_booking_order(type) {
   };
 }
 
+async function set_booking_order_fields(frm, cdt, cdn) {
+  const { station, shipping_order } = frm.doc;
+  const { booking_order, parentfield } = frappe.get_doc(cdt, cdn);
+  const fields = ['no_of_packages', 'weight_actual', 'goods_value'];
+  function get_args() {
+    if (parentfield === 'on_loads') {
+      return { name: booking_order, station };
+    }
+    if (parentfield === 'off_loads') {
+      return { name: booking_order, shipping_order };
+    }
+  }
+  if (booking_order) {
+    const { message: details = {} } = await frappe.call({
+      method: 'gg_custom.api.booking_order.get_order_details',
+      args: get_args(),
+    });
+    console.log(details);
+    fields.forEach((x) => frappe.model.set_value(cdt, cdn, x, details[x]));
+    return;
+  }
+  fields.forEach((x) => frappe.model.set_value(cdt, cdn, x, null));
+}
+
 export function loading_operation_booking_order() {
   return {
+    booking_order: set_booking_order_fields,
     no_of_packages: set_totals,
     weight_actual: set_totals,
     goods_value: set_totals,
