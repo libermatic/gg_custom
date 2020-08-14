@@ -103,3 +103,28 @@ def get_history(name):
 
     return [get_event(x) for x in logs]
 
+
+def get_manifest_rows(shipping_order):
+    return frappe.db.sql(
+        """
+            SELECT
+                lobo.booking_order,
+                lobo.no_of_packages,
+                bo.item_description,
+                lobo.weight_actual,
+                bo.destination_station,
+                bo.consignee_name
+            FROM `tabLoading Operation Booking Order` AS lobo
+            LEFT JOIN `tabLoading Operation` AS lo ON
+                lo.name = lobo.parent
+            LEFT JOIN `tabBooking Order` AS bo ON
+                bo.name = lobo.booking_order
+            WHERE
+                lo.docstatus = 1 AND
+                lobo.parentfield = 'on_loads' AND
+                lo.shipping_order = %(shipping_order)s
+            ORDER BY lo.name, lobo.idx
+        """,
+        values={"shipping_order": shipping_order},
+        as_dict=1,
+    )

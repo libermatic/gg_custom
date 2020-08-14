@@ -142,3 +142,8 @@ doc_events = {
 # 	"Task": "gg_custom.task.get_dashboard_data"
 # }
 
+# Jinja Environment Customizations
+# --------------------------------
+
+jenv = {"methods": ["get_manifest_rows:gg_custom.api.shipping_order.get_manifest_rows"]}
+
