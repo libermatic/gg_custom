@@ -42,7 +42,6 @@ async function set_booking_order_fields(frm, cdt, cdn) {
       method: 'gg_custom.api.booking_order.get_order_details',
       args: get_args(),
     });
-    console.log(details);
     fields.forEach((x) => frappe.model.set_value(cdt, cdn, x, details[x]));
     return;
   }
