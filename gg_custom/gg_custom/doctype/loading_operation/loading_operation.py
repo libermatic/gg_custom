@@ -60,13 +60,10 @@ class LoadingOperation(Document):
             self._create_booking_log(load)
 
         for load in self.on_loads:
-            if (
-                frappe.get_cached_value("Booking Order", load.booking_order, "status")
-                == "Booked"
-            ):
-                frappe.db.set_value(
-                    "Booking Order", load.booking_order, "status", "In Progress"
-                )
+            bo = frappe.get_cached_doc("Booking Order", load.booking_order)
+            if bo.status == "Booked":
+                bo.status = "In Progress"
+                bo.save(ignore_permissions=True)
 
         frappe.get_doc(
             {
@@ -81,6 +78,7 @@ class LoadingOperation(Document):
 
     def before_cancel(self):
         self._validate_shipping_order()
+        self._validate_collected_booking_orders()
 
     def on_cancel(self):
         for log_type in ["Booking Log", "Shipping Log"]:
@@ -89,6 +87,18 @@ class LoadingOperation(Document):
             ):
                 frappe.delete_doc(log_type, log_name, ignore_permissions=True)
 
+        for load in self.on_loads:
+            bo = frappe.get_cached_doc("Booking Order", load.booking_order)
+            if bo.status == "In Progress" and not frappe.db.exists(
+                "Booking Log",
+                {
+                    "booking_order": bo.name,
+                    "activity": "Loaded",
+                    "loading_operation": ("!=", self.name),
+                },
+            ):
+                bo.status = "Booked"
+                bo.save(ignore_permissions=True)
 
     def _validate_shipping_order(self):
         """disable validation"""
