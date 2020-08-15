@@ -19,6 +19,8 @@ def _update_booking_order(si):
         fields=["total", "outstanding_amount"],
     )
     bo = frappe.get_cached_doc("Booking Order", si.gg_booking_order)
+    if bo.docstatus == 2:
+        return
     if sum([x.get("total") for x in invoices]) < bo.total_amount:
         bo.payment_status = "Unbilled"
     elif sum([x.get("outstanding_amount") for x in invoices]) == 0:

@@ -29,8 +29,10 @@ class BookingOrder(Document):
         self.payment_status = "Unbilled"
 
     def before_cancel(self):
-        if self.status != "Booked":
-            frappe.throw(frappe._("Cannot cancel an order when it is in progress"))
+        if self.payment_status == "Paid":
+            frappe.throw(
+                frappe._("Cannot cancel an order when it has already been Paid")
+            )
         self.status = "Cancelled"
         self.payment_status = None
 
@@ -61,6 +63,22 @@ class BookingOrder(Document):
             "Booking Log", filters={"booking_order": self.name}, as_list=1
         ):
             frappe.delete_doc("Booking Log", log_name, ignore_permissions=True)
+
+        for (si_name,) in frappe.get_all(
+            "Sales Invoice",
+            filters={"docstatus": 1, "gg_booking_order": self.name},
+            as_list=1,
+        ):
+            si = frappe.get_doc("Sales Invoice", si_name)
+            if si.status == "Paid":
+                frappe.throw(
+                    frappe._(
+                        "Cannot cancel Paid invoice {}".format(
+                            frappe.get_desk_link("Sales Invoice", si_name)
+                        )
+                    )
+                )
+            si.cancel()
 
     def deliver(self, no_of_packages, posting_datetime=None):
         no_of_deliverable_packages = _get_deliverable_packages(self)
