@@ -34,8 +34,10 @@
   "goods_value",
   "fees_and_charges_sec",
   "booking_order_charge_template",
+  "auto_bill_to",
+  "section_break_32",
   "charges",
-  "section_break_28",
+  "section_break_34",
   "total_amount"
  ],
  "fields": [
@@ -180,7 +182,6 @@
    "label": "Item Description"
   },
   {
-   "collapsible": 1,
    "fieldname": "fees_and_charges_sec",
    "fieldtype": "Section Break",
    "label": "Fees and Charges"
@@ -209,10 +210,6 @@
    "fieldname": "charges",
    "fieldtype": "Table",
    "options": "Booking Order Charge"
-  },
-  {
-   "fieldname": "section_break_28",
-   "fieldtype": "Section Break"
   },
   {
    "fieldname": "booking_order_charge_template",
@@ -244,10 +241,24 @@
    "label": "Payment Status",
    "options": "\nUnbilled\nUnpaid\nPaid",
    "read_only": 1
+  },
+  {
+   "fieldname": "auto_bill_to",
+   "fieldtype": "Select",
+   "label": "Auto Bill To",
+   "options": "\nConsignor\nConsignee"
+  },
+  {
+   "fieldname": "section_break_32",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_34",
+   "fieldtype": "Section Break"
   }
  ],
  "is_submittable": 1,
- "modified": "2020-07-29 02:03:27.032836",
+ "modified": "2020-08-15 13:23:11.770103",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",

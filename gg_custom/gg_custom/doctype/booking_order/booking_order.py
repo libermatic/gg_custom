@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
-from gg_custom.api.booking_order import get_history
+from gg_custom.api.booking_order import get_history, make_sales_invoice
 
 
 class BookingOrder(Document):
@@ -47,6 +47,14 @@ class BookingOrder(Document):
                 "goods_value": self.goods_value,
             }
         ).insert(ignore_permissions=True)
+        if self.auto_bill_to:
+            frappe.flags.args = {
+                "bill_to": self.auto_bill_to.lower(),
+                "taxes_and_charges": None,
+            }
+            invoice = make_sales_invoice(self.name)
+            invoice.insert(ignore_permissions=True)
+            invoice.submit()
 
     def on_cancel(self):
         for (log_name,) in frappe.get_all(
