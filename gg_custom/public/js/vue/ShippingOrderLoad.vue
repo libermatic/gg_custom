@@ -15,24 +15,26 @@ function get_body(body) {
   if (!body) {
     return [];
   }
+
+  const formatter = new Intl.NumberFormat('en-IN');
   return [
     {
       label: 'No of Packages',
-      value: body.no_of_packages,
+      value: formatter.format(body.no_of_packages),
     },
     {
       label: 'Weight Actual',
-      value: body.weight_actual,
+      value: formatter.format(body.weight_actual),
     },
     {
       label: 'Goods Value',
-      value: body.goods_value,
+      value: formatter.format(body.goods_value),
     },
   ];
 }
 export default {
   props: ['on_load', 'off_load', 'current'],
-  data: function() {
+  data: function () {
     return {
       sections: [
         {
