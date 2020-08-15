@@ -78,9 +78,6 @@ class LoadingOperation(Document):
                 "loading_operation": self.name,
             }
         ).insert(ignore_permissions=True)
-        so = frappe.get_doc("Shipping Order", self.shipping_order)
-        if so.final_station == self.station:
-            so.set_as_completed()
 
     def before_cancel(self):
         self._validate_shipping_order()
