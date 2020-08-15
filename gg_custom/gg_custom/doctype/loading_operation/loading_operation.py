@@ -123,6 +123,9 @@ class LoadingOperation(Document):
                 )
             )
 
+        self._validate_dupe_bo("on_loads")
+        self._validate_dupe_bo("off_loads")
+
         get_map = compose(valmap(first), groupby("booking_order"))
 
         on_loads_orders = get_map(get_orders_for(station=self.station))
@@ -153,6 +156,28 @@ class LoadingOperation(Document):
                 frappe._(
                     "Booking Orders: {} contain invalid no of packages ".format(
                         ", ".join(off_load_rows_with_invalid_packages)
+                    )
+                )
+            )
+
+    def _validate_dupe_bo(self, field):
+        booking_orders = [x.booking_order for x in self.get(field, [])]
+        dupes = [
+            x
+            for x in set(booking_orders)
+            if len([y for y in booking_orders if y == x]) > 1
+        ]
+        if dupes:
+            frappe.throw(
+                frappe._(
+                    "Duplicate Booking Orders found in rows # {}".format(
+                        ", ".join(
+                            [
+                                frappe.utils.cstr(row.idx)
+                                for row in self.get(field)
+                                if row.booking_order in dupes
+                            ]
+                        )
                     )
                 )
             )
