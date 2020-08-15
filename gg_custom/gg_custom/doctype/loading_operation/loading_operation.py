@@ -89,21 +89,37 @@ class LoadingOperation(Document):
             ):
                 frappe.delete_doc(log_type, log_name, ignore_permissions=True)
 
+
     def _validate_shipping_order(self):
-        status, current_station = frappe.db.get_value(
-            "Shipping Order", self.shipping_order, ["status", "current_station"]
-        )
-        if status != "Stopped" or current_station != self.station:
-            frappe.throw(
-                frappe._(
-                    "Operation can only be performed for a Shipping Order {} at {}".format(
-                        frappe.bold("stopped"),
-                        frappe.get_desk_link("Station", current_station)
-                        if current_station
-                        else frappe.bold("Station"),
+        """disable validation"""
+        # status, current_station = frappe.db.get_value(
+        #     "Shipping Order", self.shipping_order, ["status", "current_station"]
+        # )
+        # if status != "Stopped" or current_station != self.station:
+        #     frappe.throw(
+        #         frappe._(
+        #             "Operation can only be performed for a Shipping Order {} at {}".format(
+        #                 frappe.bold("stopped"),
+        #                 frappe.get_desk_link("Station", current_station)
+        #                 if current_station
+        #                 else frappe.bold("Station"),
+        #             )
+        #         )
+        #     )
+
+    def _validate_collected_booking_orders(self):
+        for bo_name in [x.booking_order for x in self.on_loads + self.off_loads]:
+            if frappe.db.exists(
+                "Booking Log", {"booking_order": bo_name, "activity": "Collected"}
+            ):
+                frappe.throw(
+                    frappe._(
+                        "Cannot cancel this Loading Operation contains "
+                        "{} which is already Collected.".format(
+                            frappe.get_desk_link("Booking Order", bo_name)
+                        )
                     )
                 )
-            )
 
     def _validate_booking_orders(self):
         rows_with_zero_packages = [

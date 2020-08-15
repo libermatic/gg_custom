@@ -20,8 +20,7 @@ export function shipping_order() {
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {
         const { status } = frm.doc;
-        if (status === 'Stopped') {
-          frm.add_custom_button('Move', handle_movement_action(frm));
+        if (!['Completed', 'Cancelled'].includes(status)) {
           frm
             .add_custom_button('Perform Loading Operation', () => {
               frappe.new_doc('Loading Operation', {
@@ -29,7 +28,10 @@ export function shipping_order() {
                 station: frm.doc.current_station,
               });
             })
-            .addClass('btn-primary');
+            .toggleClass('btn-primary', status === 'Stopped');
+        }
+        if (status === 'Stopped') {
+          frm.add_custom_button('Move', handle_movement_action(frm));
           frm.add_custom_button('Complete', () =>
             frappe.confirm(
               'Are you sure you want to Complete this Shipping Order?',
