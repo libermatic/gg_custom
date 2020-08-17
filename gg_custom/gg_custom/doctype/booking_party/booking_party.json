@@ -7,6 +7,7 @@
  "field_order": [
   "naming_series",
   "booking_party_name",
+  "disabled",
   "primary_address",
   "column_break_4",
   "phone",
@@ -77,9 +78,15 @@
   {
    "fieldname": "section_break_9",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
   }
  ],
- "modified": "2020-07-18 11:41:58.391435",
+ "modified": "2020-08-17 13:30:16.564969",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Party",

@@ -42,11 +42,14 @@ export function booking_order_charge() {
 export function booking_order() {
   return {
     setup: function (frm) {
-      ['consignor', 'consignee'].forEach((type) =>
+      ['consignor', 'consignee'].forEach((type) => {
+        frm.set_query(type, (doc) => ({
+          filters: { disabled: 0 },
+        }));
         frm.set_query(`${type}_address`, (doc) => ({
           filters: { link_doctype: 'Booking Party', link_name: doc[type] },
-        }))
-      );
+        }));
+      });
       set_charge_type_query(frm);
     },
     refresh: function (frm) {
