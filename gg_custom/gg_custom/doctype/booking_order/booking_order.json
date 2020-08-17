@@ -52,6 +52,7 @@
   {
    "fieldname": "consignor",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Consignor",
    "options": "Booking Party",
    "reqd": 1
@@ -80,6 +81,7 @@
   {
    "fieldname": "consignee",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Consignee",
    "options": "Booking Party",
    "reqd": 1
@@ -135,7 +137,6 @@
    "fieldname": "source_station",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Source Station",
    "options": "Station",
    "reqd": 1
@@ -144,7 +145,6 @@
    "fieldname": "destination_station",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Destination Station",
    "options": "Station",
    "reqd": 1
@@ -258,7 +258,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2020-08-15 13:23:11.770103",
+ "modified": "2020-08-17 13:46:06.450161",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",
