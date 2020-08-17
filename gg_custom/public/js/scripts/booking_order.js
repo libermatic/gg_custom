@@ -31,6 +31,13 @@ function set_total_amount(frm) {
   const total_amount = sumBy(frm.doc.charges, 'charge_amount');
   frm.set_value({ total_amount });
 }
+async function update_party_details(frm) {
+  const { message } = await frappe.call({
+    method: 'gg_custom.api.booking_order.update_party_details',
+    args: { name: frm.doc.name },
+  });
+  frm.reload_doc();
+}
 
 export function booking_order_charge() {
   return {
@@ -69,6 +76,9 @@ export function booking_order() {
         if (outstanding_amount > 0) {
           frm.add_custom_button('Create Payment', () => create_payment(frm));
         }
+        frm.page.add_menu_item('Update Party Details', () =>
+          update_party_details(frm)
+        );
       }
       if (frm.doc.docstatus > 0) {
         const { dashboard_info } = frm.doc.__onload || {};

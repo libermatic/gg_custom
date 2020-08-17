@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 import frappe
 import json
-from frappe.contacts.doctype.address.address import get_company_address
+from frappe.contacts.doctype.address.address import (
+    get_company_address,
+    get_address_display,
+)
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 from toolz.curried import compose, merge, unique, sliding_window, concat, map, filter
 
@@ -333,3 +336,26 @@ def get_order_details(name, station=None, shipping_order=None):
         )[0]
 
     return {}
+
+
+@frappe.whitelist()
+def update_party_details(name):
+    doc = frappe.get_cached_value(
+        "Booking Order", name, ["consignor", "consignee"], as_dict=1
+    )
+
+    for field in ["consignor", "consignee"]:
+        party_name, address_name = frappe.get_cached_value(
+            "Booking Party", doc.get(field), ['booking_party_name', "primary_address"]
+        )
+        address_display = get_address_display(address_name)
+        frappe.db.set_value(
+            "Booking Order",
+            name,
+            {
+                "{}_name".format(field): party_name,
+                "{}_address".format(field): address_name,
+                "{}_address_display".format(field): address_display,
+            },
+        )
+
