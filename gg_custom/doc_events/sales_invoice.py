@@ -16,7 +16,7 @@ def _update_booking_order(si):
     invoices = frappe.get_all(
         "Sales Invoice",
         filters={"docstatus": 1, "gg_booking_order": si.gg_booking_order},
-        fields=["total", "outstanding_amount"],
+        fields=["name", "total", "outstanding_amount"],
     )
     bo = frappe.get_cached_doc("Booking Order", si.gg_booking_order)
     if bo.docstatus == 2:
@@ -27,4 +27,17 @@ def _update_booking_order(si):
         bo.payment_status = "Paid"
     else:
         bo.payment_status = "Unpaid"
+
+    bo.charges = []
+    charges = frappe.get_all(
+        "Sales Invoice Item",
+        filters={"parent": ("in", [x.get("name") for x in invoices])},
+        fields=["item_code as charge_type", "sum(amount) as charge_amount"],
+        group_by="item_code",
+    )
+    for charge in charges:
+        bo.append("charges", charge)
+
+    bo.total_amount = sum([x.get("charge_amount") for x in charges])
+    bo.flags.ignore_validate_update_after_submit = True
     bo.save()
