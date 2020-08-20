@@ -2,7 +2,7 @@ import * as scripts from './scripts';
 import * as cscripts from './cscripts';
 import * as quick_entry from './quick_entry';
 
-const __version__ = '0.2.0';
+const __version__ = '0.2.1';
 
 frappe.provide('gg_custom');
 gg_custom = { __version__, scripts };
