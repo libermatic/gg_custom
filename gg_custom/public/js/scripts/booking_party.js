@@ -43,3 +43,9 @@ export function booking_party() {
     },
   };
 }
+
+export function booking_party_listview_settings() {
+  return {
+    filters: [['disabled', '=', 0]],
+  };
+}

@@ -124,6 +124,7 @@ export function booking_order_listview_settings() {
     Unknown: 'darkgrey',
   };
   return {
+    filters: [['docstatus', '!=', 2]],
     get_indicator: function (doc) {
       const status = doc.status || 'Unknown';
       return [__(status), status_color[status] || 'grey', `status,=,${status}`];

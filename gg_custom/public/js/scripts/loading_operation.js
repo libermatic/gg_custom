@@ -91,3 +91,9 @@ export function loading_operation() {
     },
   };
 }
+
+export function loading_operation_listview_settings() {
+  return {
+    filters: [['docstatus', '!=', 2]],
+  };
+}
