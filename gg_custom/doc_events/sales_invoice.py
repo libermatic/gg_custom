@@ -34,6 +34,7 @@ def _update_booking_order(si):
         filters={"parent": ("in", [x.get("name") for x in invoices])},
         fields=["item_code as charge_type", "sum(amount) as charge_amount"],
         group_by="item_code",
+        order_by="parent, idx",
     )
     for charge in charges:
         bo.append("charges", charge)
