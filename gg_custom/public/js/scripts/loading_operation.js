@@ -27,7 +27,7 @@ function set_query_booking_order(type) {
 
 async function set_booking_order_fields(frm, cdt, cdn) {
   const { station, shipping_order } = frm.doc;
-  const { booking_order, parentfield } = frappe.get_doc(cdt, cdn);
+  const { booking_order, loading_unit, parentfield } = frappe.get_doc(cdt, cdn);
   const fields = ['no_of_packages', 'weight_actual', 'goods_value'];
   function get_args() {
     if (parentfield === 'on_loads') {
@@ -37,20 +37,32 @@ async function set_booking_order_fields(frm, cdt, cdn) {
       return { name: booking_order, shipping_order };
     }
   }
-  if (booking_order) {
+  if (booking_order && loading_unit) {
     const { message: details = {} } = await frappe.call({
       method: 'gg_custom.api.booking_order.get_order_details',
       args: get_args(),
     });
+    const available =
+      loading_unit === 'Packages'
+        ? details.no_of_packages
+        : loading_unit === 'Weight'
+        ? details.weight_actual
+        : 0;
+    ['qty', 'available'].forEach((x) =>
+      frappe.model.set_value(cdt, cdn, x, available)
+    );
     fields.forEach((x) => frappe.model.set_value(cdt, cdn, x, details[x]));
     return;
   }
-  fields.forEach((x) => frappe.model.set_value(cdt, cdn, x, null));
+  [...fields, 'qty', 'available'].forEach((x) =>
+    frappe.model.set_value(cdt, cdn, x, null)
+  );
 }
 
 export function loading_operation_booking_order() {
   return {
     booking_order: set_booking_order_fields,
+    loading_unit: set_booking_order_fields,
     no_of_packages: set_totals,
     weight_actual: set_totals,
     goods_value: set_totals,

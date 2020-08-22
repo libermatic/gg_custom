@@ -7,9 +7,9 @@ from __future__ import unicode_literals
 import json
 import frappe
 from frappe.model.document import Document
-from toolz.curried import compose, valmap, first, groupby
+from toolz.curried import compose, valmap, first, groupby, merge
 
-from gg_custom.api.booking_order import get_orders_for
+from gg_custom.api.booking_order import get_orders_for, get_loading_conversion_factor
 
 
 class LoadingOperation(Document):
@@ -35,16 +35,15 @@ class LoadingOperation(Document):
                 load.booking_order,
                 ["no_of_packages", "weight_actual", "goods_value"],
             )
-            load.weight_actual = (
-                weight_actual / no_of_packages * load.no_of_packages
-                if no_of_packages
-                else 0
+            conversion_factor = get_loading_conversion_factor(
+                load.qty, load.loading_unit, no_of_packages, weight_actual
             )
-            load.goods_value = (
-                goods_value / no_of_packages * load.no_of_packages
-                if no_of_packages
-                else 0
-            )
+            if not conversion_factor:
+                frappe.throw(frappe._("Invalid conversion in row {}".format(load.idx)))
+
+            load.no_of_packages = no_of_packages * conversion_factor
+            load.weight_actual = weight_actual * conversion_factor
+            load.goods_value = goods_value * conversion_factor
 
         for param in ["no_of_packages", "weight_actual", "goods_value"]:
             for direction in ["on_load", "off_load"]:
@@ -132,16 +131,14 @@ class LoadingOperation(Document):
                 )
 
     def _validate_booking_orders(self):
-        rows_with_zero_packages = [
-            x.booking_order
-            for x in self.on_loads + self.off_loads
-            if x.no_of_packages <= 0
+        rows_with_zero_qty = [
+            x.booking_order for x in self.on_loads + self.off_loads if x.qty <= 0
         ]
-        if rows_with_zero_packages:
+        if rows_with_zero_qty:
             frappe.throw(
                 frappe._(
-                    "Booking Orders: {} cannot contain less than 1 package".format(
-                        ", ".join(rows_with_zero_packages)
+                    "Booking Orders: {} cannot contain zero or less qty".format(
+                        ", ".join(rows_with_zero_qty)
                     )
                 )
             )
@@ -152,33 +149,31 @@ class LoadingOperation(Document):
         get_map = compose(valmap(first), groupby("booking_order"))
 
         on_loads_orders = get_map(get_orders_for(station=self.station))
-        on_load_rows_with_invalid_packages = [
+        on_load_rows_with_invalid_qty = [
             x.booking_order
             for x in self.on_loads
-            if x.no_of_packages
-            > on_loads_orders.get(x.booking_order, {}).get("no_of_packages", 0)
+            if x.qty > on_loads_orders.get(x.booking_order, {}).get("qty", 0)
         ]
-        if on_load_rows_with_invalid_packages:
+        if on_load_rows_with_invalid_qty:
             frappe.throw(
                 frappe._(
-                    "Booking Orders: {} contain invalid no of packages ".format(
-                        ", ".join(on_load_rows_with_invalid_packages)
+                    "Booking Orders: {} contain invalid no of qty".format(
+                        ", ".join(on_load_rows_with_invalid_qty)
                     )
                 )
             )
 
         off_loads_orders = get_map(get_orders_for(shipping_order=self.shipping_order))
-        off_load_rows_with_invalid_packages = [
+        off_load_rows_with_invalid_qty = [
             x.booking_order
             for x in self.off_loads
-            if x.no_of_packages
-            > off_loads_orders.get(x.booking_order, {}).get("no_of_packages", 0)
+            if x.qty > off_loads_orders.get(x.booking_order, {}).get("qty", 0)
         ]
-        if off_load_rows_with_invalid_packages:
+        if off_load_rows_with_invalid_qty:
             frappe.throw(
                 frappe._(
-                    "Booking Orders: {} contain invalid no of packages ".format(
-                        ", ".join(off_load_rows_with_invalid_packages)
+                    "Booking Orders: {} contain invalid no of qty".format(
+                        ", ".join(off_load_rows_with_invalid_qty)
                     )
                 )
             )
@@ -220,6 +215,7 @@ class LoadingOperation(Document):
                 "station": self.station,
                 "activity": activity,
                 "loading_operation": self.name,
+                "loading_unit": load.loading_unit,
                 "no_of_packages": direction * load.no_of_packages,
                 "weight_actual": direction * load.weight_actual,
                 "goods_value": direction * load.goods_value,

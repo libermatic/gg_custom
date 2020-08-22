@@ -310,33 +310,50 @@ def _get_or_create_customer(booking_order_name, bill_to):
 
 
 def get_orders_for(station=None, shipping_order=None):
+    def get_qty(row):
+        if row.get("loading_unit") == "Packages":
+            return row.get("no_of_packages")
+        if row.get("loading_unit") == "Weight":
+            return row.get("weight_actual")
+        return 0
+
+    def set_qty(row):
+        qty = get_qty(row)
+        return merge(row, {"qty": qty, "available": qty})
+
+    get_result = compose(list, map(set_qty), frappe.db.sql)
+
     if station:
-        return frappe.db.sql(
+        return get_result(
             """
                 SELECT
                     booking_order,
+                    MAX(loading_unit) AS loading_unit,
                     SUM(no_of_packages) AS no_of_packages,
                     SUM(weight_actual) AS weight_actual,
                     SUM(goods_value) AS goods_value
                 FROM `tabBooking Log`
                 WHERE station = %(station)s
-                GROUP BY booking_order HAVING SUM(no_of_packages) > 0
+                GROUP BY booking_order HAVING
+                    SUM(no_of_packages) > 0 OR SUM(weight_actual) > 0
             """,
             values={"station": station},
             as_dict=1,
         )
 
     if shipping_order:
-        return frappe.db.sql(
+        return get_result(
             """
                 SELECT
                     booking_order,
+                    MAX(loading_unit) AS loading_unit,
                     -SUM(no_of_packages) AS no_of_packages,
                     -SUM(weight_actual) AS weight_actual,
                     -SUM(goods_value) AS goods_value
                 FROM `tabBooking Log`
                 WHERE shipping_order = %(shipping_order)s
-                GROUP BY booking_order HAVING SUM(no_of_packages) < 0
+                GROUP BY booking_order HAVING
+                    SUM(no_of_packages) < 0 OR SUM(weight_actual) < 0
             """,
             values={"shipping_order": shipping_order},
             as_dict=1,
