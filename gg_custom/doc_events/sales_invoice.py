@@ -1,5 +1,25 @@
 from __future__ import unicode_literals
 import frappe
+from toolz.curried import merge
+
+from gg_custom.api.booking_order import get_freight_rates
+
+
+def validate(doc, self):
+    if doc.gg_booking_order:
+        existing = frappe.db.exists(
+            "Sales Invoice", {"docstatus": 1, "gg_booking_order": doc.gg_booking_order}
+        )
+        if existing:
+            frappe.throw(
+                frappe._(
+                    "{} already existing for {}. ".format(
+                        frappe.get_desk_link("Sales Invoice", existing),
+                        frappe.get_desk_link("Booking Order", doc.gg_booking_order),
+                    )
+                    + "If you want to proceed, please cancel the previous Invoice."
+                )
+            )
 
 
 def on_submit(doc, self):

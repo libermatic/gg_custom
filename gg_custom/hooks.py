@@ -98,6 +98,7 @@ doc_events = {
         "on_update": "gg_custom.doc_events.address.on_update",
     },
     "Sales Invoice": {
+        "validate": "gg_custom.doc_events.sales_invoice.validate",
         "on_submit": "gg_custom.doc_events.sales_invoice.on_submit",
         "on_cancel": "gg_custom.doc_events.sales_invoice.on_cancel",
     },
