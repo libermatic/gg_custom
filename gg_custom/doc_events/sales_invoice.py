@@ -29,10 +29,10 @@ def on_submit(doc, self):
 
 def on_cancel(doc, self):
     if doc.gg_booking_order:
-        _update_booking_order(doc)
+        _update_booking_order(doc, is_cancel=True)
 
 
-def _update_booking_order(si):
+def _update_booking_order(si, is_cancel=False):
     invoices = frappe.get_all(
         "Sales Invoice",
         filters={"docstatus": 1, "gg_booking_order": si.gg_booking_order},
@@ -48,17 +48,44 @@ def _update_booking_order(si):
     else:
         bo.payment_status = "Unpaid"
 
+    if is_cancel:
+        return
+
+    freight_items = {v.get("item_code"): k for k, v in get_freight_rates().items()}
+    bo.freight = []
+    freight = frappe.get_all(
+        "Sales Invoice Item",
+        filters={
+            "parent": ("in", [x.get("name") for x in invoices]),
+            "item_code": ("in", [x for x in freight_items]),
+        },
+        fields=[
+            "item_code",
+            "qty",
+            "rate",
+            "amount",
+            "description as item_description",
+        ],
+        order_by="parent, idx",
+    )
+    for row in freight:
+        bo.append(
+            "freight", merge(row, {"based_on": freight_items.get(row.get("item_code"))})
+        )
+
     bo.charges = []
     charges = frappe.get_all(
         "Sales Invoice Item",
-        filters={"parent": ("in", [x.get("name") for x in invoices])},
-        fields=["item_code as charge_type", "sum(amount) as charge_amount"],
-        group_by="item_code",
+        filters={
+            "parent": ("in", [x.get("name") for x in invoices]),
+            "item_code": ("not in", freight_items),
+        },
+        fields=["item_code as charge_type", "amount as charge_amount"],
         order_by="parent, idx",
     )
-    for charge in charges:
-        bo.append("charges", charge)
+    for row in charges:
+        bo.append("charges", row)
 
-    bo.total_amount = sum([x.get("charge_amount") for x in charges])
+    bo.set_totals()
     bo.flags.ignore_validate_update_after_submit = True
     bo.save()

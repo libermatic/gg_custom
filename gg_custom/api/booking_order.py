@@ -16,6 +16,7 @@ from toolz.curried import (
     groupby,
     valmap,
     first,
+    dissoc,
     map,
     filter,
 )
@@ -192,6 +193,30 @@ def make_sales_invoice(source_name, target_doc=None):
                 )
             )
 
+    def postprocess(source, target):
+        items = [dissoc(x.as_dict(), "idx") for x in target.items]
+        target.items = []
+        freight_rates = get_freight_rates()
+        for row in source.freight:
+            freight_item = freight_rates.get(row.get("based_on")) or {}
+            target.append(
+                "items",
+                {
+                    "item_code": freight_item.get("item_code"),
+                    "price_list_rate": freight_item.get("rate"),
+                    "qty": row.get("qty"),
+                    "rate": row.get("rate"),
+                    "stock_uom": freight_item.get("uom"),
+                    "uom": freight_item.get("uom"),
+                    "description": row.get("item_description"),
+                },
+            )
+
+        for row in items:
+            target.append("items", merge(row, {"qty": 1}))
+
+        set_invoice_missing_values(source, target)
+
     return frappe.model.mapper.get_mapped_doc(
         "Booking Order",
         source_name,
@@ -207,7 +232,7 @@ def make_sales_invoice(source_name, target_doc=None):
             },
         },
         target_doc,
-        set_invoice_missing_values,
+        postprocess,
     )
 
 
@@ -381,7 +406,7 @@ def get_freight_rates():
         args = {"price_list": price_list, "uom": item.get("uom")}
         rate = get_item_price(args, item.get("item_code"), ignore_party=True)
         if rate:
-            return rate[0].get("price_list_rate")
+            return rate[0][1]
 
         return 0
 
