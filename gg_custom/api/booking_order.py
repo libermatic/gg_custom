@@ -47,31 +47,34 @@ def query(doctype, txt, searchfield, start, page_len, filters):
     ]
     if _type == "on_load":
         booking_orders = [
-            x.booking_order for x in get_orders_for(station=filters.get("station"))
+            x.get("booking_order")
+            for x in get_orders_for(station=filters.get("station"))
         ]
-        return frappe.db.sql(
-            """
-                SELECT {fields} FROM `tabBooking Order`
-                WHERE {conds} LIMIT %(start)s, %(page_len)s
-            """.format(
-                fields=", ".join(fields), conds=" AND ".join(conds)
-            ),
-            values=merge(values, {"booking_orders": booking_orders}),
-        )
+        if booking_orders:
+            return frappe.db.sql(
+                """
+                    SELECT {fields} FROM `tabBooking Order`
+                    WHERE {conds} LIMIT %(start)s, %(page_len)s
+                """.format(
+                    fields=", ".join(fields), conds=" AND ".join(conds)
+                ),
+                values=merge(values, {"booking_orders": booking_orders}),
+            )
     if _type == "off_load":
         booking_orders = [
-            x.booking_order
+            x.get("booking_order")
             for x in get_orders_for(shipping_order=filters.get("shipping_order"))
         ]
-        return frappe.db.sql(
-            """
-                SELECT {fields} FROM `tabBooking Order`
-                WHERE {conds} LIMIT %(start)s, %(page_len)s
-            """.format(
-                fields=", ".join(fields), conds=" AND ".join(conds)
-            ),
-            values=merge(values, {"booking_orders": booking_orders}),
-        )
+        if booking_orders:
+            return frappe.db.sql(
+                """
+                    SELECT {fields} FROM `tabBooking Order`
+                    WHERE {conds} LIMIT %(start)s, %(page_len)s
+                """.format(
+                    fields=", ".join(fields), conds=" AND ".join(conds)
+                ),
+                values=merge(values, {"booking_orders": booking_orders}),
+            )
     return []
 
 
