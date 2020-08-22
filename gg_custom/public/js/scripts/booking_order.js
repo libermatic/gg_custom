@@ -110,7 +110,11 @@ export function booking_order() {
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {
         const { status, current_station, destination_station } = frm.doc;
-        if (frm.doc.__onload && frm.doc.__onload.no_of_deliverable_packages) {
+        if (
+          frm.doc.__onload &&
+          frm.doc.__onload.deliverable &&
+          frm.doc.__onload.deliverable.qty
+        ) {
           frm.add_custom_button('Deliver', handle_deliver(frm));
         }
 
@@ -252,22 +256,30 @@ function create_payment(frm) {
 
 function handle_deliver(frm) {
   return async function () {
+    console.log(get_qty());
     const dialog = new frappe.ui.Dialog({
       title: 'Deliver',
       fields: [
         {
+          fieldtype: 'Data',
+          fieldname: 'unit',
+          read_only: 1,
+          label: 'Unit',
+          default: frm.doc.__onload.deliverable.unit,
+        },
+        {
           fieldtype: 'Int',
-          fieldname: 'no_of_packages',
+          fieldname: 'qty',
           reqd: 1,
-          label: 'No of Packages',
-          default: frm.doc.__onload.no_of_deliverable_packages,
+          label: 'Qty',
+          default: frm.doc.__onload.deliverable.qty,
         },
       ],
     });
     dialog.set_primary_action('OK', async function () {
       try {
-        const no_of_packages = dialog.get_value('no_of_packages');
-        await frm.call('deliver', { no_of_packages });
+        const { unit, qty } = dialog.get_values();
+        await frm.call('deliver', { unit, qty });
         frm.reload_doc();
         dialog.hide();
       } finally {

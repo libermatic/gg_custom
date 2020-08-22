@@ -6,17 +6,20 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
+from toolz.curried import merge
 
-from gg_custom.api.booking_order import get_history, make_sales_invoice
+from gg_custom.api.booking_order import (
+    get_history,
+    make_sales_invoice,
+    get_loading_conversion_factor,
+)
 
 
 class BookingOrder(Document):
     def onload(self):
         if self.docstatus == 1:
             self.set_onload("dashboard_info", _get_dashboard_info(self))
-            self.set_onload(
-                "no_of_deliverable_packages", _get_deliverable_packages(self)
-            )
+            self.set_onload("deliverable", _get_deliverable(self))
 
     def validate(self):
         if not self.freight or not self.freight_total:
@@ -89,27 +92,20 @@ class BookingOrder(Document):
         self.charge_total = sum([x.charge_amount for x in self.charges])
         self.total_amount = self.freight_total + self.charge_total
 
-    def deliver(self, no_of_packages, posting_datetime=None):
-        no_of_deliverable_packages = _get_deliverable_packages(self)
-        if no_of_packages > no_of_deliverable_packages:
-            frappe.throw(
-                frappe._(
-                    "Cannot deliver more than {} packages".format(
-                        no_of_deliverable_packages
-                    )
-                )
-            )
+    def deliver(self, unit, qty, posting_datetime=None):
+        deliverable = _get_deliverable(self)
+        if qty > deliverable.get("qty"):
+            frappe.throw(frappe._("Cannot deliver more than {} units".format(qty)))
 
-        weight_actual = (
-            self.weight_actual / self.no_of_packages * no_of_packages
-            if self.no_of_packages
-            else 0
+        conversion_factor = get_loading_conversion_factor(
+            qty, unit, self.no_of_packages, self.weight_actual
         )
-        goods_value = (
-            self.goods_value / self.no_of_packages * no_of_packages
-            if self.no_of_packages
-            else 0
-        )
+        if not conversion_factor:
+            frappe.throw(frappe._("Invalid conversion factor"))
+
+        no_of_packages = self.no_of_packages * conversion_factor
+        weight_actual = self.weight_actual * conversion_factor
+        goods_value = self.goods_value * conversion_factor
 
         _posting_datetime = posting_datetime or frappe.utils.now()
         frappe.get_doc(
@@ -128,7 +124,10 @@ class BookingOrder(Document):
         self.set_as_completed()
 
     def set_as_completed(self):
-        if self.no_of_packages == _get_delivered_packages(self):
+        delivered = _get_delivered_packages(self)
+        if self.no_of_packages == delivered.get(
+            "no_of_packages"
+        ) and self.weight_actual == delivered.get("weight_actual"):
             self.status = "Collected"
             self.save()
 
@@ -151,26 +150,37 @@ def _get_dashboard_info(doc):
     }
 
 
-def _get_deliverable_packages(doc):
-    return (
-        frappe.get_all(
-            "Booking Log",
-            filters={"booking_order": doc.name, "station": doc.destination_station,},
-            fields=["sum(no_of_packages) as no_of_packages"],
-            as_list=1,
-        )[0][0]
-        or 0
-    )
+def _get_deliverable(doc):
+    result = frappe.get_all(
+        "Booking Log",
+        filters={"booking_order": doc.name, "station": doc.destination_station,},
+        fields=[
+            "sum(no_of_packages) as no_of_packages",
+            "sum(weight_actual) as weight_actual",
+            "max(loading_unit) as unit",
+        ],
+    )[0]
+
+    if result:
+        if result.get("unit") == "Packages":
+            return merge(result, {"qty": result.get("no_of_packages")})
+        if result.get("unit") == "Weight":
+            return merge(result, {"qty": result.get("weight_actual")})
+
+    return {"qty": 0, "unit": None}
 
 
 def _get_delivered_packages(doc):
-    return -(
+    return (
         frappe.get_all(
             "Booking Log",
             filters={"activity": "Collected", "booking_order": doc.name},
-            fields=["sum(no_of_packages) as no_of_packages"],
+            fields=[
+                "-sum(no_of_packages) as no_of_packages",
+                "-sum(weight_actual) as weight_actual",
+            ],
             as_list=1,
-        )[0][0]
-        or 0
+        )[0]
+        or {}
     )
 

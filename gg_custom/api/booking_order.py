@@ -426,3 +426,11 @@ def get_freight_rates():
         as_dict=1,
     )
 
+
+def get_loading_conversion_factor(qty, unit, no_of_packages, weight_actual):
+    if unit == "Packages" and no_of_packages:
+        return frappe.utils.flt(qty) / no_of_packages
+    if unit == "Weight" and weight_actual:
+        return frappe.utils.flt(qty) / weight_actual
+
+    return None
