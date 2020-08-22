@@ -5,6 +5,9 @@
  "engine": "InnoDB",
  "field_order": [
   "booking_order",
+  "loading_unit",
+  "qty",
+  "available",
   "no_of_packages",
   "weight_actual",
   "goods_value",
@@ -24,21 +27,18 @@
   {
    "fieldname": "no_of_packages",
    "fieldtype": "Int",
-   "in_list_view": 1,
    "label": "No of Packages",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "weight_actual",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "Weight Actual",
    "read_only": 1
   },
   {
    "fieldname": "goods_value",
    "fieldtype": "Currency",
-   "in_list_view": 1,
    "label": "Goods Value",
    "options": "Company:company:default_currency",
    "read_only": 1
@@ -61,10 +61,32 @@
    "fieldtype": "Data",
    "label": "Consignee Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "loading_unit",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Loading Unit",
+   "options": "\nPackages\nWeight",
+   "reqd": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Qty",
+   "reqd": 1
+  },
+  {
+   "fieldname": "available",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Available",
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2020-08-14 18:44:54.200610",
+ "modified": "2020-08-22 23:31:13.425955",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation Booking Order",

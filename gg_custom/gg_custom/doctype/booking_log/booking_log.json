@@ -11,6 +11,7 @@
   "station",
   "activity",
   "loading_operation",
+  "loading_unit",
   "no_of_packages",
   "weight_actual",
   "goods_value"
@@ -66,10 +67,16 @@
    "fieldtype": "Link",
    "label": "Loading Operation",
    "options": "Loading Operation"
+  },
+  {
+   "fieldname": "loading_unit",
+   "fieldtype": "Select",
+   "label": "Loading Unit",
+   "options": "\nPackages\nWeight"
   }
  ],
  "in_create": 1,
- "modified": "2020-07-28 19:41:58.628036",
+ "modified": "2020-08-22 23:24:49.400509",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Log",
