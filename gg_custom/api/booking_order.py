@@ -91,7 +91,9 @@ def get_history(name):
             "station",
             "activity",
             "loading_operation",
+            "loading_unit",
             "no_of_packages",
+            "weight_actual",
         ],
         order_by="posting_datetime",
     )
@@ -130,6 +132,12 @@ def get_history(name):
 
     def get_message(log):
         if log.get("doctype") == "Booking Log":
+            if log.get("loading_unit") == "Weight":
+                return "{} {} units by weight at {}".format(
+                    log.get("activity"),
+                    abs(log.get("weight_actual")),
+                    log.get("station"),
+                )
             return "{} {} packages at {}".format(
                 log.get("activity"), abs(log.get("no_of_packages")), log.get("station")
             )
