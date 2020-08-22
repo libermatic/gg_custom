@@ -15,7 +15,10 @@ app_license = "MIT"
 fixtures = [
     {
         "doctype": "Custom Field",
-        "filters": {"fieldname": ("like", "gg_%"), "dt": ("in", ["Sales Invoice"])},
+        "filters": {
+            "fieldname": ("like", "gg_%"),
+            "dt": ("in", ["Sales Invoice", "Item"]),
+        },
     },
 ]
 
@@ -100,6 +103,7 @@ doc_events = {
         "on_submit": "gg_custom.doc_events.payment_entry.on_submit",
         "on_cancel": "gg_custom.doc_events.payment_entry.on_cancel",
     },
+    "Item": {"validate": "gg_custom.doc_events.item.validate"},
 }
 
 # Scheduled Tasks
