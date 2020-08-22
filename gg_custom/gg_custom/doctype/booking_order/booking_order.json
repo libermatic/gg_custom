@@ -23,21 +23,23 @@
   "consignee_name",
   "consignee_address",
   "consignee_address_display",
+  "freight_sec",
+  "freight",
   "details_sec",
   "no_of_packages",
   "packing",
-  "item_description",
   "column_break_21",
   "weight_actual",
   "weight_charged",
   "invoice_no",
   "goods_value",
-  "fees_and_charges_sec",
+  "charges_sec",
   "booking_order_charge_template",
   "auto_bill_to",
-  "section_break_32",
   "charges",
   "section_break_34",
+  "freight_total",
+  "charge_total",
   "total_amount"
  ],
  "fields": [
@@ -155,7 +157,6 @@
    "label": "Order Details"
   },
   {
-   "collapsible": 1,
    "fieldname": "details_sec",
    "fieldtype": "Section Break",
    "label": "Consignment Details"
@@ -177,16 +178,6 @@
    "label": "Packing"
   },
   {
-   "fieldname": "item_description",
-   "fieldtype": "Small Text",
-   "label": "Item Description"
-  },
-  {
-   "fieldname": "fees_and_charges_sec",
-   "fieldtype": "Section Break",
-   "label": "Fees and Charges"
-  },
-  {
    "fieldname": "column_break_21",
    "fieldtype": "Column Break"
   },
@@ -198,7 +189,8 @@
   {
    "fieldname": "weight_charged",
    "fieldtype": "Float",
-   "label": "Weight Charged"
+   "label": "Weight Charged",
+   "read_only": 1
   },
   {
    "fieldname": "goods_value",
@@ -249,16 +241,41 @@
    "options": "\nConsignor\nConsignee"
   },
   {
-   "fieldname": "section_break_32",
+   "fieldname": "section_break_34",
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "section_break_34",
-   "fieldtype": "Section Break"
+   "fieldname": "freight_sec",
+   "fieldtype": "Section Break",
+   "label": "Freight Details"
+  },
+  {
+   "fieldname": "freight",
+   "fieldtype": "Table",
+   "options": "Booking Order Freight Detail"
+  },
+  {
+   "fieldname": "freight_total",
+   "fieldtype": "Currency",
+   "label": "Freight Total",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "charge_total",
+   "fieldtype": "Currency",
+   "label": "Charge Total",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "charges_sec",
+   "fieldtype": "Section Break",
+   "label": "Charges"
   }
  ],
  "is_submittable": 1,
- "modified": "2020-08-17 13:46:06.450161",
+ "modified": "2020-08-22 20:06:47.241932",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",
