@@ -6,7 +6,19 @@ from frappe.contacts.doctype.address.address import (
     get_address_display,
 )
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
-from toolz.curried import compose, merge, unique, sliding_window, concat, map, filter
+from erpnext.stock.get_item_details import get_item_price
+from toolz.curried import (
+    compose,
+    merge,
+    unique,
+    sliding_window,
+    concat,
+    groupby,
+    valmap,
+    first,
+    map,
+    filter,
+)
 
 
 def query(doctype, txt, searchfield, start, page_len, filters):
@@ -346,7 +358,7 @@ def update_party_details(name):
 
     for field in ["consignor", "consignee"]:
         party_name, address_name = frappe.get_cached_value(
-            "Booking Party", doc.get(field), ['booking_party_name', "primary_address"]
+            "Booking Party", doc.get(field), ["booking_party_name", "primary_address"]
         )
         address_display = get_address_display(address_name)
         frappe.db.set_value(
@@ -358,4 +370,34 @@ def update_party_details(name):
                 "{}_address_display".format(field): address_display,
             },
         )
+
+
+def get_freight_rates():
+    price_list = frappe.get_cached_value(
+        "Selling Settings", None, "selling_price_list",
+    )
+
+    def get_rate(item):
+        args = {"price_list": price_list, "uom": item.get("uom")}
+        rate = get_item_price(args, item.get("item_code"), ignore_party=True)
+        if rate:
+            return rate[0].get("price_list_rate")
+
+        return 0
+
+    get_freight_items = compose(
+        valmap(first),
+        groupby("based_on"),
+        map(lambda x: merge(x, {"rate": get_rate(x)})),
+        frappe.db.sql,
+    )
+
+    return get_freight_items(
+        """
+            SELECT name AS item_code, stock_uom AS uom, gg_freight_based_on AS based_on
+            FROM `tabItem`
+            WHERE gg_freight_based_on IN ('Packages', 'Weight')
+        """,
+        as_dict=1,
+    )
 

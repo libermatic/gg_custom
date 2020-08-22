@@ -68,6 +68,8 @@ app_include_js = ["/assets/js/gg_custom.min.js"]
 # before_install = "gg_custom.install.before_install"
 # after_install = "gg_custom.install.after_install"
 
+boot_session = "gg_custom.boot.boot_session"
+
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
