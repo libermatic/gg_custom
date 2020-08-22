@@ -27,10 +27,11 @@ function set_address_dispay(party_type) {
   };
 }
 
-function set_total_amount(frm) {
-  const total_amount = sumBy(frm.doc.charges, 'charge_amount');
-  frm.set_value({ total_amount });
+function set_charge_total(frm) {
+  const charge_total = sumBy(frm.doc.charges, 'charge_amount');
+  frm.set_value({ charge_total });
 }
+
 async function update_party_details(frm) {
   const { message } = await frappe.call({
     method: 'gg_custom.api.booking_order.update_party_details',
@@ -39,10 +40,57 @@ async function update_party_details(frm) {
   frm.reload_doc();
 }
 
+function set_freight_amount(frm, cdt, cdn) {
+  const { qty = 0, rate = 0 } = frappe.get_doc(cdt, cdn);
+  frappe.model.set_value(cdt, cdn, 'amount', qty * rate);
+}
+
+function set_total_amount(frm) {
+  const { freight_total, charge_total } = frm.doc;
+  frm.set_value('total_amount', freight_total + charge_total);
+}
+
+export function booking_order_freight_detail() {
+  return {
+    freight_add: function (frm, cdt, cdn) {
+      const row = frappe.get_doc(cdt, cdn);
+      frm.script_manager.copy_from_first_row('freight', row, ['based_on']);
+    },
+    based_on: function (frm, cdt, cdn) {
+      const { freight_items = {} } = frappe.boot;
+      const { based_on } = frappe.get_doc(cdt, cdn);
+      const { rate = 0 } = freight_items[based_on] || {};
+      frappe.model.set_value(cdt, cdn, 'qty', 0);
+      frappe.model.set_value(cdt, cdn, 'rate', rate);
+    },
+    qty: async function (frm, cdt, cdn) {
+      const no_of_packages = sumBy(
+        frm.doc.freight.filter((x) => x.based_on === 'Packages'),
+        'qty'
+      );
+      const weight_charged = sumBy(
+        frm.doc.freight.filter((x) => x.based_on === 'Weight'),
+        'qty'
+      );
+      await frm.set_value({
+        no_of_packages,
+        weight_actual: weight_charged,
+        weight_charged,
+      });
+      set_freight_amount(frm, cdt, cdn);
+    },
+    rate: set_freight_amount,
+    amount: function (frm, cdt, cdn) {
+      const freight_total = sumBy(frm.doc.freight, 'amount');
+      frm.set_value({ freight_total });
+    },
+  };
+}
+
 export function booking_order_charge() {
   return {
-    charge_amount: set_total_amount,
-    charges_remove: set_total_amount,
+    charge_amount: set_charge_total,
+    charges_remove: set_charge_total,
   };
 }
 
@@ -109,8 +157,10 @@ export function booking_order() {
         });
       }
       cur_frm.refresh_field('charges');
-      set_total_amount(frm);
+      set_charge_total(frm);
     },
+    freight_total: set_total_amount,
+    charge_total: set_total_amount,
   };
 }
 
