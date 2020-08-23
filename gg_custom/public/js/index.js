@@ -1,11 +1,12 @@
 import * as scripts from './scripts';
+import * as reports from './reports';
 import * as cscripts from './cscripts';
 import * as quick_entry from './quick_entry';
 
 const __version__ = '0.2.2';
 
 frappe.provide('gg_custom');
-gg_custom = { __version__, scripts };
+gg_custom = { __version__, scripts, reports };
 
 function get_qe_classname(import_name) {
   return `${import_name
