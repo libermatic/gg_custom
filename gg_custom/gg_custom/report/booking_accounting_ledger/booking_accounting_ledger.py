@@ -56,7 +56,7 @@ def _get_columns(filters):
         {
             "fieldtype": "Data",
             "fieldname": "vehicles",
-            "label": "Vehicle",
+            "label": "Vehicles",
             "width": 180,
         },
     ]
