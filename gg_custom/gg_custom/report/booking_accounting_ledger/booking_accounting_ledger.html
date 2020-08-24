@@ -1,0 +1,49 @@
+<h2 class="text-center">{%= __("Statement of Account") %}</h2>
+<h4 class="text-center">{%= filters.booking_party_name %}</h4>
+
+<h5 class="text-center">
+  {%= frappe.datetime.str_to_user(filters.from_date) %}
+  {%= __("to") %}
+  {%= frappe.datetime.str_to_user(filters.to_date) %}
+</h5>
+<hr>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th style="width: 12%">{%= __("Date") %}</th>
+      <th style="width: 15%">{%= __("Ref") %}</th>
+      <th style="width: auto">{%= __("Booking Details") %}</th>
+      <th style="width: 15%">{%= __("Amount") %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for(var i=0, l=data.length; i<l; i++) { %}
+      <tr>
+      {% if(data[i].posting_date) { %}
+        <td>{%= frappe.datetime.str_to_user(data[i].posting_date) %}</td>
+        <td>{%= data[i].voucher_type %}
+          <br />{%= data[i].voucher_no %}
+        </td>
+        <td>
+          {% if(data[i].booking_order) { %}
+            {%= data[i].booking_order %}
+            <br /> Order Dt: {%= data[i].order_date %}
+            {% if(data[i].delivery_dates) { %}
+            ; Delivery Dt: {%= ata[i].delivery_dates %}
+            {% } %}
+            <br />{%= data[i].description %}
+          {% } %}
+        </td>
+      {% } else { %}
+        <td></td>
+        <td></td>
+        <td></td>
+      {% } %}
+        <td style="text-align: right">
+          {%= format_currency(data[i].amount) %}
+        </td>
+      </tr>
+    {% } %}
+  </tbody>
+</table>
+<p class="text-right text-muted">Printed On {%= frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string()) %}</p>
