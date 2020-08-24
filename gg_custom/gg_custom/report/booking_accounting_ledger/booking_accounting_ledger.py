@@ -55,9 +55,15 @@ def _get_columns(filters):
         },
         {
             "fieldtype": "Data",
-            "fieldname": "vehicles",
-            "label": "Vehicles",
-            "width": 180,
+            "fieldname": "order_date",
+            "label": "Order Date",
+            "width": 90,
+        },
+        {
+            "fieldtype": "Data",
+            "fieldname": "delivery_dates",
+            "label": "Delivery Dates",
+            "width": 150,
         },
     ]
 
@@ -91,6 +97,7 @@ def _get_data(filters):
                 SELECT
                     si.name AS sales_invoice,
                     bo.name,
+                    bo.booking_datetime AS order_datetime,
                     bo.no_of_packages,
                     bo.weight_charged,
                     bo.packing
@@ -122,13 +129,12 @@ def _get_data(filters):
         else {}
     )
 
-    get_vehicles = compose(groupby("booking_order"), frappe.db.sql)
-    vehicles = (
-        get_vehicles(
+    get_delivery_dates = compose(groupby("booking_order"), frappe.db.sql)
+    delivery_dates = (
+        get_delivery_dates(
             """
-                SELECT so.vehicle, bl.booking_order FROM `tabBooking Log` As bl
-                LEFT JOIN `tabShipping Order` AS so ON so.name = bl.shipping_order
-                WHERE bl.activity = 'Loaded' AND bl.booking_order IN %(orders)s
+                SELECT booking_order, posting_datetime FROM `tabBooking Log`
+                WHERE activity = 'Collected' AND booking_order IN %(orders)s
             """,
             values={"orders": orders},
             as_dict=1,
@@ -138,28 +144,38 @@ def _get_data(filters):
     )
 
     def make_message(freight):
-        return freight.get("item_description")
-        # rate = frappe.utils.fmt_money(
-        #     freight.get("rate"), currency=frappe.defaults.get_global_default("currency")
-        # )
-        # if freight.get("based_on") == "Weight":
-        #     return "{} by weight @ {} - {}".format(
-        #         freight.get("qty"), rate, freight.get("item_description")
-        #     )
+        # return freight.get("item_description")
+        rate = frappe.utils.fmt_money(
+            freight.get("rate"), currency=frappe.defaults.get_global_default("currency")
+        )
+        if freight.get("based_on") == "Weight":
+            return "{} by weight @ {} - {}".format(
+                freight.get("qty"), rate, freight.get("item_description")
+            )
 
-        # return "{} packages @ {} - {}".format(
-        #     freight.get("qty"), rate, freight.get("item_description")
-        # )
+        return "{} packages @ {} - {}".format(
+            freight.get("qty"), rate, freight.get("item_description")
+        )
 
     def make_description(bo):
-        return ", ".join([make_message(x) for x in descriptions.get(bo, [])])
+        return "<br />".join([make_message(x) for x in descriptions.get(bo, [])])
 
-    def make_vehicles(bo):
-        return ", ".join(set([x.get("vehicle") for x in vehicles.get(bo, [])]))
+    def make_delivery_date(bo):
+        return ", ".join(
+            set(
+                [
+                    frappe.format_value(
+                        x.get("posting_datetime"), {"fieldtype": "Date"}
+                    )
+                    for x in delivery_dates.get(bo, [])
+                ]
+            )
+        )
 
     def make_row(row):
         booking_order = booking_orders.get(row.get("voucher_no"), {})
         bo_name = booking_order.get("name")
+        order_date = booking_order.get("order_datetime")
         return merge(
             row,
             {
@@ -168,7 +184,10 @@ def _get_data(filters):
                 "description": make_description(bo_name)
                 if row.get("voucher_type") == "Sales Invoice"
                 else row.get("remarks"),
-                "vehicles": make_vehicles(bo_name),
+                "order_date": frappe.format_value(order_date, {"fieldtype": "Date"})
+                if order_date
+                else "",
+                "delivery_dates": make_delivery_date(bo_name),
             },
         )
 
