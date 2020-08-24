@@ -91,12 +91,20 @@ export function loading_operation() {
     },
     refresh: function (frm) {
       if (frm.doc.docstatus < 1) {
-        frm.add_custom_button('Auto Load / Unload', async function () {
-          if (!frm.doc.station || !frm.doc.shipping_order) {
-            frappe.msgprint('Please select Station and Shipping Order first.');
+        frm.add_custom_button('Auto Load', async function () {
+          if (!frm.doc.station) {
+            frappe.msgprint('Please select Station first.');
             return;
           }
-          await frm.call('get_loads');
+          await frm.call('get_on_loads');
+          set_totals(frm);
+        });
+        frm.add_custom_button('Auto Unload', async function () {
+          if (!frm.doc.shipping_order) {
+            frappe.msgprint('Please select Shipping Order first.');
+            return;
+          }
+          await frm.call('get_off_loads');
           set_totals(frm);
         });
       }

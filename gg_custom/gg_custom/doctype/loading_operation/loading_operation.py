@@ -17,12 +17,13 @@ class LoadingOperation(Document):
         self._validate_shipping_order()
         self._validate_booking_orders()
 
-    def get_loads(self):
-        self._validate_shipping_order()
-
+    def get_on_loads(self):
         self.on_loads = []
         for booking_order in get_orders_for(station=self.station):
             self.append("on_loads", booking_order)
+
+    def get_off_loads(self):
+        self._validate_shipping_order()
 
         self.off_loads = []
         for booking_order in get_orders_for(shipping_order=self.shipping_order):
