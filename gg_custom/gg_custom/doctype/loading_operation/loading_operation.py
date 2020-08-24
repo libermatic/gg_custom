@@ -148,11 +148,16 @@ class LoadingOperation(Document):
 
         get_map = compose(valmap(first), groupby("booking_order"))
 
+        def check_qty(orders, row):
+            if row.get("loading_unit") == "Weight":
+                return row.qty > orders.get(row.booking_order, {}).get(
+                    "weight_actual", 0
+                )
+            return row.qty > orders.get(row.booking_order, {}).get("no_of_packages", 0)
+
         on_loads_orders = get_map(get_orders_for(station=self.station))
         on_load_rows_with_invalid_qty = [
-            x.booking_order
-            for x in self.on_loads
-            if x.qty > on_loads_orders.get(x.booking_order, {}).get("qty", 0)
+            x.booking_order for x in self.on_loads if check_qty(on_loads_orders, x)
         ]
         if on_load_rows_with_invalid_qty:
             frappe.throw(
@@ -165,9 +170,7 @@ class LoadingOperation(Document):
 
         off_loads_orders = get_map(get_orders_for(shipping_order=self.shipping_order))
         off_load_rows_with_invalid_qty = [
-            x.booking_order
-            for x in self.off_loads
-            if x.qty > off_loads_orders.get(x.booking_order, {}).get("qty", 0)
+            x.booking_order for x in self.off_loads if check_qty(off_loads_orders, x)
         ]
         if off_load_rows_with_invalid_qty:
             frappe.throw(
