@@ -22,6 +22,7 @@ from toolz.curried import (
 )
 
 
+@frappe.whitelist()
 def query(doctype, txt, searchfield, start, page_len, filters):
     _type = filters.get("type")
     fields = [

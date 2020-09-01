@@ -4,6 +4,7 @@ import json
 from toolz.curried import compose, merge, concatv, map, filter
 
 
+@frappe.whitelist()
 def query(doctype, txt, searchfield, start, page_len, filters):
     station = filters.get("station")
     cond = (
