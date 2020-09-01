@@ -462,3 +462,17 @@ def get_loading_conversion_factor(qty, unit, no_of_packages, weight_actual):
         return frappe.utils.flt(qty) / weight_actual
 
     return None
+
+
+@frappe.whitelist()
+def get_description_options(booking_order):
+    return [
+        x[0]
+        for x in frappe.get_all(
+            "Booking Order Freight Detail",
+            filters={"parent": booking_order},
+            fields=["item_description"],
+            as_list=1,
+        )
+    ]
+

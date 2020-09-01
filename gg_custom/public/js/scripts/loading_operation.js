@@ -2,7 +2,14 @@ import sumBy from 'lodash/sumBy';
 
 export function loading_operation_booking_order() {
   return {
-    booking_order: set_booking_order_fields,
+    booking_order: async function (frm, cdt, cdn) {
+      const { booking_order } = frappe.get_doc(cdt, cdn);
+      const { message: options } = await frappe.call({
+        method: 'gg_custom.api.booking_order.get_description_options',
+        args: { booking_order },
+      });
+      console.log(options);
+    },
     loading_unit: set_booking_order_fields,
     no_of_packages: set_totals,
     weight_actual: set_totals,
@@ -117,3 +124,5 @@ async function set_booking_order_fields(frm, cdt, cdn) {
     frappe.model.set_value(cdt, cdn, x, null)
   );
 }
+
+async function set_description_options(frm, cdt, cdn) {}
