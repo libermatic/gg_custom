@@ -14,7 +14,8 @@
   "loading_unit",
   "no_of_packages",
   "weight_actual",
-  "goods_value"
+  "goods_value",
+  "bo_detail"
  ],
  "fields": [
   {
@@ -73,10 +74,15 @@
    "fieldtype": "Select",
    "label": "Loading Unit",
    "options": "\nPackages\nWeight"
+  },
+  {
+   "fieldname": "bo_detail",
+   "fieldtype": "Data",
+   "label": "BO Detail"
   }
  ],
  "in_create": 1,
- "modified": "2020-08-22 23:24:49.400509",
+ "modified": "2020-09-01 20:21:06.205284",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Log",

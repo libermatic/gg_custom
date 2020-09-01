@@ -5,6 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "booking_order",
+  "description",
   "loading_unit",
   "qty",
   "available",
@@ -13,7 +14,9 @@
   "goods_value",
   "column_break_5",
   "consignee",
-  "consignee_name"
+  "consignee_name",
+  "ref_sec",
+  "bo_detail"
  ],
  "fields": [
   {
@@ -83,10 +86,32 @@
    "in_list_view": 1,
    "label": "Available",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "ref_sec",
+   "fieldtype": "Section Break",
+   "label": "References"
+  },
+  {
+   "fieldname": "bo_detail",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "BO Detail",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
   }
  ],
  "istable": 1,
- "modified": "2020-08-22 23:31:13.425955",
+ "modified": "2020-09-01 20:45:35.526416",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation Booking Order",
