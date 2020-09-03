@@ -24,6 +24,23 @@ class BookingOrder(Document):
     def validate(self):
         if not self.freight or not self.freight_total:
             frappe.throw(frappe._("Freight cannot be empty or zero"))
+        for row in self.freight:
+            if row.based_on == "Packages" and not row.no_of_packages:
+                frappe.throw(
+                    frappe._(
+                        "No of Packages cannot be zero when based on Packages in row #{}".format(
+                            row.idx
+                        )
+                    )
+                )
+            if row.based_on == "Weight" and not row.weight_actual:
+                frappe.throw(
+                    frappe._(
+                        "Weight Actual cannot be zero when based on Weight in row #{}".format(
+                            row.idx
+                        )
+                    )
+                )
 
     def before_insert(self):
         self.status = "Draft"
@@ -44,18 +61,19 @@ class BookingOrder(Document):
         self.payment_status = None
 
     def on_submit(self):
-        frappe.get_doc(
-            {
-                "doctype": "Booking Log",
-                "posting_datetime": self.booking_datetime,
-                "booking_order": self.name,
-                "station": self.source_station,
-                "activity": "Booked",
-                "no_of_packages": self.no_of_packages,
-                "weight_actual": self.weight_actual,
-                "goods_value": self.goods_value,
-            }
-        ).insert(ignore_permissions=True)
+        for row in self.freight:
+            frappe.get_doc(
+                {
+                    "doctype": "Booking Log",
+                    "posting_datetime": self.booking_datetime,
+                    "booking_order": self.name,
+                    "station": self.source_station,
+                    "activity": "Booked",
+                    "no_of_packages": row.no_of_packages,
+                    "weight_actual": row.weight_actual,
+                    "bo_detail": row.name,
+                }
+            ).insert(ignore_permissions=True)
         if self.auto_bill_to:
             frappe.flags.args = {
                 "bill_to": self.auto_bill_to.lower(),
