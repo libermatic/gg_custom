@@ -31,10 +31,10 @@ class LoadingOperation(Document):
 
     def before_save(self):
         for load in self.on_loads + self.off_loads:
-            no_of_packages, weight_actual, goods_value = frappe.get_cached_value(
-                "Booking Order",
-                load.booking_order,
-                ["no_of_packages", "weight_actual", "goods_value"],
+            no_of_packages, weight_actual = frappe.get_cached_value(
+                "Booking Order Freight Detail",
+                load.bo_detail,
+                ["no_of_packages", "weight_actual"],
             )
             conversion_factor = get_loading_conversion_factor(
                 load.qty, load.loading_unit, no_of_packages, weight_actual
@@ -44,9 +44,8 @@ class LoadingOperation(Document):
 
             load.no_of_packages = no_of_packages * conversion_factor
             load.weight_actual = weight_actual * conversion_factor
-            load.goods_value = goods_value * conversion_factor
 
-        for param in ["no_of_packages", "weight_actual", "goods_value"]:
+        for param in ["no_of_packages", "weight_actual"]:
             for direction in ["on_load", "off_load"]:
                 field = "{}_{}".format(direction, param)
                 table = self.get("{}s".format(direction))
@@ -147,14 +146,12 @@ class LoadingOperation(Document):
         self._validate_dupe_bo("on_loads")
         self._validate_dupe_bo("off_loads")
 
-        get_map = compose(valmap(first), groupby("booking_order"))
+        get_map = compose(valmap(first), groupby("bo_detail"))
 
         def check_qty(orders, row):
             if row.get("loading_unit") == "Weight":
-                return row.qty > orders.get(row.booking_order, {}).get(
-                    "weight_actual", 0
-                )
-            return row.qty > orders.get(row.booking_order, {}).get("no_of_packages", 0)
+                return row.qty > orders.get(row.bo_detail, {}).get("weight_actual", 0)
+            return row.qty > orders.get(row.bo_detail, {}).get("no_of_packages", 0)
 
         on_loads_orders = get_map(get_orders_for(station=self.station))
         on_load_rows_with_invalid_qty = [
@@ -183,16 +180,12 @@ class LoadingOperation(Document):
             )
 
     def _validate_dupe_bo(self, field):
-        booking_orders = [x.booking_order for x in self.get(field, [])]
-        dupes = [
-            x
-            for x in set(booking_orders)
-            if len([y for y in booking_orders if y == x]) > 1
-        ]
+        rows = [(x.bo_detail) for x in self.get(field, [])]
+        dupes = [x for x in set(rows) if len([y for y in rows if y == x]) > 1]
         if dupes:
             frappe.throw(
                 frappe._(
-                    "Duplicate Booking Orders found in rows # {}".format(
+                    "Duplicate Booking Orders with same Freight Detail found in rows # {}".format(
                         ", ".join(
                             [
                                 frappe.utils.cstr(row.idx)
@@ -222,6 +215,6 @@ class LoadingOperation(Document):
                 "loading_unit": load.loading_unit,
                 "no_of_packages": direction * load.no_of_packages,
                 "weight_actual": direction * load.weight_actual,
-                "goods_value": direction * load.goods_value,
+                "bo_detail": load.bo_detail,
             }
         ).insert(ignore_permissions=True)

@@ -336,15 +336,18 @@ def get_orders_for(station=None, shipping_order=None):
         return get_result(
             """
                 SELECT
-                    booking_order,
-                    MAX(loading_unit) AS loading_unit,
-                    SUM(no_of_packages) AS no_of_packages,
-                    SUM(weight_actual) AS weight_actual,
-                    SUM(goods_value) AS goods_value
-                FROM `tabBooking Log`
-                WHERE station = %(station)s
-                GROUP BY booking_order HAVING
-                    SUM(no_of_packages) > 0 OR SUM(weight_actual) > 0
+                    bl.booking_order,
+                    MAX(bl.loading_unit) AS loading_unit,
+                    SUM(bl.no_of_packages) AS no_of_packages,
+                    SUM(bl.weight_actual) AS weight_actual,
+                    bl.bo_detail,
+                    bofd.item_description AS description
+                FROM `tabBooking Log` AS bl
+                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
+                    bofd.name = bl.bo_detail
+                WHERE bl.station = %(station)s
+                GROUP BY bl.bo_detail HAVING
+                    SUM(bl.no_of_packages) > 0 OR SUM(bl.weight_actual) > 0
             """,
             values={"station": station},
             as_dict=1,
@@ -354,15 +357,18 @@ def get_orders_for(station=None, shipping_order=None):
         return get_result(
             """
                 SELECT
-                    booking_order,
-                    MAX(loading_unit) AS loading_unit,
-                    -SUM(no_of_packages) AS no_of_packages,
-                    -SUM(weight_actual) AS weight_actual,
-                    -SUM(goods_value) AS goods_value
-                FROM `tabBooking Log`
-                WHERE shipping_order = %(shipping_order)s
-                GROUP BY booking_order HAVING
-                    SUM(no_of_packages) < 0 OR SUM(weight_actual) < 0
+                    bl.booking_order,
+                    MAX(bl.loading_unit) AS loading_unit,
+                    -SUM(bl.no_of_packages) AS no_of_packages,
+                    -SUM(bl.weight_actual) AS weight_actual,
+                    bl.bo_detail,
+                    bofd.item_description AS description
+                FROM `tabBooking Log` AS bl
+                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
+                    bofd.name = bl.bo_detail
+                WHERE bl.shipping_order = %(shipping_order)s
+                GROUP BY bl.bo_detail HAVING
+                    SUM(bl.no_of_packages) < 0 OR SUM(bl.weight_actual) < 0
             """,
             values={"shipping_order": shipping_order},
             as_dict=1,
@@ -372,18 +378,22 @@ def get_orders_for(station=None, shipping_order=None):
 
 
 @frappe.whitelist()
-def get_order_details(name, station=None, shipping_order=None):
+def get_order_details(bo_detail, station=None, shipping_order=None):
     if station:
         return frappe.db.sql(
             """
                 SELECT
-                    SUM(no_of_packages) AS no_of_packages,
-                    SUM(weight_actual) AS weight_actual,
-                    SUM(goods_value) AS goods_value
-                FROM `tabBooking Log`
-                WHERE station = %(station)s AND booking_order=%(booking_order)s
+                    SUM(bl.no_of_packages) AS no_of_packages,
+                    SUM(bl.weight_actual) AS weight_actual,
+                    bofd.item_description AS description
+                FROM `tabBooking Log` AS bl
+                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
+                    bofd.name = bl.bo_detail
+                WHERE
+                    bl.station = %(station)s AND
+                    bl.bo_detail = %(bo_detail)s
             """,
-            values={"station": station, "booking_order": name},
+            values={"station": station, "bo_detail": bo_detail,},
             as_dict=1,
         )[0]
 
@@ -393,11 +403,15 @@ def get_order_details(name, station=None, shipping_order=None):
                 SELECT
                     -SUM(no_of_packages) AS no_of_packages,
                     -SUM(weight_actual) AS weight_actual,
-                    -SUM(goods_value) AS goods_value
-                FROM `tabBooking Log`
-                WHERE shipping_order = %(shipping_order)s AND booking_order=%(booking_order)s
+                    bofd.item_description AS description
+                FROM `tabBooking Log` AS bl
+                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
+                    bofd.name = bl.bo_detail
+                WHERE
+                    bl.shipping_order = %(shipping_order)s AND
+                    bl.bo_detail = %(bo_detail)s
             """,
-            values={"shipping_order": shipping_order, "booking_order": name},
+            values={"shipping_order": shipping_order, "bo_detail": bo_detail,},
             as_dict=1,
         )[0]
 
