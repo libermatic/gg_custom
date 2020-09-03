@@ -13,25 +13,20 @@ export function booking_order_freight_detail() {
       const { freight_items = {} } = frappe.boot;
       const { based_on } = frappe.get_doc(cdt, cdn);
       const { rate = 0 } = freight_items[based_on] || {};
-      frappe.model.set_value(cdt, cdn, 'qty', 0);
+      ['no_of_packages', 'weight_actual', 'weight_charged'].forEach((field) =>
+        frappe.model.set_value(cdt, cdn, field, 0)
+      );
       frappe.model.set_value(cdt, cdn, 'rate', rate);
     },
-    qty: async function (frm, cdt, cdn) {
-      const no_of_packages = sumBy(
-        frm.doc.freight.filter((x) => x.based_on === 'Packages'),
-        'qty'
-      );
-      const weight_charged = sumBy(
-        frm.doc.freight.filter((x) => x.based_on === 'Weight'),
-        'qty'
-      );
-      await frm.set_value({
-        no_of_packages,
-        weight_actual: weight_charged,
-        weight_charged,
-      });
-      set_freight_amount(frm, cdt, cdn);
+    no_of_packages: set_total('no_of_packages'),
+    weight_actual: function (frm, cdt, cdn) {
+      set_total('weight_actual')(frm, cdt, cdn);
+      const { weight_actual, weight_charged } = frappe.get_doc(cdt, cdn);
+      if (!weight_charged) {
+        frappe.model.set_value(cdt, cdn, 'weight_charged', weight_actual);
+      }
     },
+    weight_charged: set_total('weight_charged'),
     rate: set_freight_amount,
     amount: function (frm, cdt, cdn) {
       const freight_total = sumBy(frm.doc.freight, 'amount');
@@ -177,8 +172,25 @@ async function update_party_details(frm) {
 }
 
 function set_freight_amount(frm, cdt, cdn) {
-  const { qty = 0, rate = 0 } = frappe.get_doc(cdt, cdn);
+  const {
+    based_on,
+    no_of_packages = 0,
+    weight_charged = 0,
+    rate = 0,
+  } = frappe.get_doc(cdt, cdn);
+  const qty =
+    based_on === 'Packages'
+      ? no_of_packages
+      : based_on === 'Weight'
+      ? weight_charged
+      : 0;
   frappe.model.set_value(cdt, cdn, 'amount', qty * rate);
+}
+
+function set_total(field) {
+  return function (frm, cdt, cdn) {
+    frm.set_value(field, sumBy(frm.doc.freight, field));
+  };
 }
 
 function set_total_amount(frm) {
@@ -256,7 +268,6 @@ function create_payment(frm) {
 
 function handle_deliver(frm) {
   return async function () {
-    console.log(get_qty());
     const dialog = new frappe.ui.Dialog({
       title: 'Deliver',
       fields: [

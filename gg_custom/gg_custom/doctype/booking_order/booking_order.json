@@ -170,7 +170,7 @@
    "fieldname": "no_of_packages",
    "fieldtype": "Int",
    "label": "No of Packages",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "packing",
@@ -184,7 +184,8 @@
   {
    "fieldname": "weight_actual",
    "fieldtype": "Float",
-   "label": "Weight Actual"
+   "label": "Weight Actual",
+   "read_only": 1
   },
   {
    "fieldname": "weight_charged",
@@ -275,7 +276,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2020-08-22 20:06:47.241932",
+ "modified": "2020-09-03 07:45:42.281712",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",
