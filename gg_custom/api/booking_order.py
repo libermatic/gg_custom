@@ -93,10 +93,11 @@ def get_history(name):
             "activity",
             "loading_operation",
             "loading_unit",
-            "no_of_packages",
-            "weight_actual",
+            "sum(no_of_packages) as no_of_packages",
+            "sum(weight_actual) as weight_actual",
         ],
         order_by="posting_datetime",
+        group_by="posting_datetime,activity",
     )
 
     get_shipping_logs = compose(
