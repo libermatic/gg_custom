@@ -3,53 +3,6 @@ import sumBy from 'lodash/sumBy';
 import { set_charge_type_query } from './utils';
 import Timeline from '../vue/Timeline.vue';
 
-function set_address(party_type) {
-  const address_field = `${party_type}_address`;
-  return async function (frm) {
-    if (frm.doc[party_type]) {
-      const { message: { primary_address } = {} } = await frappe.db.get_value(
-        'Booking Party',
-        frm.doc[party_type],
-        'primary_address'
-      );
-      frm.set_value(address_field, primary_address);
-    } else {
-      frm.set_value(address_field, null);
-    }
-  };
-}
-
-function set_address_dispay(party_type) {
-  const address_field = `${party_type}_address`;
-  const display_field = `${party_type}_address_display`;
-  return async function (frm) {
-    erpnext.utils.get_address_display(frm, address_field, display_field);
-  };
-}
-
-function set_charge_total(frm) {
-  const charge_total = sumBy(frm.doc.charges, 'charge_amount');
-  frm.set_value({ charge_total });
-}
-
-async function update_party_details(frm) {
-  const { message } = await frappe.call({
-    method: 'gg_custom.api.booking_order.update_party_details',
-    args: { name: frm.doc.name },
-  });
-  frm.reload_doc();
-}
-
-function set_freight_amount(frm, cdt, cdn) {
-  const { qty = 0, rate = 0 } = frappe.get_doc(cdt, cdn);
-  frappe.model.set_value(cdt, cdn, 'amount', qty * rate);
-}
-
-function set_total_amount(frm) {
-  const { freight_total, charge_total } = frm.doc;
-  frm.set_value('total_amount', freight_total + charge_total);
-}
-
 export function booking_order_freight_detail() {
   return {
     freight_add: function (frm, cdt, cdn) {
@@ -184,6 +137,53 @@ export function booking_order_listview_settings() {
       return [__(status), status_color[status] || 'grey', `status,=,${status}`];
     },
   };
+}
+
+function set_address(party_type) {
+  const address_field = `${party_type}_address`;
+  return async function (frm) {
+    if (frm.doc[party_type]) {
+      const { message: { primary_address } = {} } = await frappe.db.get_value(
+        'Booking Party',
+        frm.doc[party_type],
+        'primary_address'
+      );
+      frm.set_value(address_field, primary_address);
+    } else {
+      frm.set_value(address_field, null);
+    }
+  };
+}
+
+function set_address_dispay(party_type) {
+  const address_field = `${party_type}_address`;
+  const display_field = `${party_type}_address_display`;
+  return async function (frm) {
+    erpnext.utils.get_address_display(frm, address_field, display_field);
+  };
+}
+
+function set_charge_total(frm) {
+  const charge_total = sumBy(frm.doc.charges, 'charge_amount');
+  frm.set_value({ charge_total });
+}
+
+async function update_party_details(frm) {
+  const { message } = await frappe.call({
+    method: 'gg_custom.api.booking_order.update_party_details',
+    args: { name: frm.doc.name },
+  });
+  frm.reload_doc();
+}
+
+function set_freight_amount(frm, cdt, cdn) {
+  const { qty = 0, rate = 0 } = frappe.get_doc(cdt, cdn);
+  frappe.model.set_value(cdt, cdn, 'amount', qty * rate);
+}
+
+function set_total_amount(frm) {
+  const { freight_total, charge_total } = frm.doc;
+  frm.set_value('total_amount', freight_total + charge_total);
 }
 
 function render_dashboard(frm, dashboard_info) {
