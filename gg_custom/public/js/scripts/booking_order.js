@@ -57,14 +57,7 @@ export function booking_order() {
     },
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {
-        const { status, current_station, destination_station } = frm.doc;
-        if (
-          frm.doc.__onload &&
-          frm.doc.__onload.deliverable &&
-          frm.doc.__onload.deliverable.qty
-        ) {
-          frm.add_custom_button('Deliver', handle_deliver(frm));
-        }
+        frm.add_custom_button('Deliver', handle_deliver(frm));
 
         frm
           .add_custom_button('Create Invoice', () => create_invoice(frm))
@@ -272,25 +265,52 @@ function handle_deliver(frm) {
       title: 'Deliver',
       fields: [
         {
+          fieldtype: 'Select',
+          fieldname: 'bo_detail',
+          options: ['', ...frm.doc.freight.map((x) => x.name)],
+          reqd: 1,
+          label: 'Freight Row',
+          change: async function () {
+            const cdn = this.get_value();
+            const { item_description } =
+              frappe.get_doc('Booking Order Freight Detail', cdn) || {};
+            dialog.set_value('item_description', item_description);
+            const {
+              message: { qty, unit },
+            } = await frappe.call({
+              method: 'gg_custom.api.booking_order.get_deliverable',
+              args: { bo_detail: cdn, station: frm.doc.destination_station },
+            });
+            dialog.set_value('unit', unit);
+            dialog.set_value('qty', qty);
+          },
+        },
+        { fieldtype: 'Column Break' },
+        {
+          fieldtype: 'Small Text',
+          fieldname: 'item_description',
+          read_only: 1,
+          label: 'Description',
+        },
+        { fieldtype: 'Section Break' },
+        {
           fieldtype: 'Data',
           fieldname: 'unit',
           read_only: 1,
           label: 'Unit',
-          default: frm.doc.__onload.deliverable.unit,
         },
         {
           fieldtype: 'Int',
           fieldname: 'qty',
           reqd: 1,
           label: 'Qty',
-          default: frm.doc.__onload.deliverable.qty,
         },
       ],
     });
     dialog.set_primary_action('OK', async function () {
       try {
-        const { unit, qty } = dialog.get_values();
-        await frm.call('deliver', { unit, qty });
+        const { bo_detail, qty, unit } = dialog.get_values();
+        await frm.call('deliver', { bo_detail, qty, unit });
         frm.reload_doc();
         dialog.hide();
       } finally {

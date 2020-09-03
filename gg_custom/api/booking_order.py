@@ -480,14 +480,21 @@ def get_loading_conversion_factor(qty, unit, no_of_packages, weight_actual):
 
 
 @frappe.whitelist()
-def get_description_options(booking_order):
-    return [
-        x[0]
-        for x in frappe.get_all(
-            "Booking Order Freight Detail",
-            filters={"parent": booking_order},
-            fields=["item_description"],
-            as_list=1,
-        )
-    ]
+def get_deliverable(bo_detail, station):
+    result = frappe.get_all(
+        "Booking Log",
+        filters={"bo_detail": bo_detail, "station": station},
+        fields=[
+            "sum(no_of_packages) as no_of_packages",
+            "sum(weight_actual) as weight_actual",
+            "max(loading_unit) as unit",
+        ],
+    )[0]
 
+    if result:
+        if result.get("unit") == "Packages":
+            return merge(result, {"qty": result.get("no_of_packages")})
+        if result.get("unit") == "Weight":
+            return merge(result, {"qty": result.get("weight_actual")})
+
+    return {"qty": 0, "unit": None}
