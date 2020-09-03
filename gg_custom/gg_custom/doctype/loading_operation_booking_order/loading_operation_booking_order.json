@@ -1,22 +1,19 @@
 {
  "creation": "2020-07-08 22:29:05.576609",
  "doctype": "DocType",
- "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "booking_order",
-  "description",
+  "bo_detail",
   "loading_unit",
   "qty",
   "available",
-  "no_of_packages",
-  "weight_actual",
-  "goods_value",
   "column_break_5",
+  "description",
   "consignee",
   "consignee_name",
-  "ref_sec",
-  "bo_detail"
+  "no_of_packages",
+  "weight_actual"
  ],
  "fields": [
   {
@@ -37,13 +34,6 @@
    "fieldname": "weight_actual",
    "fieldtype": "Float",
    "label": "Weight Actual",
-   "read_only": 1
-  },
-  {
-   "fieldname": "goods_value",
-   "fieldtype": "Currency",
-   "label": "Goods Value",
-   "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
@@ -88,30 +78,25 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "ref_sec",
-   "fieldtype": "Section Break",
-   "label": "References"
-  },
-  {
    "fieldname": "bo_detail",
-   "fieldtype": "Data",
-   "hidden": 1,
+   "fieldtype": "Link",
    "label": "BO Detail",
    "no_copy": 1,
+   "options": "Booking Order Freight Detail",
    "print_hide": 1,
-   "read_only": 1
+   "reqd": 1
   },
   {
    "fieldname": "description",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Description",
-   "reqd": 1
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2020-09-01 20:45:35.526416",
+ "modified": "2020-09-03 13:15:19.721741",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation Booking Order",
