@@ -175,8 +175,18 @@ def get_history(name):
 
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None):
-    bill_to = frappe.flags.args and frappe.flags.args.get("bill_to")
-    taxes_and_charges = frappe.flags.args and frappe.flags.args.get("taxes_and_charges")
+    if not frappe.flags.args:
+        frappe.throw(frappe._("args missing will trying to create Sales Invoice"))
+
+    bill_to = frappe.flags.args.get("bill_to")
+    taxes_and_charges = frappe.flags.args.get("taxes_and_charges")
+    is_freight_invoice = frappe.flags.args.get("is_freight_invoice")
+    loading_operation = frappe.flags.args.get("loading_operation")
+
+    if is_freight_invoice and not loading_operation:
+        frappe.throw(
+            frappe._("Cannot create freight Sales Invoice without Loading Operation")
+        )
 
     def set_invoice_missing_values(source, target):
         target.customer = _get_or_create_customer(source_name, bill_to)
@@ -206,46 +216,80 @@ def make_sales_invoice(source_name, target_doc=None):
                 )
             )
 
+    def get_qty_field(based_on):
+        if based_on == "Packages":
+            return "no_of_packages"
+        if based_on == "Weight":
+            return "weight_actual"
+
     def postprocess(source, target):
-        items = [dissoc(x.as_dict(), "idx") for x in target.items]
+        if not is_freight_invoice:
+            return set_invoice_missing_values(source, target)
+
+        freight_rows = frappe.db.sql(
+            """
+                SELECT
+                    bofd.name AS bo_detail,
+                    lobo.no_of_packages,
+                    lobo.weight_actual,
+                    bofd.based_on,
+                    bofd.rate,
+                    bofd.item_description
+                FROM `tabLoading Operation Booking Order` AS lobo
+                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
+                    bofd.name = lobo.bo_detail
+                WHERE lobo.parent = %(loading_operation)s
+                ORDER BY bofd.idx, lobo.idx
+            """,
+            values={"loading_operation": loading_operation},
+            as_dict=1,
+        )
+
+        target.gg_loading_operation = loading_operation
         target.items = []
         freight_rates = get_freight_rates()
-        for row in source.freight:
-            freight_item = freight_rates.get(row.get("based_on")) or {}
+        for row in freight_rows:
+            based_on = row.get("based_on")
+            freight_item = freight_rates.get(based_on) or {}
             target.append(
                 "items",
                 {
                     "item_code": freight_item.get("item_code"),
                     "price_list_rate": freight_item.get("rate"),
-                    "qty": row.get("qty"),
+                    "qty": row.get(get_qty_field(based_on)),
                     "rate": row.get("rate"),
                     "stock_uom": freight_item.get("uom"),
                     "uom": freight_item.get("uom"),
                     "description": row.get("item_description"),
+                    "gg_bo_detail": row.get("bo_detail"),
                 },
             )
 
-        for row in items:
-            target.append("items", merge(row, {"qty": 1}))
+        return set_invoice_missing_values(source, target)
 
-        set_invoice_missing_values(source, target)
-
-    return frappe.model.mapper.get_mapped_doc(
-        "Booking Order",
-        source_name,
-        {
+    def get_table_maps():
+        common = {
             "Booking Order": {
                 "doctype": "Sales Invoice",
-                "fieldmap": {"name": "px_booking_order"},
+                "fieldmap": {"name": "gg_booking_order"},
                 "validation": {"docstatus": ["=", 1]},
             },
-            "Booking Order Charge": {
-                "doctype": "Sales Invoice Item",
-                "field_map": {"charge_type": "item_code", "charge_amount": "rate"},
+        }
+        if is_freight_invoice:
+            return common
+
+        return merge(
+            common,
+            {
+                "Booking Order Charge": {
+                    "doctype": "Sales Invoice Item",
+                    "field_map": {"charge_type": "item_code", "charge_amount": "rate"},
+                },
             },
-        },
-        target_doc,
-        postprocess,
+        )
+
+    return frappe.model.mapper.get_mapped_doc(
+        "Booking Order", source_name, get_table_maps(), target_doc, postprocess,
     )
 
 

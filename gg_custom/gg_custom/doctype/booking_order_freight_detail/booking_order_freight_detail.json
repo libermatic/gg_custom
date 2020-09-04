@@ -71,11 +71,12 @@
   {
    "fieldname": "weight_charged",
    "fieldtype": "Float",
-   "label": "Weight Charged"
+   "label": "Weight Charged",
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2020-09-03 12:57:50.758050",
+ "modified": "2020-09-05 03:02:14.904876",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order Freight Detail",

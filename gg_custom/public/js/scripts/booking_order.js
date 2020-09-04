@@ -21,10 +21,8 @@ export function booking_order_freight_detail() {
     no_of_packages: set_total('no_of_packages'),
     weight_actual: function (frm, cdt, cdn) {
       set_total('weight_actual')(frm, cdt, cdn);
-      const { weight_actual, weight_charged } = frappe.get_doc(cdt, cdn);
-      if (!weight_charged) {
-        frappe.model.set_value(cdt, cdn, 'weight_charged', weight_actual);
-      }
+      const { weight_actual } = frappe.get_doc(cdt, cdn);
+      frappe.model.set_value(cdt, cdn, 'weight_charged', weight_actual);
     },
     weight_charged: set_total('weight_charged'),
     rate: set_freight_amount,
@@ -229,6 +227,24 @@ function create_invoice(frm) {
           },
         ],
         default: 'consignor',
+      },
+      {
+        fieldtype: 'Check',
+        fieldname: 'is_freight_invoice',
+        label: __('Is Freight Invoice'),
+      },
+      {
+        fieldtype: 'Link',
+        fieldname: 'loading_operation',
+        label: __('Loading Operation'),
+        options: 'Loading Operation',
+        depends_on: 'is_freight_invoice',
+        get_query: function () {
+          return {
+            query: 'gg_custom.api.loading_operation.query',
+            filters: { booking_order: frm.doc.name },
+          };
+        },
       },
       {
         fieldtype: 'Link',
