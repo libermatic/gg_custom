@@ -17,7 +17,7 @@ fixtures = [
         "doctype": "Custom Field",
         "filters": {
             "fieldname": ("like", "gg_%"),
-            "dt": ("in", ["Sales Invoice", "Item"]),
+            "dt": ("in", ["Sales Invoice", "Sales Invoice Item", "Item"]),
         },
     },
 ]
