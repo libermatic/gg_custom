@@ -176,7 +176,7 @@ def get_history(name):
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None):
     if not frappe.flags.args:
-        frappe.throw(frappe._("args missing will trying to create Sales Invoice"))
+        frappe.throw(frappe._("args missing while trying to create Sales Invoice"))
 
     bill_to = frappe.flags.args.get("bill_to")
     taxes_and_charges = frappe.flags.args.get("taxes_and_charges")

@@ -9,13 +9,18 @@ import frappe
 from frappe.model.document import Document
 from toolz.curried import compose, valmap, first, groupby, merge
 
-from gg_custom.api.booking_order import get_orders_for, get_loading_conversion_factor
+from gg_custom.api.booking_order import (
+    get_orders_for,
+    get_loading_conversion_factor,
+    make_sales_invoice,
+)
 
 
 class LoadingOperation(Document):
     def validate(self):
         self._validate_shipping_order()
         self._validate_booking_orders()
+        self._validate_invoice_params()
 
     def get_on_loads(self):
         self.on_loads = []
@@ -64,6 +69,8 @@ class LoadingOperation(Document):
                 bo.status = "In Progress"
                 bo.save(ignore_permissions=True)
 
+        self._create_sales_invoices()
+
         frappe.get_doc(
             {
                 "doctype": "Shipping Log",
@@ -85,6 +92,8 @@ class LoadingOperation(Document):
                 log_type, filters={"loading_operation": self.name}, as_list=1
             ):
                 frappe.delete_doc(log_type, log_name, ignore_permissions=True)
+
+        self._cancel_sales_invoices()
 
         for load in self.on_loads:
             bo = frappe.get_cached_doc("Booking Order", load.booking_order)
@@ -117,10 +126,9 @@ class LoadingOperation(Document):
         #     )
 
     def _validate_collected_booking_orders(self):
-        for bo_name in [x.booking_order for x in self.on_loads + self.off_loads]:
-            if frappe.db.exists(
-                "Booking Log", {"booking_order": bo_name, "activity": "Collected"}
-            ):
+        for bo_name in set(x.booking_order for x in self.on_loads + self.off_loads):
+            status = frappe.get_cached_value("Booking Order", bo_name, "status")
+            if status == "Collected":
                 frappe.throw(
                     frappe._(
                         "Cannot cancel this Loading Operation contains "
@@ -197,6 +205,20 @@ class LoadingOperation(Document):
                 )
             )
 
+    def _validate_invoice_params(self):
+        for booking_order, items in groupby(
+            "booking_order", [x.as_dict() for x in self.on_loads]
+        ).items():
+            if len(set([x.get("auto_bill_to") for x in items])) > 1:
+                frappe.throw(
+                    frappe._(
+                        "Invalid Auto Bill To selected in rows # {} for Booking Order {}".format(
+                            ", ".join([frappe.utils.cstr(x.get("idx")) for x in items]),
+                            booking_order,
+                        )
+                    )
+                )
+
     def _create_booking_log(self, load):
         if load.parentfield not in ["on_loads", "off_loads"]:
             frappe.throw(frappe._("Invalid Loading Operation load"))
@@ -218,3 +240,27 @@ class LoadingOperation(Document):
                 "bo_detail": load.bo_detail,
             }
         ).insert(ignore_permissions=True)
+
+    def _create_sales_invoices(self):
+        booking_orders = set(
+            [(x.booking_order, x.auto_bill_to) for x in self.on_loads if x.auto_bill_to]
+        )
+        for booking_order, auto_bill_to in booking_orders:
+            frappe.flags.args = {
+                "bill_to": auto_bill_to.lower(),
+                "taxes_and_charges": None,
+                "is_freight_invoice": 1,
+                "loading_operation": self.name,
+            }
+            invoice = make_sales_invoice(booking_order)
+            invoice.insert(ignore_permissions=True)
+            invoice.submit()
+
+    def _cancel_sales_invoices(self):
+        for (name,) in frappe.get_all(
+            "Sales Invoice",
+            filters={"docstatus": 1, "gg_loading_operation": self.name},
+            as_list=1,
+        ):
+            invoice = frappe.get_doc("Sales Invoice", name)
+            invoice.cancel()
