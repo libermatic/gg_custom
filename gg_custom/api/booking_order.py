@@ -238,10 +238,14 @@ def make_sales_invoice(source_name, target_doc=None):
                 FROM `tabLoading Operation Booking Order` AS lobo
                 LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
                     bofd.name = lobo.bo_detail
-                WHERE lobo.parent = %(loading_operation)s
+                WHERE lobo.parent = %(loading_operation)s AND
+                    lobo.booking_order = %(booking_order)s
                 ORDER BY bofd.idx, lobo.idx
             """,
-            values={"loading_operation": loading_operation},
+            values={
+                "loading_operation": loading_operation,
+                "booking_order": source_name,
+            },
             as_dict=1,
         )
 
