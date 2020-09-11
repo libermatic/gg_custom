@@ -112,8 +112,8 @@ def get_manifest_rows(shipping_order):
                 lobo.booking_order,
                 lobo.loading_unit,
                 lobo.qty,
-                lobo.no_of_packages AS cur_no_of_packages,
-                lobo.weight_actual AS cur_weight_actual,
+                SUM(lobo.no_of_packages) AS cur_no_of_packages,
+                SUM(lobo.weight_actual) AS cur_weight_actual,
                 GROUP_CONCAT(bofd.item_description SEPARATOR ', ') AS item_description,
                 bo.destination_station,
                 bo.consignee_name,
@@ -125,12 +125,12 @@ def get_manifest_rows(shipping_order):
             LEFT JOIN `tabBooking Order` AS bo ON
                 bo.name = lobo.booking_order
             LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                bofd.parent = bo.name
+                bofd.name = lobo.bo_detail
             WHERE
                 lo.docstatus = 1 AND
                 lobo.parentfield = 'on_loads' AND
                 lo.shipping_order = %(shipping_order)s
-            GROUP BY lobo.name
+            GROUP BY lobo.booking_order
             ORDER BY lo.name, lobo.idx
         """,
         values={"shipping_order": shipping_order},
