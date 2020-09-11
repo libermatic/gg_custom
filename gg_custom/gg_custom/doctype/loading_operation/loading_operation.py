@@ -188,7 +188,7 @@ class LoadingOperation(Document):
             )
 
     def _validate_dupe_bo(self, field):
-        rows = [(x.bo_detail) for x in self.get(field, [])]
+        rows = [x.bo_detail for x in self.get(field, [])]
         dupes = [x for x in set(rows) if len([y for y in rows if y == x]) > 1]
         if dupes:
             frappe.throw(
@@ -198,7 +198,7 @@ class LoadingOperation(Document):
                             [
                                 frappe.utils.cstr(row.idx)
                                 for row in self.get(field)
-                                if row.booking_order in dupes
+                                if row.bo_detail in dupes
                             ]
                         )
                     )
