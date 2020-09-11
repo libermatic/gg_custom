@@ -155,6 +155,7 @@ doc_events = {
 jenv = {
     "methods": [
         "get_manifest_rows:gg_custom.api.shipping_order.get_manifest_rows",
+        "get_freight_summary_rows:gg_custom.api.shipping_order.get_freight_summary_rows",
         "get_party_open_orders:gg_custom.api.booking_party.get_party_open_orders",
     ]
 }

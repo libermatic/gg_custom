@@ -136,3 +136,44 @@ def get_manifest_rows(shipping_order):
         values={"shipping_order": shipping_order},
         as_dict=1,
     )
+
+
+def get_freight_summary_rows(shipping_order):
+    def get_amount(row):
+        rate = row.get("rate") or 0
+        if row.get("based_on") == "Packages":
+            return (row.get("cur_no_of_packages") or 0) * rate
+        if row.get("based_on") == "Weight":
+            return (row.get("cur_weight_actual") or 0) * rate
+        return 0
+
+    return [
+        merge(x, {"amount": get_amount(x)})
+        for x in frappe.db.sql(
+            """
+            SELECT
+                bo.name AS booking_order,
+                bo.consignee_name,
+                bofd.item_description,
+                SUM(lobo.no_of_packages) AS cur_no_of_packages,
+                SUM(lobo.weight_actual) AS cur_weight_actual,
+                bofd.based_on,
+                bofd.rate
+            FROM `tabLoading Operation Booking Order` AS lobo
+            LEFT JOIN `tabLoading Operation` AS lo ON
+                lo.name = lobo.parent
+            LEFT JOIN `tabBooking Order` AS bo ON
+                bo.name = lobo.booking_order
+            LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
+                bofd.name = lobo.bo_detail
+            WHERE
+                lo.docstatus = 1 AND
+                lobo.parentfield = 'on_loads' AND
+                lo.shipping_order = %(shipping_order)s
+            GROUP BY lobo.name
+            ORDER BY lo.name, lobo.idx
+        """,
+            values={"shipping_order": shipping_order},
+            as_dict=1,
+        )
+    ]
