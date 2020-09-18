@@ -97,10 +97,7 @@ def _get_data(filters):
                 SELECT
                     si.name AS sales_invoice,
                     bo.name,
-                    bo.booking_datetime AS order_datetime,
-                    bo.no_of_packages,
-                    bo.weight_charged,
-                    bo.packing
+                    bo.booking_datetime AS order_datetime
                 FROM `tabSales Invoice` AS si
                 LEFT JOIN `tabBooking Order` AS bo ON bo.name = si.gg_booking_order
                 WHERE si.name IN %(invoices)s
@@ -113,19 +110,27 @@ def _get_data(filters):
     )
 
     orders = [v.get("name") for _, v in booking_orders.items()]
-    get_descriptions = compose(groupby("parent"), frappe.db.sql)
-    descriptions = (
-        get_descriptions(
+
+    get_sales_invoice_items = compose(groupby("sales_invoice"), frappe.db.sql)
+    sales_invoice_items = (
+        get_sales_invoice_items(
             """
-                SELECT bofd.parent, bofd.based_on, bofd.item_description, bofd.qty, bofd.rate
-                FROM `tabBooking Order Freight Detail` As bofd
-                LEFT JOIN `tabBooking Order` AS bo ON bo.name = bofd.parent
-                WHERE bo.name IN %(orders)s
+                SELECT
+                    sii.parent AS sales_invoice,
+                    sii.description,
+                    sii.qty,
+                    sii.rate,
+                    bofd.based_on,
+                    IFNULL(sii.gg_bo_detail, '') != '' AS is_freight_item
+                FROM `tabSales Invoice Item` AS sii
+                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
+                    bofd.name = sii.gg_bo_detail
+                WHERE sii.parent IN %(invoices)s
             """,
-            values={"orders": orders},
+            values={"invoices": invoices},
             as_dict=1,
         )
-        if orders
+        if invoices
         else {}
     )
 
@@ -143,22 +148,32 @@ def _get_data(filters):
         else {}
     )
 
-    def make_message(freight):
-        # return freight.get("item_description")
+    def make_message(item):
         rate = frappe.utils.fmt_money(
-            freight.get("rate"), currency=frappe.defaults.get_global_default("currency")
-        )
-        if freight.get("based_on") == "Weight":
-            return "{} by weight @ {} - {}".format(
-                freight.get("qty"), rate, freight.get("item_description")
-            )
-
-        return "{} packages @ {} - {}".format(
-            freight.get("qty"), rate, freight.get("item_description")
+            item.get("rate"), currency=frappe.defaults.get_global_default("currency")
         )
 
-    def make_description(bo):
-        return "<br />".join([make_message(x) for x in descriptions.get(bo, [])])
+        if item.get("is_freight_item"):
+            if item.get("based_on") == "Weight":
+                return "{} by weight @ {} - {}".format(
+                    item.get("qty"), rate, item.get("description")
+                )
+
+            if item.get("based_on") == "Packages":
+                return "{} packages @ {} - {}".format(
+                    item.get("qty"), rate, item.get("description")
+                )
+
+        return "{} @ {}".format(item.get("description"), rate)
+
+    def make_description(si):
+        return "<br />".join(
+            [
+                make_message(x)
+                for x in sales_invoice_items.get(si, [])
+                if x.get("qty") and x.get("rate")
+            ]
+        )
 
     def make_delivery_date(bo):
         return ", ".join(
@@ -181,7 +196,7 @@ def _get_data(filters):
             {
                 "amount": row.get("debit") - row.get("credit"),
                 "booking_order": bo_name,
-                "description": make_description(bo_name)
+                "description": make_description(row.get("voucher_no"))
                 if row.get("voucher_type") == "Sales Invoice"
                 else row.get("remarks"),
                 "order_date": frappe.format_value(order_date, {"fieldtype": "Date"})
