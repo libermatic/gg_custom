@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import frappe
 import json
-from toolz.curried import compose, merge, concatv, map, filter
+from toolz.curried import compose, merge, concatv, groupby, valmap, first, map, filter
 
 
 @frappe.whitelist()
@@ -145,12 +145,10 @@ def get_freight_summary_rows(shipping_order):
             return (row.get("cur_no_of_packages") or 0) * rate
         if row.get("based_on") == "Weight":
             return (row.get("cur_weight_actual") or 0) * rate
-        return 0
+        return row.get("amount") or 0
 
-    return [
-        merge(x, {"amount": get_amount(x)})
-        for x in frappe.db.sql(
-            """
+    freight_rows = frappe.db.sql(
+        """
             SELECT
                 bo.name AS booking_order,
                 bo.consignee_name,
@@ -173,7 +171,70 @@ def get_freight_summary_rows(shipping_order):
             GROUP BY lobo.name
             ORDER BY lo.name, lobo.idx
         """,
-            values={"shipping_order": shipping_order},
+        values={"shipping_order": shipping_order},
+        as_dict=1,
+    )
+
+    booking_orders = set([x.get("booking_order") for x in freight_rows])
+
+    get_first_loaded_booking_orders = compose(
+        list, map(lambda x: x.get("booking_order")), frappe.db.sql,
+    )
+    first_loaded_booking_orders = (
+        get_first_loaded_booking_orders(
+            """
+                SELECT
+                    lobo.booking_order,
+                    lo.shipping_order
+                FROM `tabLoading Operation Booking Order` AS lobo
+                LEFT JOIN `tabLoading Operation` AS lo ON
+                    lo.name = lobo.parent
+                LEFT JOIN `tabBooking Order Charge` AS boc ON
+                    boc.parent = lobo.booking_order
+                WHERE
+                    lo.docstatus = 1 AND
+                    lobo.parentfield = 'on_loads' AND
+                    lobo.booking_order IN %(booking_orders)s
+                GROUP by lobo.booking_order
+                HAVING lo.shipping_order = %(shipping_order)s
+                ORDER BY lo.posting_datetime
+            """,
+            values={"booking_orders": booking_orders, "shipping_order": shipping_order},
             as_dict=1,
         )
-    ]
+        if booking_orders
+        else []
+    )
+
+    charges_rows = (
+        frappe.db.sql(
+            """
+                SELECT
+                    bo.name AS booking_order,
+                    bo.consignee_name,
+                    GROUP_CONCAT(boc.charge_type SEPARATOR ', ') AS item_description,
+                    0 AS cur_no_of_packages,
+                    0 AS cur_weight_actual,
+                    '' AS based_on,
+                    0 AS rate,
+                    SUM(boc.charge_amount) AS amount
+                FROM `tabBooking Order` AS bo
+                LEFT JOIN `tabBooking Order Charge` AS boc ON
+                    boc.parent = bo.name
+                WHERE
+                    bo.name IN %(booking_orders)s AND
+                    boc.charge_amount > 0
+                GROUP BY bo.name
+            """,
+            values={"booking_orders": first_loaded_booking_orders},
+            as_dict=1,
+        )
+        if first_loaded_booking_orders
+        else []
+    )
+
+    return sorted(
+        [merge(x, {"amount": get_amount(x)}) for x in freight_rows + charges_rows],
+        key=lambda x: x.get("booking_order"),
+    )
+
