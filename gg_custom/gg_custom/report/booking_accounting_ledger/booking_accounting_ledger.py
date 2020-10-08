@@ -49,6 +49,12 @@ def _get_columns(filters):
         },
         {
             "fieldtype": "Data",
+            "fieldname": "paper_receipt_no",
+            "label": "Paper Receipt No",
+            "width": 90,
+        },
+        {
+            "fieldtype": "Data",
             "fieldname": "description",
             "label": "Description",
             "width": 300,
@@ -97,6 +103,7 @@ def _get_data(filters):
                 SELECT
                     si.name AS sales_invoice,
                     bo.name,
+                    bo.paper_receipt_no,
                     bo.booking_datetime AS order_datetime
                 FROM `tabSales Invoice` AS si
                 LEFT JOIN `tabBooking Order` AS bo ON bo.name = si.gg_booking_order
@@ -196,6 +203,7 @@ def _get_data(filters):
             {
                 "amount": row.get("debit") - row.get("credit"),
                 "booking_order": bo_name,
+                "paper_receipt_no": booking_order.get("paper_receipt_no"),
                 "description": make_description(row.get("voucher_no"))
                 if row.get("voucher_type") == "Sales Invoice"
                 else row.get("remarks"),

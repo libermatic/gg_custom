@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "paper_receipt_no",
   "booking_datetime",
   "status",
   "payment_status",
@@ -273,10 +274,15 @@
    "fieldname": "charges_sec",
    "fieldtype": "Section Break",
    "label": "Charges"
+  },
+  {
+   "fieldname": "paper_receipt_no",
+   "fieldtype": "Data",
+   "label": "Paper Receipt No"
   }
  ],
  "is_submittable": 1,
- "modified": "2020-09-03 12:54:50.188513",
+ "modified": "2020-10-08 19:10:54.043995",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",

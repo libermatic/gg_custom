@@ -27,7 +27,10 @@
         <td>
           {% if(data[i].booking_order) { %}
             {%= data[i].booking_order %}
-            <br /> Order Dt: {%= data[i].order_date %}
+            {% if(data[i].paper_receipt_no) { %}
+            ({%= data[i].paper_receipt_no %})
+            {% } %}
+            <br />Order Dt: {%= data[i].order_date %}
             {% if(data[i].delivery_dates) { %}
             ; Delivery Dt: {%= ata[i].delivery_dates %}
             {% } %}
