@@ -1,5 +1,5 @@
 {
- "add_total_row": 1,
+ "add_total_row": 0,
  "creation": "2020-08-22 13:00:55.417251",
  "disable_prepared_report": 0,
  "disabled": 0,
@@ -7,8 +7,7 @@
  "doctype": "Report",
  "idx": 0,
  "is_standard": "Yes",
- "letter_head": "def",
- "modified": "2020-08-22 13:00:55.417251",
+ "modified": "2020-10-08 21:37:34.274202",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Accounting Ledger",

@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
-from erpnext.accounts.report.general_ledger.general_ledger import get_gl_entries
+from erpnext.accounts.report.general_ledger.general_ledger import execute as get_report
 from erpnext.accounts.party import get_party_account
 from toolz.curried import groupby, valmap, first, compose, merge
 
@@ -80,16 +80,21 @@ def _get_data(filters):
         "Booking Party", filters.booking_party, "customer"
     )
     account = get_party_account("Customer", customer, company,)
-    gl_entries = get_gl_entries(
-        {
-            "from_date": filters.get("from_date"),
-            "to_date": filters.get("to_date"),
-            "company": company,
-            "account": account,
-            "party_type": "Customer",
-            "party": [customer],
-        }
+    _, rows = get_report(
+        frappe._dict(
+            {
+                "from_date": filters.get("from_date"),
+                "to_date": filters.get("to_date"),
+                "company": company,
+                "account": account,
+                "party_type": "Customer",
+                "party": [customer],
+                "group_by": frappe._("Group by Voucher (Consolidated)"),
+            }
+        )
     )
+
+    gl_entries = rows[1:-2]
 
     invoices = [
         x.get("voucher_no")
@@ -214,4 +219,14 @@ def _get_data(filters):
             },
         )
 
-    return [make_row(x) for x in gl_entries]
+    def make_ag_row(row, label):
+        return merge(
+            row, {"voucher_type": label, "amount": row.get("debit") - row.get("credit")}
+        )
+
+    return (
+        [make_ag_row(rows[0], "Opening")]
+        + [make_row(x) for x in gl_entries]
+        + [make_ag_row(rows[-2], "Total"), make_ag_row(rows[-1], "Closing")]
+    )
+
