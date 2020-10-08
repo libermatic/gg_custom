@@ -323,6 +323,10 @@ def make_payment_entry(source_name, target_doc=None):
             )
         )
 
+    return get_payment_entry_from_invoices(invoices)
+
+
+def get_payment_entry_from_invoices(invoices):
     pe = get_payment_entry("Sales Invoice", invoices[0].name)
     if len(invoices) > 1:
         outstanding_amount = sum([x.outstanding_amount for x in invoices])

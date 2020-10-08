@@ -1,3 +1,5 @@
+import sumBy from 'lodash/sumBy';
+
 export function booking_party() {
   return {
     setup: function (frm) {
@@ -42,6 +44,15 @@ export function booking_party() {
       if (!frm.doc.__islocal && frm.doc.__onload) {
         erpnext.utils.set_party_dashboard_indicators(frm);
         render_booking_order_links(frm);
+      }
+
+      if (
+        !frm.doc.__islocal &&
+        frm.doc.__onload &&
+        frm.doc.__onload.dashboard_info &&
+        sumBy(frm.doc.__onload.dashboard_info, 'total_unpaid')
+      ) {
+        frm.add_custom_button('Create Payment', () => create_payment(frm));
       }
     },
     primary_address: function (frm) {
@@ -96,4 +107,11 @@ function render_booking_order_links(frm) {
 
   frm.dashboard.links_area.removeClass('hidden');
   frm.dashboard.show();
+}
+
+function create_payment(frm) {
+  frappe.model.open_mapped_doc({
+    method: 'gg_custom.api.booking_party.make_payment_entry',
+    frm,
+  });
 }
