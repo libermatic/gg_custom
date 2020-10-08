@@ -5,7 +5,9 @@
  "engine": "InnoDB",
  "field_order": [
   "charge_type",
-  "charge_amount"
+  "charge_amount",
+  "column_break_3",
+  "item_description"
  ],
  "fields": [
   {
@@ -24,10 +26,19 @@
    "label": "Charge Amount",
    "options": "Company:company:default_currency",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "item_description",
+   "fieldtype": "Small Text",
+   "label": "Item Description"
   }
  ],
  "istable": 1,
- "modified": "2020-07-17 21:05:34.923844",
+ "modified": "2020-10-08 22:04:34.719259",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order Charge",

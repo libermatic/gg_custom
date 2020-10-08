@@ -287,7 +287,11 @@ def make_sales_invoice(source_name, target_doc=None):
             {
                 "Booking Order Charge": {
                     "doctype": "Sales Invoice Item",
-                    "field_map": {"charge_type": "item_code", "charge_amount": "rate"},
+                    "field_map": {
+                        "charge_type": "item_code",
+                        "charge_amount": "rate",
+                        "item_description": "description",
+                    },
                 },
             },
         )
