@@ -66,7 +66,7 @@ class BookingParty(Document):
             address.append(
                 "links", {"link_doctype": doc.doctype, "link_name": doc.name}
             )
-            address.save()
+            address.save(ignore_permissions=True)
 
         self.db_set("customer", doc.name)
         return doc

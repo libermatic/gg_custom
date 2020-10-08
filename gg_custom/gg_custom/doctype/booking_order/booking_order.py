@@ -103,6 +103,7 @@ class BookingOrder(Document):
                         )
                     )
                 )
+            si.flags.ignore_permissions = True
             si.cancel()
 
     def set_totals(self):

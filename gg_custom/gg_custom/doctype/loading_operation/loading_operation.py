@@ -263,4 +263,5 @@ class LoadingOperation(Document):
             as_list=1,
         ):
             invoice = frappe.get_doc("Sales Invoice", name)
+            invoice.flags.ignore_permissions = True
             invoice.cancel()
