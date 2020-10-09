@@ -1,6 +1,6 @@
 {
   "name": "gg_custom",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Customizations for GG",
   "main": "gg_custom/public/js/index.js",
   "scripts": {
