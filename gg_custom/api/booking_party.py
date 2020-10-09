@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 import frappe
-from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 
 from gg_custom.api.booking_order import get_payment_entry_from_invoices
 

@@ -1,9 +1,7 @@
 from __future__ import unicode_literals
 import frappe
 from toolz.curried import (
-    merge,
     compose,
-    concatv,
     valmap,
     first,
     groupby,

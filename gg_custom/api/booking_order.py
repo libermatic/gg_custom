@@ -16,7 +16,6 @@ from toolz.curried import (
     groupby,
     valmap,
     first,
-    dissoc,
     map,
     filter,
 )

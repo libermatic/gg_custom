@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from toolz.curried import merge, compose, excepts, first, map, filter
+from toolz.curried import compose, excepts, first, map, filter
 
 from gg_custom.api.booking_order import (
     get_history,

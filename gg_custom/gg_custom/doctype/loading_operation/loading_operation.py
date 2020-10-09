@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 import json
 import frappe
 from frappe.model.document import Document
-from toolz.curried import compose, valmap, first, groupby, merge
+from toolz.curried import compose, valmap, first, groupby
 
 from gg_custom.api.booking_order import (
     get_orders_for,
