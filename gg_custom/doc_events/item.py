@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import frappe
 
 
-def validate(doc, self):
+def validate(doc, method):
     if doc.gg_freight_based_on:
         existing = frappe.db.exists(
             "Item",

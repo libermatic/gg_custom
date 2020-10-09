@@ -3,13 +3,13 @@ import frappe
 from toolz.curried import compose, unique, map, filter
 
 
-def on_submit(doc, self):
+def on_submit(doc, method):
     _update_booking_orders(
         [x for x in doc.references if x.reference_doctype == "Sales Invoice"]
     )
 
 
-def on_cancel(doc, self):
+def on_cancel(doc, method):
     _update_booking_orders(
         [x for x in doc.references if x.reference_doctype == "Sales Invoice"]
     )

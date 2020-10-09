@@ -15,7 +15,7 @@ from toolz.curried import (
 from gg_custom.api.booking_order import get_freight_rates
 
 
-def validate(doc, self):
+def validate(doc, method):
     def get_error_type():
         if doc.gg_loading_operation:
             existing = frappe.db.exists(
@@ -61,12 +61,12 @@ def validate(doc, self):
             _validate_freight_qty(doc)
 
 
-def on_submit(doc, self):
+def on_submit(doc, method):
     if doc.gg_booking_order:
         _update_booking_order(doc, is_charge=not doc.gg_loading_operation)
 
 
-def on_cancel(doc, self):
+def on_cancel(doc, method):
     if doc.gg_booking_order:
         _update_booking_order(
             doc, is_charge=not doc.gg_loading_operation, is_cancel=True
