@@ -174,7 +174,7 @@ def get_history(name):
 
 
 @frappe.whitelist()
-def make_sales_invoice(source_name, target_doc=None):
+def make_sales_invoice(source_name, target_doc=None, posting_datetime=None):
     if not frappe.flags.args:
         frappe.throw(frappe._("args missing while trying to create Sales Invoice"))
 
@@ -206,6 +206,11 @@ def make_sales_invoice(source_name, target_doc=None):
             )
         target.taxes_and_charges = taxes_and_charges
         target.ignore_pricing_rule = 1
+        if posting_datetime:
+            target.set_posting_time = 1
+            dt = frappe.utils.get_datetime(posting_datetime)
+            target.posting_date = dt.date()
+            target.posting_time = dt.time()
         target.run_method("set_missing_values")
         target.run_method("calculate_taxes_and_totals")
         target.update(get_company_address(target.company))

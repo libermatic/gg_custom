@@ -79,7 +79,9 @@ class BookingOrder(Document):
                 "bill_to": self.auto_bill_to.lower(),
                 "taxes_and_charges": None,
             }
-            invoice = make_sales_invoice(self.name)
+            invoice = make_sales_invoice(
+                self.name, posting_datetime=self.booking_datetime
+            )
             invoice.insert(ignore_permissions=True)
             invoice.submit()
 

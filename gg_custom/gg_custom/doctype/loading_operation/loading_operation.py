@@ -252,7 +252,9 @@ class LoadingOperation(Document):
                 "is_freight_invoice": 1,
                 "loading_operation": self.name,
             }
-            invoice = make_sales_invoice(booking_order)
+            invoice = make_sales_invoice(
+                booking_order, posting_datetime=self.posting_datetime
+            )
             invoice.insert(ignore_permissions=True)
             invoice.submit()
 
