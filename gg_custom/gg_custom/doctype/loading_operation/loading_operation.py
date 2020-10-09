@@ -255,6 +255,7 @@ class LoadingOperation(Document):
             invoice = make_sales_invoice(
                 booking_order, posting_datetime=self.posting_datetime
             )
+            invoice.flags.validate_loading = True
             invoice.insert(ignore_permissions=True)
             invoice.submit()
 

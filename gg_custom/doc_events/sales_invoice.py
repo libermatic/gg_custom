@@ -55,7 +55,7 @@ def validate(doc, method):
                 )
             )
 
-        if doc.gg_loading_operation:
+        if doc.flags.validate_loading and doc.gg_loading_operation:
             _validate_freight_qty(doc)
 
 
@@ -88,41 +88,34 @@ def _update_booking_order(si, is_charge=False, is_cancel=False):
     else:
         bo.payment_status = "Unpaid"
 
-    if is_cancel:
-        return
+    if not is_cancel:
+        if is_charge:
+            _update_charges(bo)
+        else:
+            _update_freight(bo, si)
+        bo.set_totals()
+        bo.flags.ignore_validate_update_after_submit = True
 
-    if is_charge:
-        _update_charges(bo)
-    else:
-        _update_freight(bo, si.gg_loading_operation)
-
-    bo.set_totals()
-    bo.flags.ignore_validate_update_after_submit = True
     bo.save()
 
 
-def _update_freight(bo, loading_operation):
-    invoices = frappe.get_all(
-        "Sales Invoice",
-        filters={
-            "docstatus": 1,
-            "gg_booking_order": bo.name,
-            "gg_loading_operation": loading_operation,
-        },
+def _update_freight(bo, si):
+    get_freight_row = compose(
+        excepts(StopIteration, first, lambda _: None),
+        lambda name: filter(lambda x: x.name == name, bo.freight),
     )
-
-    get_items = compose(valmap(first), groupby("gg_bo_detail"), frappe.get_all)
-    items = get_items(
-        "Sales Invoice Item",
-        filters={"parent": ("in", [x.get("name") for x in invoices])},
-        fields=["item_code", "rate", "description as item_description", "gg_bo_detail"],
-        order_by="parent, idx",
-    )
-    for row in bo.freight:
-        rate = items.get(row.name, {}).get("rate")
-        if row.rate != rate:
-            row.rate = rate
-            row.amount = rate * _get_freight_qty(row)
+    for sii in [x for x in si.items if x.gg_update_freight]:
+        freight = get_freight_row(sii.gg_bo_detail)
+        if freight:
+            freight.based_on = frappe.get_cached_value(
+                "Item", sii.item_code, "gg_freight_based_on"
+            )
+            if freight.based_on == "Packages":
+                freight.no_of_packages = sii.qty
+            elif freight.based_on == "Weight":
+                freight.weight_actual = sii.qty
+            freight.rate = sii.rate
+            freight.amount = sii.amount
 
 
 def _update_charges(bo):
