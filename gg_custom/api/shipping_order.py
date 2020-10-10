@@ -151,6 +151,7 @@ def get_freight_summary_rows(shipping_order):
         """
             SELECT
                 bo.name AS booking_order,
+                bo.consignor_name,
                 bo.consignee_name,
                 bofd.item_description,
                 SUM(lobo.no_of_packages) AS cur_no_of_packages,
@@ -211,6 +212,7 @@ def get_freight_summary_rows(shipping_order):
             """
                 SELECT
                     bo.name AS booking_order,
+                    bo.consignor_name,
                     bo.consignee_name,
                     GROUP_CONCAT(boc.charge_type SEPARATOR ', ') AS item_description,
                     0 AS cur_no_of_packages,
