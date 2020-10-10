@@ -16,6 +16,8 @@ export function shipping_order() {
           ],
         },
       }));
+      frm.set_query('vehicle', (doc) => ({ filters: { disabled: 0 } }));
+      frm.set_query('driver', (doc) => ({ filters: { status: 'Active' } }));
     },
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {
