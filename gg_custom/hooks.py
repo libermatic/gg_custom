@@ -137,11 +137,11 @@ doc_events = {
 
 # Overriding Methods
 # ------------------------------
-#
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "gg_custom.event.get_events"
-# }
-#
+
+override_whitelisted_methods = {
+    "frappe.model.rename_doc.update_document_title": "gg_custom.api.utils.update_document_title"
+}
+
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps

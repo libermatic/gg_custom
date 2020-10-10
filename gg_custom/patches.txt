@@ -1,1 +1,2 @@
 gg_custom.patches.v0_3.handle_orders_by_pkg_or_wt
+gg_custom.patches.v0_4.update_customer_to_booking_party

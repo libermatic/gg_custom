@@ -10,6 +10,8 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from erpnext.selling.doctype.customer.customer import make_address
 from erpnext.accounts.party import get_dashboard_info
 
+from gg_custom.api.booking_party import update_customer
+
 
 class BookingParty(Document):
     def onload(self):
@@ -23,6 +25,7 @@ class BookingParty(Document):
         self.flags.is_new_doc = self.is_new()
 
     def on_update(self):
+        update_customer(self.name)
         if self.flags.is_new_doc and self.get("address_line1"):
             address = make_address(self)
             if self.get("_gstin"):

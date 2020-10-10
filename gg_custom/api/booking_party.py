@@ -44,3 +44,22 @@ def make_payment_entry(source_name, target_doc=None):
     ]
 
     return get_payment_entry_from_invoices(invoices)
+
+
+def update_customer(name):
+    doc = frappe.get_doc("Booking Party", name)
+    if doc and doc.customer:
+        customer = frappe.get_cached_doc("Customer", doc.customer)
+        for booking_party_field, customer_field in [
+            ("booking_party_name", "customer_name"),
+            ("primary_address", "customer_primary_address"),
+        ]:
+            if customer and (
+                customer.get(booking_party_field) != doc.get(booking_party_field)
+            ):
+                frappe.db.set_value(
+                    "Customer",
+                    doc.customer,
+                    customer_field,
+                    doc.get(booking_party_field),
+                )
