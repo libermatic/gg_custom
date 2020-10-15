@@ -116,6 +116,7 @@ def get_manifest_rows(shipping_order):
                 SUM(lobo.weight_actual) AS cur_weight_actual,
                 GROUP_CONCAT(bofd.item_description SEPARATOR ', ') AS item_description,
                 bo.destination_station,
+                bo.consignor_name,
                 bo.consignee_name,
                 bo.no_of_packages,
                 bo.weight_actual
