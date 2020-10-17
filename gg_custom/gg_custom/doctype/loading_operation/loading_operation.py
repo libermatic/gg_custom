@@ -47,8 +47,14 @@ class LoadingOperation(Document):
             if not conversion_factor:
                 frappe.throw(frappe._("Invalid conversion in row {}".format(load.idx)))
 
-            load.no_of_packages = no_of_packages * conversion_factor
-            load.weight_actual = weight_actual * conversion_factor
+            load.no_of_packages = frappe.utils.rounded(
+                no_of_packages * conversion_factor,
+                precision=load.precision("no_of_packages"),
+            )
+            load.weight_actual = frappe.utils.rounded(
+                weight_actual * conversion_factor,
+                precision=load.precision("weight_actual"),
+            )
 
         for param in ["no_of_packages", "weight_actual"]:
             for direction in ["on_load", "off_load"]:
