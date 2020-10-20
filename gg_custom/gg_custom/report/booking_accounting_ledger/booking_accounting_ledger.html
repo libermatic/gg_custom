@@ -35,6 +35,8 @@
             ; Delivery Dt: {%= ata[i].delivery_dates %}
             {% } %}
             <br />{%= data[i].description %}
+          {% } else { %}
+            {%= data[i].description %}
           {% } %}
         </td>
       {% } else { %}
