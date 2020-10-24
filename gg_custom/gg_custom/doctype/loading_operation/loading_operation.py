@@ -91,6 +91,7 @@ class LoadingOperation(Document):
     def before_cancel(self):
         self._validate_shipping_order()
         self._validate_collected_booking_orders()
+        self._validate_paid_booking_orders()
 
     def on_cancel(self):
         for log_type in ["Booking Log", "Shipping Log"]:
@@ -141,6 +142,31 @@ class LoadingOperation(Document):
                         "{} which is already Collected.".format(
                             frappe.get_desk_link("Booking Order", bo_name)
                         )
+                    )
+                )
+
+    def _validate_paid_booking_orders(self):
+        if "System Manager" in frappe.get_roles():
+            return
+
+        bos = list(set(x.booking_order for x in self.on_loads))
+        if bos:
+            paid_invoice_count = frappe.db.sql(
+                """
+                    SELECT COUNT(per.reference_name) FROM `tabPayment Entry Reference` AS per
+                    LEFT JOIN `tabPayment Entry` AS pe ON pe.name = per.parent
+                    LEFT JOIN `tabSales Invoice` AS si ON si.name = per.reference_name
+                    WHERE
+                        pe.docstatus = 1 AND
+                        per.reference_doctype = 'Sales Invoice' AND
+                        si.gg_booking_order IN %(bos)s
+                """,
+                values={"bos": bos},
+            )[0][0]
+            if paid_invoice_count:
+                frappe.throw(
+                    frappe._(
+                        "Cannot cancel this Loading Operation because it contains paid Booking Orders"
                     )
                 )
 
