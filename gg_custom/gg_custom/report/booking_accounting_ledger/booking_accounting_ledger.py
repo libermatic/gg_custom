@@ -34,10 +34,17 @@ def _get_columns(filters):
             "label": "Voucher No",
             "width": 180,
         },
+        {"fieldtype": "Currency", "fieldname": "debit", "label": "Debit", "width": 90,},
         {
             "fieldtype": "Currency",
-            "fieldname": "amount",
-            "label": "Amount",
+            "fieldname": "credit",
+            "label": "Credit",
+            "width": 90,
+        },
+        {
+            "fieldtype": "Currency",
+            "fieldname": "balance",
+            "label": "Balance",
             "width": 90,
         },
         {
@@ -206,7 +213,6 @@ def _get_data(filters):
         return merge(
             row,
             {
-                "amount": row.get("debit") - row.get("credit"),
                 "booking_order": bo_name,
                 "paper_receipt_no": booking_order.get("paper_receipt_no"),
                 "description": make_description(row.get("voucher_no"))
@@ -220,9 +226,7 @@ def _get_data(filters):
         )
 
     def make_ag_row(row, label):
-        return merge(
-            row, {"voucher_type": label, "amount": row.get("debit") - row.get("credit")}
-        )
+        return merge(row, {"voucher_type": label})
 
     return (
         [make_ag_row(rows[0], "Opening")]
