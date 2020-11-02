@@ -15,6 +15,12 @@ export function booking_summary() {
         default: frappe.datetime.get_today(),
         reqd: 1,
       },
+      {
+        fieldtype: 'Link',
+        fieldname: 'station',
+        options: 'Station',
+        label: 'Station',
+      },
     ],
   };
 }
