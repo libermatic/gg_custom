@@ -17,6 +17,18 @@ def get_data():
                     "name": "Booking Party",
                     "description": frappe._("Consignor / Consignee Details"),
                 },
+                {
+                    "type": "report",
+                    "is_query_report": True,
+                    "name": "Booking Accounting Ledger",
+                    "label": frappe._("Booking Accounting Ledger"),
+                },
+                {
+                    "type": "report",
+                    "is_query_report": True,
+                    "name": "Booking Summary",
+                    "label": frappe._("Booking Summary"),
+                },
             ],
         },
         {
