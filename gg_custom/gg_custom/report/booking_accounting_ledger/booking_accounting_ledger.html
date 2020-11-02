@@ -13,7 +13,9 @@
       <th style="width: 12%">{%= __("Date") %}</th>
       <th style="width: 15%">{%= __("Ref") %}</th>
       <th style="width: auto">{%= __("Booking Details") %}</th>
-      <th style="width: 15%">{%= __("Amount") %}</th>
+      <th style="width: 15%">{%= __("Debit") %}</th>
+      <th style="width: 15%">{%= __("Credit") %}</th>
+      <th style="width: 15%">{%= __("Balance") %}</th>
     </tr>
   </thead>
   <tbody>
@@ -44,8 +46,14 @@
         <td>{%= data[i].voucher_type %}</td>
         <td></td>
       {% } %}
+      <td style="text-align: right">
+        {%= format_currency(data[i].debit) %}
+      </td>
         <td style="text-align: right">
-          {%= format_currency(data[i].amount) %}
+          {%= format_currency(data[i].credit) %}
+        </td>
+        <td style="text-align: right">
+          {%= format_currency(data[i].balance) %}
         </td>
       </tr>
     {% } %}

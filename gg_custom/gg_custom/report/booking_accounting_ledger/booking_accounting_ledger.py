@@ -34,6 +34,19 @@ def _get_columns(filters):
             "label": "Voucher No",
             "width": 180,
         },
+        {
+            "fieldtype": "Link",
+            "fieldname": "booking_order",
+            "options": "Booking Order",
+            "label": "Booking Order",
+            "width": 120,
+        },
+        {
+            "fieldtype": "Data",
+            "fieldname": "description",
+            "label": "Description",
+            "width": 300,
+        },
         {"fieldtype": "Currency", "fieldname": "debit", "label": "Debit", "width": 90,},
         {
             "fieldtype": "Currency",
@@ -48,23 +61,10 @@ def _get_columns(filters):
             "width": 90,
         },
         {
-            "fieldtype": "Link",
-            "fieldname": "booking_order",
-            "options": "Booking Order",
-            "label": "Booking Order",
-            "width": 120,
-        },
-        {
             "fieldtype": "Data",
             "fieldname": "paper_receipt_no",
             "label": "Paper Receipt No",
             "width": 90,
-        },
-        {
-            "fieldtype": "Data",
-            "fieldname": "description",
-            "label": "Description",
-            "width": 300,
         },
         {
             "fieldtype": "Data",
