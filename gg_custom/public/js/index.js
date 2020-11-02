@@ -3,7 +3,7 @@ import * as reports from './reports';
 import * as cscripts from './cscripts';
 import * as quick_entry from './quick_entry';
 
-const __version__ = '0.4.11';
+const __version__ = '0.4.12';
 
 frappe.provide('gg_custom');
 gg_custom = { __version__, scripts, reports };
