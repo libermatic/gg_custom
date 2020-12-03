@@ -1,0 +1,29 @@
+{
+ "add_total_row": 1,
+ "creation": "2020-12-04 00:18:44.078671",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Standard",
+ "modified": "2020-12-04 00:18:54.874140",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "Accounts Receivable Summary ordered by Customer Name",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Sales Invoice",
+ "reference_report": "Accounts Receivable Summary",
+ "report_name": "Accounts Receivable Summary ordered by Customer Name",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  }
+ ]
+}

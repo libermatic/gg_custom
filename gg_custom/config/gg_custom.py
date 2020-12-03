@@ -29,6 +29,14 @@ def get_data():
                     "name": "Booking Summary",
                     "label": frappe._("Booking Summary"),
                 },
+                {
+                    "type": "report",
+                    "is_query_report": True,
+                    "name": "Accounts Receivable Summary ordered by Customer Name",
+                    "label": frappe._(
+                        "Accounts Receivable Summary ordered by Customer Name"
+                    ),
+                },
             ],
         },
         {
