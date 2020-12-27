@@ -1,5 +1,10 @@
 from __future__ import unicode_literals
 import frappe
+from erpnext.accounts.party import get_party_account
+from erpnext.accounts.utils import get_account_currency
+from erpnext.accounts.doctype.journal_entry.journal_entry import (
+    get_default_bank_cash_account,
+)
 
 from gg_custom.api.booking_order import get_payment_entry_from_invoices
 
@@ -43,7 +48,47 @@ def make_payment_entry(source_name, target_doc=None):
         )
     ]
 
+    if not invoices:
+        return _get_empty_payment_entry(customer)
+
     return get_payment_entry_from_invoices(invoices)
+
+
+def _get_empty_payment_entry(customer):
+    company = frappe.defaults.get_user_default("company")
+    mode_of_payment = "Cash"
+    company_account = get_default_bank_cash_account(
+        company, "Cash", mode_of_payment=mode_of_payment,
+    )
+    party_account = get_party_account("Customer", customer, company)
+    party_account_currency = get_account_currency(party_account)
+
+    pe = frappe.new_doc("Payment Entry")
+    pe.update(
+        {
+            "doctype": "Payment Entry",
+            "payment_type": "Receive",
+            "company": company,
+            "cost_center": frappe.get_cached_value("Company", company, "cost_center"),
+            "posting_date": frappe.utils.nowdate(),
+            "mode_of_payment": mode_of_payment,
+            "party_type": "Customer",
+            "party": customer,
+            "paid_from": party_account,
+            "paid_to": company_account.account,
+            "paid_from_account_currency": party_account_currency,
+            "paid_to_account_currency": company_account.account_currency,
+            "paid_amount": 0,
+            "received_amount": 0,
+        }
+    )
+    pe.setup_party_account_field()
+    pe.set_missing_values()
+    if party_account and company_account:
+        pe.set_exchange_rate()
+        pe.set_amounts()
+
+    return pe
 
 
 def update_customer(name):

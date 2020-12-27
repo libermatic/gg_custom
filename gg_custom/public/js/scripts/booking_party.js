@@ -46,12 +46,7 @@ export function booking_party() {
         render_booking_order_links(frm);
       }
 
-      if (
-        !frm.doc.__islocal &&
-        frm.doc.__onload &&
-        frm.doc.__onload.dashboard_info &&
-        sumBy(frm.doc.__onload.dashboard_info, 'total_unpaid')
-      ) {
+      if (!frm.doc.__islocal && frm.doc.customer) {
         frm.add_custom_button('Create Payment', () => create_payment(frm));
       }
     },
