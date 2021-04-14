@@ -1,0 +1,156 @@
+{
+ "cards_label": "GG Custom",
+ "category": "Modules",
+ "charts": [],
+ "creation": "2021-04-13 19:47:19.557626",
+ "developer_mode_only": 0,
+ "disable_user_customization": 0,
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "extends_another_page": 0,
+ "hide_custom": 0,
+ "icon": "star",
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "label": "GG Custom",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Order",
+   "link_to": "Booking Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Party",
+   "link_to": "Booking Party",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Booking Accounting Ledger",
+   "link_to": "Booking Accounting Ledger",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Booking Summary",
+   "link_to": "Booking Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Accounts Receivable Summary ordered by Customer Name",
+   "link_to": "Accounts Receivable Summary ordered by Customer Name",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shipping",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shipping Order",
+   "link_to": "Shipping Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Loading Operation",
+   "link_to": "Loading Operation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vehicle",
+   "link_to": "Vehicle",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Setup",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Driver",
+   "link_to": "Driver",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item",
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Order Charge Template",
+   "link_to": "Booking Order Charge Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Station",
+   "link_to": "Station",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2021-04-14 21:22:57.937318",
+ "modified_by": "Administrator",
+ "module": "GG Custom",
+ "name": "GG Custom",
+ "owner": "Administrator",
+ "pin_to_bottom": 0,
+ "pin_to_top": 0,
+ "shortcuts": []
+}
