@@ -559,3 +559,18 @@ def get_deliverable(bo_detail, station):
             return merge(result, {"qty": result.get("weight_actual")})
 
     return {"qty": 0, "unit": None}
+
+
+@frappe.whitelist()
+def get_charges_from_template(template):
+    if not template:
+        return None
+
+    doc = frappe.get_doc("Booking Order Charge Template", template)
+    if not doc:
+        return None
+
+    return [
+        {"charge_type": x.charge_type, "charge_amount": x.charge_amount}
+        for x in doc.charges
+    ]

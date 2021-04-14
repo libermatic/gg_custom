@@ -86,16 +86,11 @@ export function booking_order() {
       cur_frm.clear_table('charges');
       const { booking_order_charge_template } = frm.doc;
       if (booking_order_charge_template) {
-        const charges = await frappe.db.get_list('Booking Order Charge', {
-          fields: ['charge_type', 'charge_amount'],
-          parent: 'Booking Order Charge Template',
-          filters: {
-            parenttype: 'Booking Order Charge Template',
-            parent: booking_order_charge_template,
-          },
-          order_by: 'idx',
+        const { message: charges } = await frappe.call({
+          method: 'gg_custom.api.booking_order.get_charges_from_template',
+          args: { template: booking_order_charge_template },
         });
-        charges.forEach((row) => {
+        (charges || []).forEach((row) => {
           frm.add_child('charges', row);
         });
       }
