@@ -462,8 +462,8 @@ def get_order_details(bo_detail, station=None, shipping_order=None):
         return frappe.db.sql(
             """
                 SELECT
-                    -SUM(no_of_packages) AS no_of_packages,
-                    -SUM(weight_actual) AS weight_actual,
+                    -SUM(bl.no_of_packages) AS no_of_packages,
+                    -SUM(bl.weight_actual) AS weight_actual,
                     bofd.item_description AS description
                 FROM `tabBooking Log` AS bl
                 LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
