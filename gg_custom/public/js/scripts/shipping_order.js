@@ -144,14 +144,24 @@ function handle_movement_action(frm) {
 
     const dialog = new frappe.ui.Dialog({
       title: current_status === 'Stopped' ? 'Start' : 'Stop',
-      fields: get_fields(),
+      fields: [
+        ...get_fields(),
+        {
+          fieldtype: 'Datetime',
+          fieldname: 'posting_datetime',
+          label: 'Posting Datetime',
+          default: frappe.datetime.now_datetime(),
+          reqd: 1,
+        },
+      ],
     });
     dialog.set_primary_action('OK', async function () {
       const station = dialog.get_value('next_station');
+      const posting_datetime = dialog.get_value('posting_datetime');
       if (current_status === 'In Transit') {
-        await frm.call('stop', { station });
+        await frm.call('stop', { station, posting_datetime });
       } else if (current_status === 'Stopped') {
-        await frm.call('start', { station });
+        await frm.call('start', { station, posting_datetime });
       }
       frm.reload_doc();
       dialog.hide();
