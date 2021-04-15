@@ -164,12 +164,12 @@ function handle_movement_action(frm) {
 function render_dashboard(frm, dashboard_info) {
   const props = { ...dashboard_info };
   new Vue({
-    el: frm.dashboard.add_section('<div />').children()[0],
+    el: frm.dashboard.add_section('<div />', 'Current').children()[0],
     render: (h) => h(ShippingOrderLoad, { props }),
   });
 
   new Vue({
-    el: frm.dashboard.add_section('<div />').children()[0],
+    el: frm.dashboard.add_section('<div />', 'History').children()[0],
     render: (h) => h(Timeline, { props }),
   });
 
