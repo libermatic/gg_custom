@@ -507,7 +507,7 @@ def get_freight_rates():
     )
 
     def get_rate(item):
-        args = {"price_list": price_list, "uom": item.get("uom")}
+        args = {"price_list": price_list, "uom": item.get("uom"), "batch_no": None}
         rate = get_item_price(args, item.get("item_code"), ignore_party=True)
         if rate:
             return rate[0][1]
