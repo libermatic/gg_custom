@@ -4,7 +4,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import json
+from gg_custom.doc_events.sales_invoice import validate_invoice
 import frappe
 from frappe.model.document import Document
 from toolz.curried import compose, valmap, first, groupby
@@ -66,27 +66,8 @@ class LoadingOperation(Document):
         self.off_load_no_of_bookings = len(self.off_loads)
 
     def on_submit(self):
-        for load in self.on_loads + self.off_loads:
-            self._create_booking_log(load)
-
-        for load in self.on_loads:
-            bo = frappe.get_cached_doc("Booking Order", load.booking_order)
-            if bo.status == "Booked":
-                bo.status = "In Progress"
-                bo.save(ignore_permissions=True)
-
-        self._create_sales_invoices()
-
-        frappe.get_doc(
-            {
-                "doctype": "Shipping Log",
-                "posting_datetime": self.posting_datetime,
-                "shipping_order": self.shipping_order,
-                "station": self.station,
-                "activity": "Operation",
-                "loading_operation": self.name,
-            }
-        ).insert(ignore_permissions=True)
+        frappe.enqueue(_create_sales_invoices, doc=self)
+        frappe.enqueue(_create_logs_and_set_statuses, doc=self)
 
     def before_cancel(self):
         self._validate_shipping_order()
@@ -94,26 +75,9 @@ class LoadingOperation(Document):
         self._validate_paid_booking_orders()
 
     def on_cancel(self):
-        for log_type in ["Booking Log", "Shipping Log"]:
-            for (log_name,) in frappe.get_all(
-                log_type, filters={"loading_operation": self.name}, as_list=1
-            ):
-                frappe.delete_doc(log_type, log_name, ignore_permissions=True)
-
-        self._cancel_sales_invoices()
-
-        for load in self.on_loads:
-            bo = frappe.get_cached_doc("Booking Order", load.booking_order)
-            if bo.status == "In Progress" and not frappe.db.exists(
-                "Booking Log",
-                {
-                    "booking_order": bo.name,
-                    "activity": "Loaded",
-                    "loading_operation": ("!=", self.name),
-                },
-            ):
-                bo.status = "Booked"
-                bo.save(ignore_permissions=True)
+        self.ignore_linked_doctypes = ["Sales Invoice"]
+        frappe.enqueue(_remove_logs_and_set_statuses, doc=self)
+        frappe.enqueue(_cancel_sales_invoices, doc=self)
 
     def _validate_shipping_order(self):
         """disable validation"""
@@ -251,7 +215,27 @@ class LoadingOperation(Document):
                     )
                 )
 
-    def _create_booking_log(self, load):
+        errors = []
+        for item in [x for x in self.on_loads if x.auto_bill_to]:
+            frappe.flags.args = {
+                "bill_to": item.auto_bill_to.lower(),
+                "taxes_and_charges": None,
+                "is_freight_invoice": 1,
+                "loading_operation": self.name,
+            }
+            invoice = make_sales_invoice(
+                item.booking_order, posting_datetime=self.posting_datetime
+            )
+            invoice.flags.validate_loading = True
+            msg = validate_invoice(invoice, throw=False)
+            if msg:
+                errors.append(msg)
+        if errors:
+            frappe.throw(errors)
+
+
+def _create_logs_and_set_statuses(doc):
+    def create_log(load):
         if load.parentfield not in ["on_loads", "off_loads"]:
             frappe.throw(frappe._("Invalid Loading Operation load"))
 
@@ -260,12 +244,12 @@ class LoadingOperation(Document):
         frappe.get_doc(
             {
                 "doctype": "Booking Log",
-                "posting_datetime": self.posting_datetime,
+                "posting_datetime": doc.posting_datetime,
                 "booking_order": load.booking_order,
-                "shipping_order": self.shipping_order,
-                "station": self.station,
+                "shipping_order": doc.shipping_order,
+                "station": doc.station,
                 "activity": activity,
-                "loading_operation": self.name,
+                "loading_operation": doc.name,
                 "loading_unit": load.loading_unit,
                 "no_of_packages": direction * load.no_of_packages,
                 "weight_actual": direction * load.weight_actual,
@@ -273,30 +257,79 @@ class LoadingOperation(Document):
             }
         ).insert(ignore_permissions=True)
 
-    def _create_sales_invoices(self):
-        booking_orders = set(
-            [(x.booking_order, x.auto_bill_to) for x in self.on_loads if x.auto_bill_to]
-        )
-        for booking_order, auto_bill_to in booking_orders:
-            frappe.flags.args = {
-                "bill_to": auto_bill_to.lower(),
-                "taxes_and_charges": None,
-                "is_freight_invoice": 1,
-                "loading_operation": self.name,
-            }
-            invoice = make_sales_invoice(
-                booking_order, posting_datetime=self.posting_datetime
-            )
-            invoice.flags.validate_loading = True
-            invoice.insert(ignore_permissions=True)
-            invoice.submit()
+    for load in doc.on_loads + doc.off_loads:
+        create_log(load)
 
-    def _cancel_sales_invoices(self):
-        for (name,) in frappe.get_all(
-            "Sales Invoice",
-            filters={"docstatus": 1, "gg_loading_operation": self.name},
-            as_list=1,
+    for load in doc.on_loads:
+        bo = frappe.get_cached_doc("Booking Order", load.booking_order)
+        if bo.status == "Booked":
+            bo.status = "In Progress"
+            bo.save(ignore_permissions=True)
+
+    frappe.get_doc(
+        {
+            "doctype": "Shipping Log",
+            "posting_datetime": doc.posting_datetime,
+            "shipping_order": doc.shipping_order,
+            "station": doc.station,
+            "activity": "Operation",
+            "loading_operation": doc.name,
+        }
+    ).insert(ignore_permissions=True)
+
+
+def _remove_logs_and_set_statuses(doc):
+    for log_type in ["Booking Log", "Shipping Log"]:
+        for (log_name,) in frappe.get_all(
+            log_type, filters={"loading_operation": doc.name}, as_list=1
         ):
-            invoice = frappe.get_doc("Sales Invoice", name)
-            invoice.flags.ignore_permissions = True
-            invoice.cancel()
+            frappe.delete_doc(log_type, log_name, ignore_permissions=True)
+
+    for load in doc.on_loads:
+        bo = frappe.get_cached_doc("Booking Order", load.booking_order)
+        if bo.status == "In Progress" and not frappe.db.exists(
+            "Booking Log",
+            {
+                "booking_order": bo.name,
+                "activity": "Loaded",
+                "loading_operation": ("!=", doc.name),
+            },
+        ):
+            bo.status = "Booked"
+            bo.save(ignore_permissions=True)
+
+
+def _create_sales_invoices(doc):
+    booking_orders = set(
+        [(x.booking_order, x.auto_bill_to) for x in doc.on_loads if x.auto_bill_to]
+    )
+    for booking_order, auto_bill_to in booking_orders:
+        frappe.flags.args = {
+            "bill_to": auto_bill_to.lower(),
+            "taxes_and_charges": None,
+            "is_freight_invoice": 1,
+            "loading_operation": doc.name,
+        }
+        invoice = make_sales_invoice(
+            booking_order, posting_datetime=doc.posting_datetime
+        )
+        invoice.flags.skip_validation = True
+        invoice.insert(ignore_permissions=True)
+        invoice.submit()
+
+
+def _cancel_sales_invoices(doc):
+    for (name,) in frappe.get_all(
+        "Sales Invoice",
+        filters={"docstatus": 1, "gg_loading_operation": doc.name},
+        as_list=1,
+    ):
+        invoice = frappe.get_doc("Sales Invoice", name)
+        invoice.flags.ignore_permissions = True
+        invoice.cancel()
+        frappe.delete_doc(
+            "Sales Invoice",
+            name,
+            flags={"ignore_links": True},
+            ignore_permissions=True,
+        )

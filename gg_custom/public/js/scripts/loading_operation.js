@@ -13,6 +13,9 @@ export function loading_operation_booking_order() {
 
 export function loading_operation() {
   return {
+    onload: function (frm) {
+      frm.ignore_doctypes_on_cancel_all = ['Sales Invoice'];
+    },
     setup: function (frm) {
       frm.set_query('shipping_order', ({ station }) => ({
         query: 'gg_custom.api.shipping_order.query',
