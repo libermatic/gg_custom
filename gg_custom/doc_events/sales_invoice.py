@@ -2,18 +2,21 @@ from __future__ import unicode_literals
 import frappe
 from toolz.curried import (
     compose,
-    valmap,
     first,
-    groupby,
     excepts,
     map,
     filter,
 )
 
-from gg_custom.api.booking_order import get_freight_rates
-
 
 def validate(doc, method):
+    validate_invoice(doc)
+
+
+def validate_invoice(doc, throw=True):
+    if doc.flags.skip_validation:
+        return None
+
     def get_error_type():
         if doc.gg_loading_operation:
             existing = frappe.db.exists(
@@ -45,18 +48,27 @@ def validate(doc, method):
     if doc.gg_booking_order:
         error_type = get_error_type()
         if error_type:
-            frappe.throw(
-                frappe._(
-                    "Sales Invoice for {} already existing for {}. ".format(
-                        error_type,
-                        frappe.get_desk_link("Booking Order", doc.gg_booking_order),
-                    )
-                    + "If you want to proceed, please cancel the previous Invoice."
+            msg = frappe._(
+                "Sales Invoice for {} already exists for {}. ".format(
+                    error_type,
+                    frappe.get_desk_link("Booking Order", doc.gg_booking_order),
                 )
+                + "If you want to proceed, please cancel the previous Invoice."
             )
+            if throw:
+                frappe.throw(msg)
+
+            return msg
 
         if doc.flags.validate_loading and doc.gg_loading_operation:
-            _validate_freight_qty(doc)
+            msg = _validate_freight_qty(doc)
+            if msg:
+                if throw:
+                    frappe.throw(msg)
+
+                return msg
+
+    return None
 
 
 def on_submit(doc, method):
@@ -153,11 +165,9 @@ def _validate_freight_qty(doc):
         if item.gg_bo_detail:
             freight_row = get_freight_row(item.gg_bo_detail)
             if not freight_row:
-                frappe.throw(
-                    frappe._(
-                        "Invalid Booking Order Freight Detail found in row #{} for {}".format(
-                            item.idx, frappe.get_desk_link("Sales Invoice", doc.name)
-                        )
+                return frappe._(
+                    "Invalid Booking Order Freight Detail found in row #{} for {}".format(
+                        item.idx, frappe.get_desk_link("Sales Invoice", doc.name)
                     )
                 )
 
@@ -170,21 +180,21 @@ def _validate_freight_qty(doc):
                 )[0][0]
                 or 0
             )
-            if total_qty + item.qty > _get_freight_qty(freight_row):
-                frappe.throw(
-                    frappe._(
-                        "Total Qty in #{} for {} will exceed Freight Qty declared in {}".format(
-                            item.idx,
-                            frappe.get_desk_link("Sales Invoice", doc.name),
-                            frappe.get_desk_link("Booking Order", doc.gg_booking_order),
-                        )
+            if frappe.utils.flt(total_qty + item.qty, precision=3) > _get_freight_qty(
+                freight_row
+            ):
+                return frappe._(
+                    "Total Qty will exceed Freight Qty declared in {}".format(
+                        frappe.get_desk_link("Booking Order", doc.gg_booking_order),
                     )
                 )
+
+    return None
 
 
 def _get_freight_qty(freight_row):
     if freight_row.based_on == "Packages":
-        return freight_row.no_of_packages
+        return frappe.utils.flt(freight_row.no_of_packages, precision=3)
     if freight_row.based_on == "Weight":
-        return freight_row.weight_actual
-    return 0
+        return frappe.utils.flt(freight_row.weight_actual, precision=3)
+    return 0.0
