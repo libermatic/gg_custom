@@ -301,7 +301,7 @@ def make_sales_invoice(source_name, target_doc=None, posting_datetime=None):
         )
 
     return frappe.model.mapper.get_mapped_doc(
-        "Booking Order", source_name, get_table_maps(), target_doc, postprocess,
+        "Booking Order", source_name, get_table_maps(), target_doc, postprocess
     )
 
 
@@ -454,7 +454,7 @@ def get_order_details(bo_detail, station=None, shipping_order=None):
                     bl.station = %(station)s AND
                     bl.bo_detail = %(bo_detail)s
             """,
-            values={"station": station, "bo_detail": bo_detail,},
+            values={"station": station, "bo_detail": bo_detail},
             as_dict=1,
         )[0]
 
@@ -472,7 +472,7 @@ def get_order_details(bo_detail, station=None, shipping_order=None):
                     bl.shipping_order = %(shipping_order)s AND
                     bl.bo_detail = %(bo_detail)s
             """,
-            values={"shipping_order": shipping_order, "bo_detail": bo_detail,},
+            values={"shipping_order": shipping_order, "bo_detail": bo_detail},
             as_dict=1,
         )[0]
 
@@ -502,9 +502,7 @@ def update_party_details(name):
 
 
 def get_freight_rates():
-    price_list = frappe.get_cached_value(
-        "Selling Settings", None, "selling_price_list",
-    )
+    price_list = frappe.get_cached_value("Selling Settings", None, "selling_price_list")
 
     def get_rate(item):
         args = {"price_list": price_list, "uom": item.get("uom"), "batch_no": None}

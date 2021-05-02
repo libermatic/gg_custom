@@ -293,4 +293,3 @@ def _current_onboard_bookings(doc):
         for x in get_booking_orders("on_loads")
         if x not in get_booking_orders("off_loads")
     ]
-

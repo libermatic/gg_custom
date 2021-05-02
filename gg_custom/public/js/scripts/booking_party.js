@@ -1,5 +1,3 @@
-import sumBy from 'lodash/sumBy';
-
 export function booking_party() {
   return {
     setup: function (frm) {
