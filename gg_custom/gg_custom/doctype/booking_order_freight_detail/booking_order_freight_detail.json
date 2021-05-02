@@ -1,7 +1,7 @@
 {
+ "actions": [],
  "creation": "2020-08-22 15:08:16.888291",
  "doctype": "DocType",
- "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "based_on",
@@ -76,7 +76,8 @@
   }
  ],
  "istable": 1,
- "modified": "2020-09-05 03:02:14.904876",
+ "links": [],
+ "modified": "2021-05-02 16:01:37.133373",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order Freight Detail",
