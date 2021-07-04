@@ -22,7 +22,7 @@ export function booking_party() {
       } else {
         frappe.contacts.render_address_and_contact(frm);
       }
-      if (!frm.doc.__islocal) {
+      if (!frm.doc.__islocal && frm.doc.customer) {
         frm.add_custom_button('Booking Ledger', function () {
           frappe.set_route('query-report', 'Booking Accounting Ledger', {
             booking_party: frm.doc.name,
