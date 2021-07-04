@@ -93,7 +93,7 @@ def _get_data(filters):
                 "from_date": filters.get("from_date"),
                 "to_date": filters.get("to_date"),
                 "company": company,
-                "account": account,
+                "account": [account],
                 "party_type": "Customer",
                 "party": [customer],
                 "group_by": frappe._("Group by Voucher (Consolidated)"),
