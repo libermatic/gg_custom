@@ -98,8 +98,8 @@ function render_booking_order_links(frm) {
     }
   });
 
-  frm.dashboard.links_area.removeClass('hidden');
-  frm.dashboard.show();
+  frm.dashboard.links_area.wrapper.removeClass('hidden');
+  frm.dashboard.links_area.show();
 }
 
 function create_payment(frm) {
