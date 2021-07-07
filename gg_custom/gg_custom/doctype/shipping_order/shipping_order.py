@@ -127,6 +127,7 @@ class ShippingOrder(Document):
         ):
             frappe.delete_doc("Shipping Log", log_name, ignore_permissions=True)
 
+    @frappe.whitelist()
     def stop(self, station, posting_datetime=None):
         if self.status != "In Transit":
             frappe.throw(
@@ -156,6 +157,7 @@ class ShippingOrder(Document):
             }
         ).insert(ignore_permissions=True)
 
+    @frappe.whitelist()
     def start(self, station, posting_datetime=None):
         if self.status != "Stopped":
             frappe.throw(
@@ -184,6 +186,7 @@ class ShippingOrder(Document):
             }
         ).insert(ignore_permissions=True)
 
+    @frappe.whitelist()
     def set_as_completed(self, validate_onboard=False):
         if self.status != "Stopped":
             frappe.throw(
