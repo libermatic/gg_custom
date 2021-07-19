@@ -32,6 +32,7 @@ class BookingParty(Document):
                 frappe.db.set_value(address.doctype, address.name, "gstin", self._gstin)
                 frappe.db.set_value(self.doctype, self.name, "gstin", self._gstin)
 
+    @frappe.whitelist()
     def create_customer(self):
         if self.customer:
             frappe.throw(

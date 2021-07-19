@@ -113,6 +113,7 @@ class BookingOrder(Document):
         self.charge_total = sum([x.charge_amount for x in self.charges])
         self.total_amount = self.freight_total + self.charge_total
 
+    @frappe.whitelist()
     def deliver(self, bo_detail, qty, unit, posting_datetime=None):
         deliverable = get_deliverable(bo_detail, self.destination_station)
         if qty > deliverable.get("qty"):
@@ -152,6 +153,7 @@ class BookingOrder(Document):
 
         self.set_as_completed()
 
+    @frappe.whitelist()
     def set_as_completed(self):
         def is_collected(row):
             delivered = _get_delivered_packages(row.name)

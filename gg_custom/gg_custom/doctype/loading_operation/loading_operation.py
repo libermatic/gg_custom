@@ -22,11 +22,13 @@ class LoadingOperation(Document):
         self._validate_booking_orders()
         self._validate_invoice_params()
 
+    @frappe.whitelist()
     def get_on_loads(self):
         self.on_loads = []
         for booking_order in get_orders_for(station=self.station):
             self.append("on_loads", booking_order)
 
+    @frappe.whitelist()
     def get_off_loads(self):
         self._validate_shipping_order()
 
