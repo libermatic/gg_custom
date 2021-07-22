@@ -47,7 +47,12 @@ def _get_columns(filters):
             "label": "Description",
             "width": 300,
         },
-        {"fieldtype": "Currency", "fieldname": "debit", "label": "Debit", "width": 90,},
+        {
+            "fieldtype": "Currency",
+            "fieldname": "debit",
+            "label": "Debit",
+            "width": 90,
+        },
         {
             "fieldtype": "Currency",
             "fieldname": "credit",
@@ -86,7 +91,11 @@ def _get_data(filters):
     customer = frappe.get_cached_value(
         "Booking Party", filters.booking_party, "customer"
     )
-    account = get_party_account("Customer", customer, company,)
+    account = get_party_account(
+        "Customer",
+        customer,
+        company,
+    )
     _, rows = get_report(
         frappe._dict(
             {
@@ -217,7 +226,7 @@ def _get_data(filters):
                 "paper_receipt_no": booking_order.get("paper_receipt_no"),
                 "description": make_description(row.get("voucher_no"))
                 if row.get("voucher_type") == "Sales Invoice"
-                else row.get("remarks"),
+                else (row.remarks.split("\n")[0] if row.get("remarks") else ""),
                 "order_date": frappe.format_value(order_date, {"fieldtype": "Date"})
                 if order_date
                 else "",
@@ -233,4 +242,3 @@ def _get_data(filters):
         + [make_row(x) for x in gl_entries]
         + [make_ag_row(rows[-2], "Total"), make_ag_row(rows[-1], "Closing")]
     )
-
