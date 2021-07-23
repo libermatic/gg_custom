@@ -15,6 +15,7 @@ class BookingLog(Document):
             filters={
                 "name": ("!=", self.name),
                 "booking_order": self.booking_order,
+                "bo_detail": self.bo_detail,
                 "activity": ("!=", "Booked"),
             },
             fieldname="loading_unit",
