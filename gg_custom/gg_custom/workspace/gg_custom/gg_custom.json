@@ -143,9 +143,18 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "GG Custom Settings",
+   "link_to": "GG Custom Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2021-04-14 21:22:57.937318",
+ "modified": "2021-07-23 15:12:16.863553",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "GG Custom",
