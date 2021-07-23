@@ -87,7 +87,10 @@ def _get_columns(filters):
 
 
 def _get_data(filters):
-    company = frappe.defaults.get_user_default("company")
+    company = frappe.db.get_single_value("GG Custom Settings", "company")
+    if not company:
+        frappe.throw(frappe._("Setup incomplete in GG Custom Settings"))
+
     customer = frappe.get_cached_value(
         "Booking Party", filters.booking_party, "customer"
     )

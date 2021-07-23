@@ -55,10 +55,15 @@ def make_payment_entry(source_name, target_doc=None):
 
 
 def _get_empty_payment_entry(customer):
-    company = frappe.defaults.get_user_default("company")
+    company = frappe.db.get_single_value("GG Custom Settings", "company")
+    if not company:
+        frappe.throw(frappe._("Setup incomplete in GG Custom Settings"))
+
     mode_of_payment = "Cash"
     company_account = get_default_bank_cash_account(
-        company, "Cash", mode_of_payment=mode_of_payment,
+        company,
+        "Cash",
+        mode_of_payment=mode_of_payment,
     )
     party_account = get_party_account("Customer", customer, company)
     party_account_currency = get_account_currency(party_account)

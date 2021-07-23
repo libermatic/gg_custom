@@ -48,7 +48,7 @@ export function booking_party(QuickEntryForm) {
           fieldname: 'country',
           fieldtype: 'Link',
           options: 'Country',
-          default: frappe.defaults.get_default('country'),
+          default: frappe.defaults.get_global_default('country'),
         },
       ];
     }

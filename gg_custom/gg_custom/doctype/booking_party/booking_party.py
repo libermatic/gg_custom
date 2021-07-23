@@ -47,11 +47,11 @@ class BookingParty(Document):
             {
                 "doctype": "Customer",
                 "customer_name": self.booking_party_name,
-                "customer_group": frappe.get_cached_value(
-                    "Selling Settings", None, "customer_group"
+                "customer_group": frappe.db.get_single_value(
+                    "GG Custom Settings", "customer_group"
                 ),
-                "territory": frappe.get_cached_value(
-                    "Selling Settings", None, "territory"
+                "territory": frappe.db.get_single_value(
+                    "GG Custom Settings", "territory"
                 ),
                 "customer_primary_address": self.primary_address,
             }
