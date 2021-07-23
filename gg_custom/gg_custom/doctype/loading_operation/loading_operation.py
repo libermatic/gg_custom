@@ -18,6 +18,14 @@ from gg_custom.api.booking_order import (
 
 class LoadingOperation(Document):
     def validate(self):
+        if self._action == "submit" and not self.on_loads and not self.off_loads:
+            frappe.throw(
+                frappe._(
+                    "Cannot submit without any on or off loads.Please make sure "
+                    "at least one of On Load and Off Load tables are not empty."
+                )
+            )
+
         self._validate_shipping_order()
         self._validate_booking_orders()
         self._validate_invoice_params()
