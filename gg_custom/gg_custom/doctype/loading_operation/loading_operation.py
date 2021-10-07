@@ -76,8 +76,8 @@ class LoadingOperation(Document):
         self.off_load_no_of_bookings = len(self.off_loads)
 
     def on_submit(self):
-        frappe.enqueue(_create_sales_invoices, doc=self)
         frappe.enqueue(_create_logs_and_set_statuses, doc=self)
+        _create_sales_invoices(self)
 
     def before_cancel(self):
         self._validate_shipping_order()
@@ -87,7 +87,7 @@ class LoadingOperation(Document):
     def on_cancel(self):
         self.ignore_linked_doctypes = ["Sales Invoice"]
         frappe.enqueue(_remove_logs_and_set_statuses, doc=self)
-        frappe.enqueue(_cancel_sales_invoices, doc=self)
+        _cancel_sales_invoices(self)
 
     @frappe.whitelist()
     def remove_booking_orders(self, booking_orders):
