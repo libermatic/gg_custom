@@ -108,6 +108,14 @@ class BookingOrder(Document):
             si.flags.ignore_permissions = True
             si.cancel()
 
+    def on_update_after_submit(self):
+        prev_doc = self.get_doc_before_save()
+        for row in self.freight:
+            prev_rows = [x for x in prev_doc.freight if x.name == row.name]
+            if not prev_rows or prev_rows[0].item_description != row.item_description:
+                _update_loading_operations(row)
+                _update_invoices(row)
+
     def set_totals(self):
         self.freight_total = sum([x.amount for x in self.freight])
         self.charge_total = sum([x.charge_amount for x in self.charges])
@@ -197,3 +205,38 @@ def _get_delivered_packages(bo_detail):
         or {}
     )
 
+
+def _update_loading_operations(freight):
+    lobos = frappe.get_all(
+        "Loading Operation Booking Order",
+        filters={
+            "docstatus": ("<", 2),
+            "bo_detail": freight.name,
+        },
+        as_list=1,
+    )
+    for (name,) in lobos:
+        frappe.db.set_value(
+            "Loading Operation Booking Order",
+            name,
+            "description",
+            freight.item_description,
+        )
+
+
+def _update_invoices(freight):
+    siis = frappe.get_all(
+        "Sales Invoice Item",
+        filters={
+            "docstatus": ("<", 2),
+            "gg_bo_detail": freight.name,
+        },
+        as_list=1,
+    )
+    for (name,) in siis:
+        frappe.db.set_value(
+            "Sales Invoice Item",
+            name,
+            "description",
+            freight.item_description,
+        )
