@@ -89,6 +89,54 @@ class LoadingOperation(Document):
         frappe.enqueue(_remove_logs_and_set_statuses, doc=self)
         frappe.enqueue(_cancel_sales_invoices, doc=self)
 
+    @frappe.whitelist()
+    def remove_booking_orders(self, booking_orders):
+        if len(booking_orders) == len(self.on_loads):
+            frappe.throw(frappe._("Cannot remove all Booking Orders"))
+
+        for row in booking_orders:
+            for (name,) in frappe.get_all(
+                "Booking Log",
+                filters={
+                    "loading_operation": self.name,
+                    "bo_detail": row.get("bo_detail"),
+                },
+                as_list=1,
+            ):
+                frappe.delete_doc("Booking Log", name, ignore_permissions=True)
+
+            for (name,) in frappe.get_all(
+                "Sales Invoice Item",
+                fields=["parent"],
+                filters={
+                    "docstatus": 1,
+                    "gg_bo_detail": row.get("bo_detail"),
+                },
+                as_list=1,
+            ):
+                if (
+                    frappe.get_cached_value(
+                        "Sales Invoice", name, "gg_loading_operation"
+                    )
+                    == self.name
+                ):
+                    invoice = frappe.get_doc("Sales Invoice", name)
+                    invoice.flags.ignore_permissions = True
+                    invoice.cancel()
+
+        to_remove = [x.get("name") for x in booking_orders]
+        for row in self.on_loads:
+            if row.name in to_remove:
+                self.on_loads.remove(row)
+
+        for param in ["no_of_packages", "weight_actual"]:
+            self.set(
+                "on_load_{}".format(param), sum([x.get(param) for x in self.on_loads])
+            )
+        self.on_load_no_of_bookings = len(self.on_loads)
+        self.flags.ignore_validate_update_after_submit = True
+        self.save()
+
     def _validate_shipping_order(self):
         """disable validation"""
         # status, current_station = frappe.db.get_value(
