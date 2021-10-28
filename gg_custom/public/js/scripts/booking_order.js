@@ -176,6 +176,13 @@ function set_freight_amount(frm, cdt, cdn) {
 function set_total(field) {
   return function (frm, cdt, cdn) {
     frm.set_value(field, sumBy(frm.doc.freight, field));
+    const { based_on } = frappe.get_doc(cdt, cdn);
+    if (
+      (field === 'no_of_packages' && based_on === 'Packages') ||
+      (field === 'weight_charged' && based_on === 'Weight')
+    ) {
+      set_freight_amount(frm, cdt, cdn);
+    }
   };
 }
 
