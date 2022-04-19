@@ -49,15 +49,18 @@ def make_payment_entry(source_name, target_doc=None):
     ]
 
     if not invoices:
-        return _get_empty_payment_entry(customer)
+        return get_empty_payment_entry("Customer", customer)
 
     return get_payment_entry_from_invoices(invoices)
 
 
-def _get_empty_payment_entry(customer):
+def get_empty_payment_entry(party_type, party):
     company = frappe.db.get_single_value("GG Custom Settings", "company")
     if not company:
         frappe.throw(frappe._("Setup incomplete in GG Custom Settings"))
+
+    if party_type not in ["Customer", "Supplier"]:
+        frappe.throw(f"Invalid party type: {party_type}")
 
     mode_of_payment = "Cash"
     company_account = get_default_bank_cash_account(
@@ -65,24 +68,32 @@ def _get_empty_payment_entry(customer):
         "Cash",
         mode_of_payment=mode_of_payment,
     )
-    party_account = get_party_account("Customer", customer, company)
+    party_account = get_party_account(party_type, party, company)
     party_account_currency = get_account_currency(party_account)
 
     pe = frappe.new_doc("Payment Entry")
     pe.update(
         {
             "doctype": "Payment Entry",
-            "payment_type": "Receive",
+            "payment_type": "Receive" if party_type == "Customer" else "Pay",
             "company": company,
             "cost_center": frappe.get_cached_value("Company", company, "cost_center"),
             "posting_date": frappe.utils.nowdate(),
             "mode_of_payment": mode_of_payment,
-            "party_type": "Customer",
-            "party": customer,
-            "paid_from": party_account,
-            "paid_to": company_account.account,
-            "paid_from_account_currency": party_account_currency,
-            "paid_to_account_currency": company_account.account_currency,
+            "party_type": party_type,
+            "party": party,
+            "paid_from": party_account
+            if party_type == "Customer"
+            else company_account.account,
+            "paid_to": company_account.account
+            if party_type == "Customer"
+            else party_account,
+            "paid_from_account_currency": party_account_currency
+            if party_type == "Customer"
+            else company_account.account_currency,
+            "paid_to_account_currency": company_account.account_currency
+            if party_type == "Customer"
+            else party_account_currency,
             "paid_amount": 0,
             "received_amount": 0,
         }

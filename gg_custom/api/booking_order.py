@@ -331,27 +331,30 @@ def make_payment_entry(source_name, target_doc=None):
             )
         )
 
-    return get_payment_entry_from_invoices(invoices)
+    return get_payment_entry_from_invoices("Sales Invoice", invoices)
 
 
-def get_payment_entry_from_invoices(invoices):
-    pe = get_payment_entry("Sales Invoice", invoices[0].name)
+def get_payment_entry_from_invoices(invoice_type, invoices):
+    if invoice_type not in ["Sales Invoice", "Purchase Invoice"]:
+        frappe.throw(f"Invalid invoice type: {invoice_type}")
+
+    pe = get_payment_entry(invoice_type, invoices[0].name)
     if len(invoices) > 1:
         outstanding_amount = sum([x.outstanding_amount for x in invoices])
         pe.paid_amount = outstanding_amount
         pe.received_amount = outstanding_amount
         pe.references = []
-        for si in invoices:
+        for inv in invoices:
             pe.append(
                 "references",
                 {
-                    "reference_doctype": si.doctype,
-                    "reference_name": si.name,
-                    "bill_no": si.get("bill_no"),
-                    "due_date": si.get("due_date"),
-                    "total_amount": si.grand_total,
-                    "outstanding_amount": si.outstanding_amount,
-                    "allocated_amount": si.outstanding_amount,
+                    "reference_doctype": inv.doctype,
+                    "reference_name": inv.name,
+                    "bill_no": inv.get("bill_no"),
+                    "due_date": inv.get("due_date"),
+                    "total_amount": inv.grand_total,
+                    "outstanding_amount": inv.outstanding_amount,
+                    "allocated_amount": inv.outstanding_amount,
                 },
             )
     return pe
