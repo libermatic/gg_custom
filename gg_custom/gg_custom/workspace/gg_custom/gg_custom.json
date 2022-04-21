@@ -104,6 +104,15 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Shipping Vendor",
+   "link_to": "Shipping Vendor",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Setup",
    "onboard": 0,
    "type": "Card Break"
@@ -154,7 +163,7 @@
    "type": "Link"
   }
  ],
- "modified": "2021-07-23 15:12:16.863553",
+ "modified": "2022-04-19 23:47:44.837189",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "GG Custom",
