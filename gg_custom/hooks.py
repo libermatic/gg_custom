@@ -17,7 +17,16 @@ fixtures = [
         "doctype": "Custom Field",
         "filters": {
             "fieldname": ("like", "gg_%"),
-            "dt": ("in", ["Sales Invoice", "Sales Invoice Item", "Item"]),
+            "dt": (
+                "in",
+                [
+                    "Sales Invoice",
+                    "Sales Invoice Item",
+                    "Purchase Invoice",
+                    "Item",
+                    "Vehicle",
+                ],
+            ),
         },
     },
 ]
@@ -102,6 +111,9 @@ doc_events = {
         "on_submit": "gg_custom.doc_events.sales_invoice.on_submit",
         "on_cancel": "gg_custom.doc_events.sales_invoice.on_cancel",
     },
+    "Purchase Invoice": {
+        "validate": "gg_custom.doc_events.purchase_invoice.validate",
+    },
     "Payment Entry": {
         "on_submit": "gg_custom.doc_events.payment_entry.on_submit",
         "on_cancel": "gg_custom.doc_events.payment_entry.on_cancel",
@@ -159,4 +171,3 @@ jenv = {
         "get_party_open_orders:gg_custom.api.booking_party.get_party_open_orders",
     ]
 }
-
