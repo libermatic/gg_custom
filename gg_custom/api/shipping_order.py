@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 import frappe
-import json
-from toolz.curried import compose, merge, map, filter
+from toolz.curried import compose, merge, concat, valmap, keymap, keyfilter, map, filter
+from frappe.contacts.doctype.address.address import get_company_address
+
+from gg_custom.api.booking_order import get_freight_rates
 
 
 @frappe.whitelist()
@@ -78,7 +80,10 @@ def get_history(name):
                 or "Operation"
             )
 
-            return "{} at {}".format(msg, log.get("station"),)
+            return "{} at {}".format(
+                msg,
+                log.get("station"),
+            )
 
         if activity == "Stopped":
             return "Stopped at {}".format(log.get("station"))
@@ -180,7 +185,9 @@ def get_freight_summary_rows(shipping_order):
     booking_orders = set([x.get("booking_order") for x in freight_rows])
 
     get_first_loaded_booking_orders = compose(
-        list, map(lambda x: x.get("booking_order")), frappe.db.sql,
+        list,
+        map(lambda x: x.get("booking_order")),
+        frappe.db.sql,
     )
     first_loaded_booking_orders = (
         get_first_loaded_booking_orders(
@@ -239,6 +246,97 @@ def get_freight_summary_rows(shipping_order):
     return sorted(
         [merge(x, {"amount": get_amount(x)}) for x in freight_rows + charges_rows],
         key=lambda x: x.get("booking_order"),
+    )
+
+
+@frappe.whitelist()
+def make_purchase_invoice(source_name, target_doc=None, posting_datetime=None):
+    doc = frappe.get_doc("Shipping Order", source_name)
+
+    def set_invoice_missing_values(source, target):
+        target.status = None
+        target.supplier = frappe.get_cached_value(
+            "Shipping Vendor", doc.shipping_vendor, "supplier"
+        )
+        target.update(
+            frappe.model.utils.get_fetch_values(
+                "Purchase Invoice", "supplier", target.supplier
+            )
+        )
+        target.supplier_address = frappe.get_cached_value(
+            "Shipping Vendor", doc.shipping_vendor, "primary_address"
+        )
+        if target.supplier_address:
+            target.update(
+                frappe.model.utils.get_fetch_values(
+                    "Purchase Invoice", "supplier_address", target.supplier_address
+                )
+            )
+        target.taxes_and_charges = None
+        target.ignore_pricing_rule = 1
+        if doc.start_datetime:
+            target.set_posting_time = 1
+            dt = frappe.utils.get_datetime(doc.start_datetime)
+            target.posting_date = dt.date()
+            target.posting_time = dt.time()
+        target.run_method("set_missing_values")
+        target.run_method("calculate_taxes_and_totals")
+        target.update(get_company_address(target.company))
+        if target.company_address:
+            target.update(
+                frappe.model.utils.get_fetch_values(
+                    "Purchase Invoice", "company_address", target.company_address
+                )
+            )
+        
+
+    def postprocess(source, target):
+        freight_rates = get_freight_rates()
+        loads = get_order_contents(doc).get("on_load")
+        target.items = []
+        for based_on in ["Packages", "Weight"]:
+            freight_item = freight_rates.get(based_on) or {}
+            target.append(
+                "items",
+                {
+                    "item_code": freight_item.get("item_code"),
+                    "price_list_rate": freight_item.get("rate"),
+                    "qty": loads.get(
+                        "no_of_packages" if based_on == "Packages" else "weight_actual"
+                    ),
+                    "rate": 0,
+                    "stock_uom": freight_item.get("uom"),
+                    "uom": freight_item.get("uom"),
+                },
+            )
+
+        target.taxes = []
+        for charge in doc.charges:
+            target.append(
+                "taxes",
+                {
+                    "category": "Total",
+                    "add_deduct_tax": "Deduct",
+                    "charge_type": "Actual",
+                    "account_head": charge.charge_account,
+                    "description": charge.item_description,
+                    "tax_amount": charge.charge_amount,
+                },
+            )
+
+        return set_invoice_missing_values(source, target)
+
+    def get_table_maps():
+        return {
+            "Shipping Order": {
+                "doctype": "Purchase Invoice",
+                "fieldmap": {"name": "gg_shipping_order"},
+                "validation": {"docstatus": ["=", 1]},
+            }
+        }
+
+    return frappe.model.mapper.get_mapped_doc(
+        "Shipping Order", source_name, get_table_maps(), target_doc, postprocess
     )
 
 
