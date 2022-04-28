@@ -51,7 +51,7 @@ def make_payment_entry(source_name, target_doc=None):
     if not invoices:
         return get_empty_payment_entry("Customer", customer)
 
-    return get_payment_entry_from_invoices(invoices)
+    return get_payment_entry_from_invoices("Sales Invoice", invoices)
 
 
 def get_empty_payment_entry(party_type, party):
