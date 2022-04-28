@@ -241,3 +241,44 @@ def get_freight_summary_rows(shipping_order):
         key=lambda x: x.get("booking_order"),
     )
 
+
+def get_order_contents(doc):
+    params = ["no_of_packages", "weight_actual", "goods_value"]
+    fields = list(
+        concat(
+            [
+                ["SUM({t}_{p}) AS {t}_{p}".format(t=t, p=p) for p in params]
+                for t in ["on_load", "off_load"]
+            ]
+        )
+    )
+    data = frappe.db.sql(
+        """
+            SELECT {fields} FROM `tabLoading Operation`
+            WHERE docstatus = 1 AND shipping_order = %(shipping_order)s
+        """.format(
+            fields=", ".join(fields)
+        ),
+        values={"shipping_order": doc.name},
+        as_dict=1,
+    )[0]
+
+    def get_values(_type):
+        fields = list(map(lambda x: "{}_{}".format(_type, x), params))
+        _get = compose(
+            valmap(lambda x: x or 0),
+            keymap(lambda x: x.replace("{}_".format(_type), "")),
+            keyfilter(lambda x: x in fields),
+        )
+        return _get(data)
+
+    on_load = get_values("on_load")
+    off_load = get_values("off_load")
+
+    current = merge({}, *[{x: on_load[x] - off_load[x]} for x in params])
+
+    return {
+        "on_load": on_load,
+        "off_load": off_load,
+        "current": current,
+    }
