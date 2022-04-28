@@ -147,6 +147,15 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Shipping Order Charge Template",
+   "link_to": "Shipping Order Charge Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Station",
    "link_to": "Station",
    "link_type": "DocType",
@@ -163,7 +172,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-04-19 23:47:44.837189",
+ "modified": "2022-04-27 15:52:50.196012",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "GG Custom",
