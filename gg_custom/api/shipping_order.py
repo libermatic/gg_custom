@@ -282,3 +282,22 @@ def get_order_contents(doc):
         "off_load": off_load,
         "current": current,
     }
+
+
+@frappe.whitelist()
+def get_charges_from_template(template):
+    if not template:
+        return None
+
+    doc = frappe.get_doc("Shipping Order Charge Template", template)
+    if not doc:
+        return None
+
+    return [
+        {
+            "charge_account": x.charge_account,
+            "charge_amount": x.charge_amount,
+            "item_description": x.item_description,
+        }
+        for x in doc.charges
+    ]

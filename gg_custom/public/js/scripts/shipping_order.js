@@ -32,6 +32,17 @@ export function shipping_order() {
             })
             .toggleClass('btn-primary', status === 'Stopped');
         }
+        frm
+          .add_custom_button('Create Invoice', () =>
+            frappe.model.open_mapped_doc({
+              method: 'gg_custom.api.shipping_order.make_purchase_invoice',
+              frm,
+            })
+          )
+          .addClass('btn-primary');
+        const {
+          dashboard_info: { invoice: { outstanding_amount = 0 } = {} } = {},
+        } = frm.doc.__onload || {};
         if (status === 'Stopped') {
           frm.add_custom_button('Move', handle_movement_action(frm));
           frm.add_custom_button('Complete', () =>
@@ -59,6 +70,20 @@ export function shipping_order() {
           render_dashboard(frm, dashboard_info);
         }
       }
+    },
+    shipping_order_charge_template: async function (frm) {
+      cur_frm.clear_table('charges');
+      const { shipping_order_charge_template } = frm.doc;
+      if (shipping_order_charge_template) {
+        const { message: charges } = await frappe.call({
+          method: 'gg_custom.api.shipping_order.get_charges_from_template',
+          args: { template: shipping_order_charge_template },
+        });
+        (charges || []).forEach((row) => {
+          frm.add_child('charges', row);
+        });
+      }
+      cur_frm.refresh_field('charges');
     },
   };
 }

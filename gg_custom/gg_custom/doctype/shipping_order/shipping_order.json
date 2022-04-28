@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "naming_series:",
  "creation": "2020-07-08 18:51:13.874745",
  "doctype": "DocType",
@@ -8,6 +9,8 @@
   "naming_series",
   "vehicle",
   "status",
+  "shipping_vendor",
+  "shipping_vendor_name",
   "current_station",
   "next_station",
   "column_break_4",
@@ -23,7 +26,10 @@
   "eta",
   "column_break_8",
   "start_datetime",
-  "end_datetime"
+  "end_datetime",
+  "charges_sec",
+  "shipping_order_charge_template",
+  "charges"
  ],
  "fields": [
   {
@@ -154,10 +160,46 @@
    "fieldname": "eta",
    "fieldtype": "Datetime",
    "label": "Est End Datetime"
+  },
+  {
+   "depends_on": "vehicle",
+   "fetch_from": "vehicle.gg_shipping_vendor",
+   "fieldname": "shipping_vendor",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Shipping Vendor",
+   "options": "Shipping Vendor",
+   "read_only": 1
+  },
+  {
+   "depends_on": "shipping_vendor",
+   "fetch_from": "shipping_vendor.shipping_vendor_name",
+   "fieldname": "shipping_vendor_name",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Shipping Vendor Name"
+  },
+  {
+   "fieldname": "charges",
+   "fieldtype": "Table",
+   "options": "Shipping Order Charge"
+  },
+  {
+   "fieldname": "shipping_order_charge_template",
+   "fieldtype": "Link",
+   "label": "Shipping Order Charge Template",
+   "options": "Shipping Order Charge Template"
+  },
+  {
+   "depends_on": "shipping_vendor",
+   "fieldname": "charges_sec",
+   "fieldtype": "Section Break",
+   "label": "Charges"
   }
  ],
  "is_submittable": 1,
- "modified": "2020-12-26 02:44:38.806425",
+ "links": [],
+ "modified": "2022-04-28 05:28:05.984219",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Shipping Order",
