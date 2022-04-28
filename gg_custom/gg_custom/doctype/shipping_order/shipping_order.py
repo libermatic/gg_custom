@@ -238,8 +238,20 @@ def _update_booking_orders(shipping_order):
 
 def _get_dashboard_info(doc):
     contents = get_order_contents(doc)
+    invoice = frappe.db.sql(
+        """
+            SELECT
+                SUM(rounded_total) AS rounded_total,
+                SUM(outstanding_amount) AS outstanding_amount
+            FROM `tabPurchase Invoice` WHERE
+                docstatus = 1 AND gg_shipping_order = %(shipping_order)s
+        """,
+        values={"shipping_order": doc.name},
+        as_dict=1,
+    )[0]
     return {
         **contents,
+        "invoice": invoice,
         "history": get_history(doc.name),
     }
 

@@ -43,6 +43,14 @@ export function shipping_order() {
         const {
           dashboard_info: { invoice: { outstanding_amount = 0 } = {} } = {},
         } = frm.doc.__onload || {};
+        if (outstanding_amount > 0) {
+          frm.add_custom_button('Create Payment', () =>
+            frappe.model.open_mapped_doc({
+              method: 'gg_custom.api.shipping_order.make_payment_entry',
+              frm,
+            })
+          );
+        }
         if (status === 'Stopped') {
           frm.add_custom_button('Move', handle_movement_action(frm));
           frm.add_custom_button('Complete', () =>

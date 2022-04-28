@@ -1,9 +1,22 @@
 from __future__ import unicode_literals
 import frappe
-from toolz.curried import compose, merge, concat, valmap, keymap, keyfilter, map, filter
+from toolz.curried import (
+    compose,
+    merge,
+    concat,
+    valmap,
+    keymap,
+    keyfilter,
+    unique,
+    map,
+    filter,
+)
 from frappe.contacts.doctype.address.address import get_company_address
 
-from gg_custom.api.booking_order import get_freight_rates
+from gg_custom.api.booking_order import (
+    get_freight_rates,
+    get_payment_entry_from_invoices,
+)
 
 
 @frappe.whitelist()
@@ -288,7 +301,6 @@ def make_purchase_invoice(source_name, target_doc=None, posting_datetime=None):
                     "Purchase Invoice", "company_address", target.company_address
                 )
             )
-        
 
     def postprocess(source, target):
         freight_rates = get_freight_rates()
@@ -399,3 +411,32 @@ def get_charges_from_template(template):
         }
         for x in doc.charges
     ]
+
+
+@frappe.whitelist()
+def make_payment_entry(source_name, target_doc=None):
+    invoices = [
+        frappe.get_cached_doc("Purchase Invoice", x.get("name"))
+        for x in frappe.get_all(
+            "Purchase Invoice",
+            filters={
+                "docstatus": 1,
+                "gg_shipping_order": source_name,
+                "outstanding_amount": [">", 0],
+            },
+            order_by="posting_date, name",
+        )
+    ]
+
+    if not invoices:
+        frappe.throw(frappe._("No outstanding invoices to create payment"))
+
+    if len(list(unique([x.supplier for x in invoices]))) != 1:
+        frappe.throw(
+            frappe._(
+                "Multiple invoices found for separate parties. "
+                "Please create Payment Entry manually from Sales Invoice."
+            )
+        )
+
+    return get_payment_entry_from_invoices("Purchase Invoice", invoices)
