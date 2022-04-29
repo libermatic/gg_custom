@@ -32,14 +32,16 @@ export function shipping_order() {
             })
             .toggleClass('btn-primary', status === 'Stopped');
         }
-        frm
-          .add_custom_button('Create Invoice', () =>
-            frappe.model.open_mapped_doc({
-              method: 'gg_custom.api.shipping_order.make_purchase_invoice',
-              frm,
-            })
-          )
-          .addClass('btn-primary');
+        if (frm.doc.shipping_vendor) {
+          frm
+            .add_custom_button('Create Invoice', () =>
+              frappe.model.open_mapped_doc({
+                method: 'gg_custom.api.shipping_order.make_purchase_invoice',
+                frm,
+              })
+            )
+            .addClass('btn-primary');
+        }
         const {
           dashboard_info: { invoice: { outstanding_amount = 0 } = {} } = {},
         } = frm.doc.__onload || {};
