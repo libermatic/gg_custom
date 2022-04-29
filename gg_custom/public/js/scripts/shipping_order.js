@@ -206,6 +206,18 @@ function handle_movement_action(frm) {
 
 function render_dashboard(frm, dashboard_info) {
   const props = { ...dashboard_info };
+  if (dashboard_info && dashboard_info.invoice) {
+    const { rounded_total, outstanding_amount } = dashboard_info.invoice;
+    cur_frm.dashboard.add_indicator(
+      `Total Billed: ${format_currency(rounded_total)}`,
+      'green'
+    );
+    cur_frm.dashboard.add_indicator(
+      `Outstanding Amount: ${format_currency(outstanding_amount)}`,
+      'orange'
+    );
+  }
+
   new Vue({
     el: frm.dashboard.add_section('<div />', 'Current').children()[0],
     render: (h) => h(ShippingOrderLoad, { props }),
