@@ -440,3 +440,46 @@ def make_payment_entry(source_name, target_doc=None):
         )
 
     return get_payment_entry_from_invoices("Purchase Invoice", invoices)
+
+
+def get_shipping_order_invoice(shipping_order):
+    inv_name = frappe.db.exists(
+        "Purchase Invoice", {"gg_shipping_order": shipping_order, "docstatus": 1}
+    )
+    if not inv_name:
+        return None
+
+    inv = frappe.get_doc("Purchase Invoice", inv_name)
+    result = {
+        "invoice": inv.name,
+        "total": inv.total,
+        "total_taxes_and_charges": inv.total_taxes_and_charges,
+        "grand_total": inv.grand_total,
+        "rounded_total": inv.rounded_total,
+        "freight": {},
+        "charges": [],
+    }
+    freight_rates = get_freight_rates()
+    for based_on in ["Packages", "Weight"]:
+        freight_item = freight_rates.get(based_on) or {}
+        items = [x for x in inv.items if x.item_code == freight_item["item_code"]]
+        qty = sum([x.qty for x in items])
+        amount = sum([x.amount for x in items])
+        result["freight"][based_on] = {
+            "qty": qty,
+            "amount": amount,
+            "rate": amount / qty,
+        }
+
+    for charge in [x for x in inv.taxes if x.add_deduct_tax == "Deduct"]:
+        result["charges"].append(
+            {
+                "account_name": frappe.get_cached_value(
+                    "Account", charge.account_head, "account_name"
+                ),
+                "description": charge.description,
+                "tax_amount": charge.tax_amount,
+            }
+        )
+
+    return result
