@@ -9,8 +9,8 @@
   "naming_series",
   "vehicle",
   "status",
-  "shipping_vendor",
-  "shipping_vendor_name",
+  "transporter",
+  "transporter_name",
   "current_station",
   "next_station",
   "column_break_4",
@@ -87,9 +87,10 @@
    "depends_on": "driver",
    "fetch_from": "driver.full_name",
    "fieldname": "driver_name",
-   "fieldtype": "Read Only",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Driver Name"
+   "label": "Driver Name",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_8",
@@ -162,24 +163,6 @@
    "label": "Est End Datetime"
   },
   {
-   "depends_on": "vehicle",
-   "fetch_from": "vehicle.gg_shipping_vendor",
-   "fieldname": "shipping_vendor",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Shipping Vendor",
-   "options": "Shipping Vendor",
-   "read_only": 1
-  },
-  {
-   "depends_on": "shipping_vendor",
-   "fetch_from": "shipping_vendor.shipping_vendor_name",
-   "fieldname": "shipping_vendor_name",
-   "fieldtype": "Read Only",
-   "in_list_view": 1,
-   "label": "Shipping Vendor Name"
-  },
-  {
    "fieldname": "charges",
    "fieldtype": "Table",
    "options": "Shipping Order Charge"
@@ -191,15 +174,30 @@
    "options": "Shipping Order Charge Template"
   },
   {
-   "depends_on": "shipping_vendor",
+   "depends_on": "transporter",
    "fieldname": "charges_sec",
    "fieldtype": "Section Break",
    "label": "Charges"
+  },
+  {
+   "fetch_from": "vehicle.gg_transporter",
+   "fieldname": "transporter",
+   "fieldtype": "Link",
+   "label": "Transporter",
+   "options": "Supplier"
+  },
+  {
+   "depends_on": "transporter",
+   "fetch_from": "transporter.supplier_name",
+   "fieldname": "transporter_name",
+   "fieldtype": "Data",
+   "label": "Transporter Name",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2022-04-28 05:28:05.984219",
+ "modified": "2022-05-01 02:52:59.924120",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Shipping Order",

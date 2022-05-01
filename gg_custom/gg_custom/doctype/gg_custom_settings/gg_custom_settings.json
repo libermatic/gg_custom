@@ -10,7 +10,7 @@
   "customer_group",
   "column_break_4",
   "territory",
-  "shipping_vendor_sec",
+  "transporter_sec",
   "supplier_group",
   "column_break_8",
   "supplier_type"
@@ -65,15 +65,15 @@
    "label": "Booking Party"
   },
   {
-   "fieldname": "shipping_vendor_sec",
+   "fieldname": "transporter_sec",
    "fieldtype": "Section Break",
-   "label": "Shipping Vendor"
+   "label": "Transporter"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2022-04-19 23:32:55.704541",
+ "modified": "2022-05-01 02:14:00.570362",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "GG Custom Settings",

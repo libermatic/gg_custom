@@ -88,7 +88,7 @@ class ShippingOrder(Document):
             )
     
     def before_save(self):
-        if not self.shipping_vendor:
+        if not self.transporter:
             self.shipping_order_charge_template = None
             self.charges = []
 

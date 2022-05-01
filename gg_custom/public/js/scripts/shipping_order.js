@@ -16,6 +16,7 @@ export function shipping_order() {
           ],
         },
       }));
+      frm.set_query('transporter', (doc) => ({ filters: { disabled: 0, is_transporter: 1 } }));
       frm.set_query('vehicle', (doc) => ({ filters: { disabled: 0 } }));
       frm.set_query('driver', (doc) => ({ filters: { status: 'Active' } }));
     },
@@ -32,7 +33,7 @@ export function shipping_order() {
             })
             .toggleClass('btn-primary', status === 'Stopped');
         }
-        if (frm.doc.shipping_vendor) {
+        if (frm.doc.transporter) {
           frm
             .add_custom_button('Create Invoice', () =>
               frappe.model.open_mapped_doc({

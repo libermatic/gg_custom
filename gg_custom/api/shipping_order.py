@@ -268,16 +268,14 @@ def make_purchase_invoice(source_name, target_doc=None, posting_datetime=None):
 
     def set_invoice_missing_values(source, target):
         target.status = None
-        target.supplier = frappe.get_cached_value(
-            "Shipping Vendor", doc.shipping_vendor, "supplier"
-        )
+        target.supplier = doc.transporter
         target.update(
             frappe.model.utils.get_fetch_values(
                 "Purchase Invoice", "supplier", target.supplier
             )
         )
         target.supplier_address = frappe.get_cached_value(
-            "Shipping Vendor", doc.shipping_vendor, "primary_address"
+            "Supplier", doc.transporter, "supplier_primary_address"
         )
         if target.supplier_address:
             target.update(
