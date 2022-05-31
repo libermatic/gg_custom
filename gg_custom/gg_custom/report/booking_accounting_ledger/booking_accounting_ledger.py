@@ -83,6 +83,18 @@ def _get_columns(filters):
             "label": "Delivery Dates",
             "width": 150,
         },
+        {
+            "fieldtype": "Data",
+            "fieldname": "consignor",
+            "label": "Consignor",
+            "width": 180,
+        },
+        {
+            "fieldtype": "Data",
+            "fieldname": "consignee",
+            "label": "Consignee",
+            "width": 180,
+        },
     ]
 
 
@@ -128,6 +140,8 @@ def _get_data(filters):
                     si.name AS sales_invoice,
                     bo.name,
                     bo.paper_receipt_no,
+                    bo.consignor_name AS consignor,
+                    bo.consignee_name AS consignee,
                     bo.booking_datetime AS order_datetime
                 FROM `tabSales Invoice` AS si
                 LEFT JOIN `tabBooking Order` AS bo ON bo.name = si.gg_booking_order
@@ -230,6 +244,8 @@ def _get_data(filters):
                 "description": make_description(row.get("voucher_no"))
                 if row.get("voucher_type") == "Sales Invoice"
                 else (row.remarks.split("\n")[0] if row.get("remarks") else ""),
+                "consignor": booking_order.get("consignor"),
+                "consignee": booking_order.get("consignee"),
                 "order_date": frappe.format_value(order_date, {"fieldtype": "Date"})
                 if order_date
                 else "",

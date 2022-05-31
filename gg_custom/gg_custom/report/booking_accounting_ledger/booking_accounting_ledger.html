@@ -32,9 +32,11 @@
             {% if(data[i].paper_receipt_no) { %}
             ({%= data[i].paper_receipt_no %})
             {% } %}
+            <br />Cnor: {%= data[i].consignor %};
+            Cnee: {%= data[i].consignee %}
             <br />Order Dt: {%= data[i].order_date %}
             {% if(data[i].delivery_dates) { %}
-            ; Delivery Dt: {%= ata[i].delivery_dates %}
+            ; Delivery Dt: {%= data[i].delivery_dates %}
             {% } %}
             <br />{%= data[i].description %}
           {% } else { %}
