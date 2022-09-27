@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import frappe
 from erpnext.accounts.party import get_party_account
 from erpnext.accounts.utils import get_account_currency

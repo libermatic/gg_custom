@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from gg_custom.api.booking_order import get_freight_rates
 
 

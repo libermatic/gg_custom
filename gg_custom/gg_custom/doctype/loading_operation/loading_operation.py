@@ -3,7 +3,6 @@
 # Copyright (c) 2020, Libermatic and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 from gg_custom.doc_events.sales_invoice import validate_invoice
 import frappe
 from frappe.model.document import Document

@@ -1,7 +1,6 @@
 # Copyright (c) 2013, Libermatic and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 import frappe
 from erpnext.accounts.report.general_ledger.general_ledger import execute as get_report
 from erpnext.accounts.party import get_party_account

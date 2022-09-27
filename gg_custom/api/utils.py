@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import frappe
 
 from gg_custom.api.booking_party import update_customer
