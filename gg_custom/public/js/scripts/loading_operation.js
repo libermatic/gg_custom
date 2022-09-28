@@ -1,4 +1,4 @@
-import sumBy from 'lodash/sumBy';
+import { sumBy } from './utils';
 
 export function loading_operation_booking_order() {
   return {
@@ -169,7 +169,7 @@ function set_totals(frm) {
     ['on_load', 'off_load'].forEach((type) => {
       const field = `${type}_${param}`;
       const table = frm.doc[`${type}s`] || [];
-      frm.set_value(field, sumBy(table, param));
+      frm.set_value(field, sumBy(param, table));
     })
   );
 }

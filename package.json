@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/libermatic/gg_custom#readme",
   "dependencies": {
-    "lodash": "^4.17.19"
+    "ramda": "^0.28.0"
   }
 }

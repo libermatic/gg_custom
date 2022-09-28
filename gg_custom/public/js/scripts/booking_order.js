@@ -1,6 +1,4 @@
-import sumBy from 'lodash/sumBy';
-
-import { set_charge_type_query } from './utils';
+import { set_charge_type_query, sumBy } from './utils';
 import Timeline from '../vue/Timeline.vue';
 
 export function booking_order_freight_detail() {
@@ -27,7 +25,7 @@ export function booking_order_freight_detail() {
     weight_charged: set_total('weight_charged'),
     rate: set_freight_amount,
     amount: function (frm, cdt, cdn) {
-      const freight_total = sumBy(frm.doc.freight, 'amount');
+      const freight_total = sumBy('amount', frm.doc.freight);
       frm.set_value({ freight_total });
     },
   };
@@ -145,7 +143,7 @@ function set_address_dispay(party_type) {
 }
 
 function set_charge_total(frm) {
-  const charge_total = sumBy(frm.doc.charges, 'charge_amount');
+  const charge_total = sumBy('charge_amount', frm.doc.charges);
   frm.set_value({ charge_total });
 }
 
@@ -175,7 +173,7 @@ function set_freight_amount(frm, cdt, cdn) {
 
 function set_total(field) {
   return function (frm, cdt, cdn) {
-    frm.set_value(field, sumBy(frm.doc.freight, field));
+    frm.set_value(field, sumBy(field, frm.doc.freight));
     const { based_on } = frappe.get_doc(cdt, cdn);
     if (
       (field === 'no_of_packages' && based_on === 'Packages') ||
