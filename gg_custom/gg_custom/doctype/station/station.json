@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "field:station_name",
  "creation": "2020-07-08 13:53:39.428273",
  "doctype": "DocType",
@@ -15,10 +16,12 @@
    "unique": 1
   }
  ],
- "modified": "2020-07-31 12:44:46.279913",
+ "links": [],
+ "modified": "2022-09-28 05:26:33.026655",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Station",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -40,5 +43,6 @@
  ],
  "quick_entry": 1,
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "states": []
 }

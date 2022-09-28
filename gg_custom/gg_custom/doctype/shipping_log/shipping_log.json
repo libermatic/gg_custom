@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "format:SL{YY}{MM}{#####}",
  "creation": "2020-07-28 15:59:31.890387",
  "doctype": "DocType",
@@ -43,10 +44,12 @@
   }
  ],
  "in_create": 1,
- "modified": "2020-07-29 00:42:31.615420",
+ "links": [],
+ "modified": "2022-09-28 05:26:19.938545",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Shipping Log",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -67,5 +70,6 @@
   }
  ],
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "states": []
 }

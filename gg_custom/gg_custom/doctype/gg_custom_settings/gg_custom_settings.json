@@ -70,10 +70,9 @@
    "label": "Transporter"
   }
  ],
- "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2022-05-01 02:14:00.570362",
+ "modified": "2022-09-28 05:27:14.365350",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "GG Custom Settings",
@@ -92,5 +91,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

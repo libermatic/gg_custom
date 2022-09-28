@@ -37,10 +37,11 @@
   }
  ],
  "links": [],
- "modified": "2022-04-27 15:38:42.486603",
+ "modified": "2022-09-28 05:25:39.691109",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Shipping Order Charge Template",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -67,5 +68,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

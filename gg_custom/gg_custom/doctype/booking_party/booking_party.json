@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "naming_series:",
  "creation": "2020-07-08 12:41:01.439558",
  "doctype": "DocType",
@@ -86,10 +87,12 @@
    "label": "Disabled"
   }
  ],
- "modified": "2020-08-17 13:30:16.564969",
+ "links": [],
+ "modified": "2022-09-28 05:21:55.132410",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Party",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -120,6 +123,7 @@
  "search_fields": "booking_party_name,phone",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "booking_party_name",
  "track_changes": 1
 }

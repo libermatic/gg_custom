@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "field:template_name",
  "creation": "2020-07-08 16:08:57.106242",
  "doctype": "DocType",
@@ -35,10 +36,12 @@
    "options": "Booking Order Charge"
   }
  ],
- "modified": "2020-07-17 21:14:25.709374",
+ "links": [],
+ "modified": "2022-09-28 05:24:48.430771",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order Charge Template",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -65,5 +68,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

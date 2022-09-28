@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "naming_series:",
  "creation": "2020-07-08 22:28:00.129511",
  "doctype": "DocType",
@@ -150,10 +151,12 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2020-09-05 02:33:24.738853",
+ "links": [],
+ "modified": "2022-09-28 05:26:37.069798",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -188,5 +191,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }
