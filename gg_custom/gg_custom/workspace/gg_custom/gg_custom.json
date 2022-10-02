@@ -40,7 +40,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "Booking Accounting Ledger",
    "link_count": 0,
    "link_to": "Booking Accounting Ledger",
@@ -50,7 +50,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "Booking Summary",
    "link_count": 0,
    "link_to": "Booking Summary",
@@ -60,7 +60,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "Accounts Receivable Summary ordered by Customer Name",
    "link_count": 0,
    "link_to": "Accounts Receivable Summary ordered by Customer Name",
@@ -193,7 +193,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-09-28 05:19:39.965227",
+ "modified": "2022-10-01 18:02:55.649848",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "GG Custom",
