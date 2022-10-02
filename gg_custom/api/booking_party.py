@@ -9,18 +9,16 @@ from gg_custom.api.booking_order import get_payment_entry_from_invoices
 
 
 def get_party_open_orders(party):
+    customer = frappe.get_cached_value("Booking Party", party, "customer")
+    SalesInvoice = frappe.qb.DocType("Sales Invoice")
+    q = (
+        frappe.qb.from_(SalesInvoice)
+        .select(SalesInvoice.name)
+        .where((SalesInvoice.docstatus == 1) & (SalesInvoice.outstanding_amount > 0))
+        .where(SalesInvoice.customer == customer)
+    )
     sales_invoices = [
-        frappe.get_cached_doc("Sales Invoice", x.get("name"))
-        for x in frappe.db.sql(
-            """
-                SELECT name FROM `tabSales Invoice`
-                WHERE docstatus = 1 AND outstanding_amount > 0 AND customer = %(customer)s
-            """,
-            values={
-                "customer": frappe.get_cached_value("Booking Party", party, "customer")
-            },
-            as_dict=1,
-        )
+        frappe.get_cached_doc("Sales Invoice", x.get("name")) for x in q.run(as_dict=1)
     ]
 
     booking_orders = [

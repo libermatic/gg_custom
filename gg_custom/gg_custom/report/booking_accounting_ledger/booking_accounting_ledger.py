@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe.query_builder.functions import IfNull
 from erpnext.accounts.report.general_ledger.general_ledger import execute as get_report
 from erpnext.accounts.party import get_party_account
 from toolz.curried import groupby, valmap, first, compose, merge
@@ -126,67 +127,71 @@ def _get_data(filters):
 
     gl_entries = rows[1:-2]
 
+    SalesInvoice = frappe.qb.DocType("Sales Invoice")
+    BookingOrder = frappe.qb.DocType("Booking Order")
     invoices = [
         x.get("voucher_no")
         for x in gl_entries
         if x.get("voucher_type") == "Sales Invoice"
     ]
-    get_booking_orders = compose(valmap(first), groupby("sales_invoice"), frappe.db.sql)
+    get_booking_orders = compose(valmap(first), groupby("sales_invoice"))
     booking_orders = (
         get_booking_orders(
-            """
-                SELECT
-                    si.name AS sales_invoice,
-                    bo.name,
-                    bo.paper_receipt_no,
-                    bo.consignor_name AS consignor,
-                    bo.consignee_name AS consignee,
-                    bo.booking_datetime AS order_datetime
-                FROM `tabSales Invoice` AS si
-                LEFT JOIN `tabBooking Order` AS bo ON bo.name = si.gg_booking_order
-                WHERE si.name IN %(invoices)s
-            """,
-            values={"invoices": invoices},
-            as_dict=1,
+            frappe.qb.from_(SalesInvoice)
+            .left_join(BookingOrder)
+            .on(BookingOrder.name == SalesInvoice.gg_booking_order)
+            .where(SalesInvoice.name.isin(invoices))
+            .select(
+                SalesInvoice.name.as_("sales_invoice"),
+                BookingOrder.name,
+                BookingOrder.paper_receipt_no,
+                BookingOrder.consignor_name.as_("consignor"),
+                BookingOrder.consignee_name.as_("consignee"),
+                BookingOrder.booking_datetime.as_("order_datetime"),
+            )
+            .run(as_dict=1)
         )
         if invoices
         else {}
     )
 
+    SalesInvoiceItem = frappe.qb.DocType("Sales Invoice Item")
+    BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
     orders = [v.get("name") for _, v in booking_orders.items()]
-
-    get_sales_invoice_items = compose(groupby("sales_invoice"), frappe.db.sql)
     sales_invoice_items = (
-        get_sales_invoice_items(
-            """
-                SELECT
-                    sii.parent AS sales_invoice,
-                    sii.description,
-                    sii.qty,
-                    sii.rate,
-                    bofd.based_on,
-                    IFNULL(sii.gg_bo_detail, '') != '' AS is_freight_item
-                FROM `tabSales Invoice Item` AS sii
-                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                    bofd.name = sii.gg_bo_detail
-                WHERE sii.parent IN %(invoices)s
-            """,
-            values={"invoices": invoices},
-            as_dict=1,
+        groupby(
+            "sales_invoice",
+            frappe.qb.from_(SalesInvoiceItem)
+            .left_join(BookingOrderFreightDetail)
+            .on(BookingOrderFreightDetail.name == SalesInvoiceItem.gg_bo_detail)
+            .where(SalesInvoiceItem.parent.isin(invoices))
+            .select(
+                SalesInvoiceItem.parent.as_("sales_invoice"),
+                SalesInvoiceItem.description,
+                SalesInvoiceItem.qty,
+                SalesInvoiceItem.rate,
+                BookingOrderFreightDetail.based_on,
+                (IfNull(SalesInvoiceItem.gg_bo_detail, "") != "").as_(
+                    "is_freight_item"
+                ),
+            )
+            .run(as_dict=1),
         )
         if invoices
         else {}
     )
 
-    get_delivery_dates = compose(groupby("booking_order"), frappe.db.sql)
+    BookingLog = frappe.qb.DocType("Booking Log")
+    get_delivery_dates = groupby("booking_order")
     delivery_dates = (
         get_delivery_dates(
-            """
-                SELECT booking_order, posting_datetime FROM `tabBooking Log`
-                WHERE activity = 'Collected' AND booking_order IN %(orders)s
-            """,
-            values={"orders": orders},
-            as_dict=1,
+            frappe.qb.from_(BookingLog)
+            .where(
+                (BookingLog.activity == "Collected")
+                & (BookingLog.booking_order.isin(orders))
+            )
+            .select(BookingLog.booking_order, BookingLog.posting_datetime)
+            .run(as_dict=1)
         )
         if orders
         else {}

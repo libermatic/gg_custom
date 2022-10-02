@@ -1,4 +1,5 @@
 import frappe
+from frappe.query_builder.functions import Count, IfNull
 from toolz.curried import (
     compose,
     first,
@@ -30,16 +31,17 @@ def validate_invoice(doc, throw=True):
             if existing:
                 return "freight"
         else:
-            existing = frappe.db.sql(
-                """
-                    SELECT COUNT(name) FROM `tabSales Invoice` WHERE
-                        name != %(name)s AND
-                        docstatus = 1 AND
-                        gg_booking_order = %(booking_order)s AND
-                        IFNULL(gg_loading_operation, '') = ''
-                """,
-                values={"name": doc.name, "booking_order": doc.gg_booking_order},
-            )[0][0]
+            SalesInvoice = frappe.qb.DocType("Sales Invoice")
+            existing = (
+                frappe.qb.from_(SalesInvoice)
+                .where(SalesInvoice.docstatus == 1)
+                .where(
+                    (SalesInvoice.name != doc.name)
+                    & (SalesInvoice.gg_booking_order == doc.gg_booking_order)
+                    & (IfNull(SalesInvoice.gg_loading_operation, "") == "")
+                )
+                .select(Count(SalesInvoice.name))
+            ).run()[0][0]
             if existing:
                 return "charges"
         return None

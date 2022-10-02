@@ -6,6 +6,7 @@
 from gg_custom.doc_events.sales_invoice import validate_invoice
 import frappe
 from frappe.model.document import Document
+from frappe.query_builder.functions import Count
 from toolz.curried import compose, valmap, first, groupby
 
 from gg_custom.api.booking_order import (
@@ -172,18 +173,21 @@ class LoadingOperation(Document):
 
         bos = list(set(x.booking_order for x in self.on_loads))
         if bos:
-            paid_invoice_count = frappe.db.sql(
-                """
-                    SELECT COUNT(per.reference_name) FROM `tabPayment Entry Reference` AS per
-                    LEFT JOIN `tabPayment Entry` AS pe ON pe.name = per.parent
-                    LEFT JOIN `tabSales Invoice` AS si ON si.name = per.reference_name
-                    WHERE
-                        pe.docstatus = 1 AND
-                        per.reference_doctype = 'Sales Invoice' AND
-                        si.gg_booking_order IN %(bos)s
-                """,
-                values={"bos": bos},
-            )[0][0]
+            PaymentEntryReference = frappe.qb.DocType("Payment Entry Reference")
+            PaymentEntry = frappe.qb.DocType("Payment Entry")
+            SalesInvoice = frappe.qb.DocType("Sales Invoice")
+            paid_invoice_count = (frappe.qb.from_(PaymentEntryReference)
+                .left_join(PaymentEntry).on(PaymentEntry.name == PaymentEntryReference.parent)
+                .left_join(SalesInvoice).on(SalesInvoice.name == PaymentEntryReference.reference_name)
+                .where(
+                    (PaymentEntry.docstatus == 1)
+                    & (PaymentEntryReference.reference_doctype == 'Sales Invoice')
+                    & (SalesInvoice.gg_booking_order.isin(bos))
+                ).select(
+                    Count(PaymentEntryReference.reference_name)
+                )
+            ).run()[0][0]
+
             if paid_invoice_count:
                 frappe.throw(
                     frappe._(

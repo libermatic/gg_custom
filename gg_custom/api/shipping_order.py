@@ -1,8 +1,9 @@
 import frappe
+from frappe.query_builder import Criterion
+from frappe.query_builder.functions import Sum, GroupConcat
 from toolz.curried import (
     compose,
     merge,
-    concat,
     valmap,
     keymap,
     keyfilter,
@@ -20,59 +21,59 @@ from gg_custom.api.booking_order import (
 
 @frappe.whitelist()
 def query(doctype, txt, searchfield, start, page_len, filters):
-    station = filters.get("station")
-    cond = (
-        " OR ".join(
-            [
-                "so.initial_station = %(station)s",
-                "so.final_station = %(station)s",
-                "sots.station = %(station)s",
-            ]
+    ShippingOrder = frappe.qb.DocType("Shipping Order")
+    ShippingOrderTransitStation = frappe.qb.DocType("Shipping Order Transit Station")
+
+    q = (
+        frappe.qb.from_(ShippingOrder)
+        .left_join(ShippingOrderTransitStation)
+        .on(ShippingOrderTransitStation.parent == ShippingOrder.name)
+        .where(ShippingOrder.docstatus == 1)
+        .where(ShippingOrder.name.like(f"%{txt}%"))
+        .select(
+            ShippingOrder.name,
+            ShippingOrder.vehicle,
+            ShippingOrder.driver_name,
+            ShippingOrder.driver,
         )
-        if station
-        else "1 = 1"
+        .distinct()
+        .limit(page_len)
+        .offset(start)
     )
-    return frappe.db.sql(
-        """
-            SELECT DISTINCT so.name, so.vehicle, so.driver_name, so.driver
-            FROM `tabShipping Order` AS so
-            LEFT JOIN `tabShipping Order Transit Station` AS sots
-                ON sots.parent = so.name
-			WHERE ({cond}) AND (
-                so.docstatus = 1 AND
-                so.name LIKE %(txt)s
-            ) LIMIT %(start)s, %(page_len)s
-        """.format(
-            cond=cond,
-        ),
-        values={
-            "station": station,
-            "txt": "%%%s%%" % txt,
-            "start": start,
-            "page_len": page_len,
-        },
-    )
+    station = filters.get("station")
+    if station:
+        q = q.where(
+            Criterion.any(
+                [
+                    ShippingOrder.initial_station == station,
+                    ShippingOrder.final_station == station,
+                    ShippingOrderTransitStation.station == station,
+                ]
+            )
+        )
+
+    return q.run()
 
 
 @frappe.whitelist()
 def get_history(name):
-    logs = frappe.db.sql(
-        """
-            SELECT
-                sl.posting_datetime,
-                sl.station,
-                sl.activity,
-                lo.on_load_no_of_packages,
-                lo.off_load_no_of_packages
-            FROM `tabShipping Log` AS sl
-            LEFT JOIN `tabLoading Operation` AS lo ON
-                lo.name = sl.loading_operation
-            WHERE sl.shipping_order = %(shipping_order)s
-            ORDER BY sl.posting_datetime
-        """,
-        values={"shipping_order": name},
-        as_dict=1,
-    )
+    ShippingLog = frappe.qb.DocType("Shipping Log")
+    LoadingOperation = frappe.qb.DocType("Loading Operation")
+
+    logs = (
+        frappe.qb.from_(ShippingLog)
+        .left_join(LoadingOperation)
+        .on(LoadingOperation.name == ShippingLog.loading_operation)
+        .where(ShippingLog.shipping_order == name)
+        .select(
+            ShippingLog.posting_datetime,
+            ShippingLog.station,
+            ShippingLog.activity,
+            LoadingOperation.on_load_no_of_packages,
+            LoadingOperation.off_load_no_of_packages,
+        )
+        .orderby(ShippingLog.posting_datetime)
+    ).run(as_dict=1)
 
     def get_message(log):
         activity = log.get("activity")
@@ -123,37 +124,41 @@ def get_history(name):
 
 
 def get_manifest_rows(shipping_order):
-    return frappe.db.sql(
-        """
-            SELECT
-                lobo.booking_order,
-                lobo.loading_unit,
-                lobo.qty,
-                SUM(lobo.no_of_packages) AS cur_no_of_packages,
-                SUM(lobo.weight_actual) AS cur_weight_actual,
-                GROUP_CONCAT(bofd.item_description SEPARATOR ', ') AS item_description,
-                bo.destination_station,
-                bo.consignor_name,
-                bo.consignee_name,
-                bo.no_of_packages,
-                bo.weight_actual
-            FROM `tabLoading Operation Booking Order` AS lobo
-            LEFT JOIN `tabLoading Operation` AS lo ON
-                lo.name = lobo.parent
-            LEFT JOIN `tabBooking Order` AS bo ON
-                bo.name = lobo.booking_order
-            LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                bofd.name = lobo.bo_detail
-            WHERE
-                lo.docstatus = 1 AND
-                lobo.parentfield = 'on_loads' AND
-                lo.shipping_order = %(shipping_order)s
-            GROUP BY lobo.booking_order
-            ORDER BY lo.name, lobo.idx
-        """,
-        values={"shipping_order": shipping_order},
-        as_dict=1,
-    )
+    LoadingOperationBookingOrder = frappe.qb.DocType("Loading Operation Booking Order")
+    LoadingOperation = frappe.qb.DocType("Loading Operation")
+    BookingOrder = frappe.qb.DocType("Booking Order")
+    BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
+
+    return (
+        frappe.qb.from_(LoadingOperationBookingOrder)
+        .left_join(LoadingOperation)
+        .on(LoadingOperation.name == LoadingOperationBookingOrder.parent)
+        .left_join(BookingOrder)
+        .on(BookingOrder.name == LoadingOperationBookingOrder.booking_order)
+        .left_join(BookingOrderFreightDetail)
+        .on(BookingOrderFreightDetail.name == LoadingOperationBookingOrder.bo_detail)
+        .where(
+            (LoadingOperation.docstatus == 1)
+            & (LoadingOperationBookingOrder.parentfield == "on_loads")
+        )
+        .where(LoadingOperation.shipping_order == shipping_order)
+        .select(
+            LoadingOperationBookingOrder.booking_order,
+            LoadingOperationBookingOrder.loading_unit,
+            LoadingOperationBookingOrder.qty,
+            Sum(LoadingOperationBookingOrder.no_of_packages, "cur_no_of_packages"),
+            Sum(LoadingOperationBookingOrder.weight_actual, "cur_weight_actual"),
+            GroupConcat(BookingOrderFreightDetail.item_description, "item_description"),
+            BookingOrder.destination_station,
+            BookingOrder.consignor_name,
+            BookingOrder.consignee_name,
+            BookingOrder.no_of_packages,
+            BookingOrder.weight_actual,
+        )
+        .groupby(LoadingOperationBookingOrder.booking_order)
+        .orderby(LoadingOperation.name)
+        .orderby(LoadingOperation.idx)
+    ).run(as_dict=1)
 
 
 def get_freight_summary_rows(shipping_order):
@@ -165,98 +170,105 @@ def get_freight_summary_rows(shipping_order):
             return (row.get("cur_weight_actual") or 0) * rate
         return row.get("amount") or 0
 
-    freight_rows = frappe.db.sql(
-        """
-            SELECT
-                bo.name AS booking_order,
-                bo.consignor_name,
-                bo.consignee_name,
-                bofd.item_description,
-                SUM(lobo.no_of_packages) AS cur_no_of_packages,
-                SUM(lobo.weight_actual) AS cur_weight_actual,
-                bofd.based_on,
-                bofd.rate
-            FROM `tabLoading Operation Booking Order` AS lobo
-            LEFT JOIN `tabLoading Operation` AS lo ON
-                lo.name = lobo.parent
-            LEFT JOIN `tabBooking Order` AS bo ON
-                bo.name = lobo.booking_order
-            LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                bofd.name = lobo.bo_detail
-            WHERE
-                lo.docstatus = 1 AND
-                lobo.parentfield = 'on_loads' AND
-                lo.shipping_order = %(shipping_order)s
-            GROUP BY lobo.name
-            ORDER BY lo.name, lobo.idx
-        """,
-        values={"shipping_order": shipping_order},
-        as_dict=1,
-    )
+    LoadingOperationBookingOrder = frappe.qb.DocType("Loading Operation Booking Order")
+    LoadingOperation = frappe.qb.DocType("Loading Operation")
+    BookingOrder = frappe.qb.DocType("Booking Order")
+    BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
+    BookingOrderCharge = frappe.qb.DocType("Booking Order Charge")
+
+    freight_rows = (
+        frappe.qb.from_(LoadingOperationBookingOrder)
+        .left_join(LoadingOperation)
+        .on(LoadingOperation.name == LoadingOperationBookingOrder.parent)
+        .left_join(BookingOrder)
+        .on(BookingOrder.name == LoadingOperationBookingOrder.booking_order)
+        .left_join(BookingOrderFreightDetail)
+        .on(BookingOrderFreightDetail.name == LoadingOperationBookingOrder.bo_detail)
+        .where(
+            (LoadingOperation.docstatus == 1)
+            & (LoadingOperationBookingOrder.parentfield == "on_loads")
+        )
+        .where(LoadingOperation.shipping_order == shipping_order)
+        .select(
+            BookingOrder.name.as_("booking_order"),
+            BookingOrder.consignor_name,
+            BookingOrder.consignee_name,
+            BookingOrderFreightDetail.item_description,
+            Sum(LoadingOperationBookingOrder.no_of_packages, "cur_no_of_packages"),
+            Sum(LoadingOperationBookingOrder.weight_actual, "cur_weight_actual"),
+            BookingOrderFreightDetail.based_on,
+            BookingOrderFreightDetail.rate,
+        )
+        .groupby(LoadingOperationBookingOrder.name)
+        .orderby(LoadingOperation.name)
+        .orderby(LoadingOperationBookingOrder.idx)
+    ).run(as_dict=1)
 
     booking_orders = set([x.get("booking_order") for x in freight_rows])
 
-    get_first_loaded_booking_orders = compose(
-        list,
-        map(lambda x: x.get("booking_order")),
-        frappe.db.sql,
-    )
     first_loaded_booking_orders = (
-        get_first_loaded_booking_orders(
-            """
-                SELECT
-                    lobo.booking_order,
-                    lo.shipping_order
-                FROM `tabLoading Operation Booking Order` AS lobo
-                LEFT JOIN `tabLoading Operation` AS lo ON
-                    lo.name = lobo.parent
-                LEFT JOIN `tabBooking Order Charge` AS boc ON
-                    boc.parent = lobo.booking_order
-                WHERE
-                    lo.docstatus = 1 AND
-                    lobo.parentfield = 'on_loads' AND
-                    lobo.booking_order IN %(booking_orders)s
-                GROUP by lobo.booking_order
-                HAVING lo.shipping_order = %(shipping_order)s
-                ORDER BY lo.posting_datetime
-            """,
-            values={"booking_orders": booking_orders, "shipping_order": shipping_order},
-            as_dict=1,
-        )
+        [
+            x.get("booking_order")
+            for x in (
+                frappe.qb.from_(LoadingOperationBookingOrder)
+                .left_join(LoadingOperation)
+                .on(LoadingOperation.name == LoadingOperationBookingOrder.parent)
+                .left_join(BookingOrderCharge)
+                .on(
+                    BookingOrderCharge.parent
+                    == LoadingOperationBookingOrder.booking_order
+                )
+                .where(
+                    (LoadingOperation.docstatus == 1)
+                    & (LoadingOperationBookingOrder.parentfield == "on_loads")
+                )
+                .where(LoadingOperationBookingOrder.booking_order.isin(booking_orders))
+                .select(
+                    LoadingOperationBookingOrder.booking_order,
+                    LoadingOperation.shipping_order,
+                )
+                .groupby(LoadingOperationBookingOrder.booking_order)
+                .having(LoadingOperation.shipping_order == shipping_order)
+                .orderby(LoadingOperation.posting_datetime)
+            ).run(as_dict=1)
+        ]
         if booking_orders
         else []
     )
 
     charges_rows = (
-        frappe.db.sql(
-            """
-                SELECT
-                    bo.name AS booking_order,
-                    bo.consignor_name,
-                    bo.consignee_name,
-                    GROUP_CONCAT(boc.charge_type SEPARATOR ', ') AS item_description,
-                    0 AS cur_no_of_packages,
-                    0 AS cur_weight_actual,
-                    '' AS based_on,
-                    0 AS rate,
-                    SUM(boc.charge_amount) AS amount
-                FROM `tabBooking Order` AS bo
-                LEFT JOIN `tabBooking Order Charge` AS boc ON
-                    boc.parent = bo.name
-                WHERE
-                    bo.name IN %(booking_orders)s AND
-                    boc.charge_amount > 0
-                GROUP BY bo.name
-            """,
-            values={"booking_orders": first_loaded_booking_orders},
-            as_dict=1,
-        )
+        [
+            {
+                **x,
+                "cur_no_of_packages": 0,
+                "cur_weight_actual": 0,
+                "based_on": "",
+                "rate": 0,
+            }
+            for x in (
+                (
+                    frappe.qb.from_(BookingOrder)
+                    .left_join(BookingOrderCharge)
+                    .on(BookingOrderCharge.parent == BookingOrder.name)
+                    .where(BookingOrder.name.isin(first_loaded_booking_orders))
+                    .where(BookingOrderCharge.charge_amount > 0)
+                    .select(
+                        BookingOrder.name.as_("booking_order"),
+                        BookingOrder.consignor_name,
+                        BookingOrder.consignee_name,
+                        GroupConcat(BookingOrderCharge.charge_type, "item_description"),
+                        Sum(BookingOrderCharge.charge_amount, "amount"),
+                    )
+                    .groupby(BookingOrder.name)
+                )
+            ).run(as_dict=1)
+        ]
         if first_loaded_booking_orders
         else []
     )
 
     return sorted(
-        [merge(x, {"amount": get_amount(x)}) for x in freight_rows + charges_rows],
+        [{**x, "amount": get_amount(x)} for x in freight_rows + charges_rows],
         key=lambda x: x.get("booking_order"),
     )
 
@@ -350,25 +362,17 @@ def make_purchase_invoice(source_name, target_doc=None, posting_datetime=None):
 
 
 def get_order_contents(doc):
+    LoadingOperation = frappe.qb.DocType("Loading Operation")
     params = ["no_of_packages", "weight_actual", "goods_value"]
-    fields = list(
-        concat(
-            [
-                ["SUM({t}_{p}) AS {t}_{p}".format(t=t, p=p) for p in params]
-                for t in ["on_load", "off_load"]
-            ]
+    fieldnames = [f"{t}_{p}" for p in params for t in ["on_load", "off_load"]]
+    data = (
+        frappe.qb.from_(LoadingOperation)
+        .where(LoadingOperation.docstatus == 1)
+        .where(LoadingOperation.shipping_order == doc.name)
+        .select(
+            *[Sum(LoadingOperation[x]).as_(x) for x in fieldnames],
         )
-    )
-    data = frappe.db.sql(
-        """
-            SELECT {fields} FROM `tabLoading Operation`
-            WHERE docstatus = 1 AND shipping_order = %(shipping_order)s
-        """.format(
-            fields=", ".join(fields)
-        ),
-        values={"shipping_order": doc.name},
-        as_dict=1,
-    )[0]
+    ).run(as_dict=1)[0]
 
     def get_values(_type):
         fields = list(map(lambda x: "{}_{}".format(_type, x), params))

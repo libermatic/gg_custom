@@ -5,14 +5,10 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.query_builder.functions import Sum
 from toolz.curried import (
     unique,
     pluck,
-    merge,
-    keyfilter,
-    concat,
-    keymap,
-    valmap,
     map,
     compose,
 )
@@ -85,7 +81,7 @@ class ShippingOrder(Document):
                     )
                 )
             )
-    
+
     def before_save(self):
         if not self.transporter:
             self.shipping_order_charge_template = None
@@ -237,17 +233,20 @@ def _update_booking_orders(shipping_order):
 
 def _get_dashboard_info(doc):
     contents = get_order_contents(doc)
-    invoice = frappe.db.sql(
-        """
-            SELECT
-                SUM(rounded_total) AS rounded_total,
-                SUM(outstanding_amount) AS outstanding_amount
-            FROM `tabPurchase Invoice` WHERE
-                docstatus = 1 AND gg_shipping_order = %(shipping_order)s
-        """,
-        values={"shipping_order": doc.name},
-        as_dict=1,
-    )[0]
+    PurchaseInvoice = frappe.qb.DocType("Purchase Invoice")
+    q = (
+        frappe.qb.from_(PurchaseInvoice)
+        .where(
+            (PurchaseInvoice.docstatus == 1)
+            & (PurchaseInvoice.gg_shipping_order == doc.name)
+        )
+        .select(
+            Sum(PurchaseInvoice.rounded_total, "rounded_total"),
+            Sum(PurchaseInvoice.outstanding_amount, "outstanding_amount"),
+        )
+    )
+    invoice = q.run(as_dict=1)[0]
+
     return {
         **contents,
         "invoice": invoice,
@@ -256,22 +255,22 @@ def _get_dashboard_info(doc):
 
 
 def _current_onboard_bookings(doc):
+    LoadingOperationBookingOrder = frappe.qb.DocType("Loading Operation Booking Order")
+    LoadingOperation = frappe.qb.DocType("Loading Operation")
+    q = (
+        frappe.qb.from_(LoadingOperationBookingOrder)
+        .left_join(LoadingOperation)
+        .on(LoadingOperation.name == LoadingOperationBookingOrder.parent)
+        .where(
+            (LoadingOperation.docstatus == 1)
+            & (LoadingOperation.shipping_order == doc.name)
+        )
+        .select(LoadingOperationBookingOrder.booking_order)
+    )
     get_booking_orders = compose(
         list,
         map(lambda x: x[0]),
-        lambda x: frappe.db.sql(
-            """
-                SELECT lobo.booking_order
-                FROM `tabLoading Operation Booking Order` AS lobo
-                LEFT JOIN `tabLoading Operation` AS lo ON
-                    lo.name = lobo.parent
-                WHERE
-                    lo.docstatus = 1 AND
-                    lo.shipping_order = %(shipping_order)s AND
-                    lobo.parentfield = %(parentfield)s
-            """,
-            values={"shipping_order": doc.name, "parentfield": x},
-        ),
+        lambda x: q.where(LoadingOperationBookingOrder.parentfield == x).run(),
     )
     return [
         x

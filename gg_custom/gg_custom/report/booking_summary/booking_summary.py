@@ -7,9 +7,7 @@ from toolz.curried import groupby, compose, concat, concatv, merge
 
 def execute(filters=None):
     columns = _get_columns(filters)
-    keys = [x.get("fieldname") for x in columns]
-    clauses, values = _get_filters(filters)
-    data = _get_data(clauses, values, keys)
+    data = _get_data(filters)
     return columns, data
 
 
@@ -66,55 +64,44 @@ def _get_columns(filters):
     )
 
 
-def _get_filters(filters):
-    join = compose(lambda x: " AND ".join(x), concatv)
-    clauses = join(
-        ["bl.posting_datetime BETWEEN %(from_date)s AND %(to_date)s"],
-        ["bl.station = %(station)s"] if filters.station else [],
+def _get_data(filters):
+    BookingLog = frappe.qb.DocType("Booking Log")
+    BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
+    BookingOrder = frappe.qb.DocType("Booking Order")
+    q = (
+        frappe.qb.from_(BookingLog)
+        .left_join(BookingOrderFreightDetail)
+        .on(BookingOrderFreightDetail.name == BookingLog.bo_detail)
+        .left_join(BookingOrder)
+        .on(BookingOrder.name == BookingLog.booking_order)
+        .where(BookingLog.posting_datetime[filters.from_date : filters.to_date])
+        .select(
+            BookingLog.bo_detail,
+            BookingOrderFreightDetail.item_description,
+            BookingLog.booking_order,
+            BookingOrder.consignor_name,
+            BookingOrder.consignee_name,
+        )
+        .distinct()
+        .orderby(BookingLog.posting_datetime)
     )
-
-    return clauses, filters
-
-
-def _get_data(clauses, values, keys):
-    bo_details = frappe.db.sql(
-        """
-            SELECT
-                DISTINCT bl.bo_detail,
-                bofd.item_description,
-                bl.booking_order,
-                bo.consignor_name,
-                bo.consignee_name
-            FROM `tabBooking Log` AS bl
-            LEFT JOIN `tabBooking Order Freight Detail` AS bofd
-                ON bofd.name = bl.bo_detail
-            LEFT JOIN `tabBooking Order` AS bo
-                ON bo.name = bl.booking_order
-            WHERE {clauses} ORDER BY bl.posting_datetime
-        """.format(
-            clauses=clauses
-        ),
-        values=values,
-        as_dict=1,
-    )
+    if filters.station:
+        q = q.where(BookingLog.station == filters.station)
+    bo_details = q.run(as_dict=1)
 
     details = (
         groupby(
             "bo_detail",
-            frappe.db.sql(
-                """
-                    SELECT
-                        booking_order,
-                        activity,
-                        no_of_packages,
-                        weight_actual,
-                        bo_detail
-                    FROM `tabBooking Log`
-                    WHERE bo_detail IN %(bo_details)s
-                """,
-                values={"bo_details": [x.bo_detail for x in bo_details]},
-                as_dict=1,
-            ),
+            frappe.qb.from_(BookingLog)
+            .where(BookingLog.bo_detail.isin([x.bo_detail for x in bo_details]))
+            .select(
+                BookingLog.booking_order,
+                BookingLog.activity,
+                BookingLog.no_of_packages,
+                BookingLog.weight_actual,
+                BookingLog.bo_detail,
+            )
+            .run(as_dict=1),
         )
         if bo_details
         else {}
@@ -134,4 +121,3 @@ def _get_data(clauses, values, keys):
         )
 
     return [make_row(x) for x in bo_details]
-

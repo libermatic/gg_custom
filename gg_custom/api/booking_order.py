@@ -1,5 +1,6 @@
 import frappe
-import json
+from frappe.query_builder import Criterion
+from frappe.query_builder.functions import Sum, Max
 from frappe.contacts.doctype.address.address import (
     get_company_address,
     get_address_display,
@@ -23,58 +24,39 @@ from toolz.curried import (
 @frappe.whitelist()
 def query(doctype, txt, searchfield, start, page_len, filters):
     _type = filters.get("type")
+    booking_orders = (
+        get_orders_for(station=filters.get("station"))
+        if _type == "on_load"
+        else get_orders_for(shipping_order=filters.get("shipping_order"))
+        if _type == "off_load"
+        else []
+    )
+
+    if not booking_orders:
+        return []
+
+    BookingOrder = frappe.qb.DocType("Booking Order")
     fields = [
-        "name",
-        "source_station",
-        "consignor",
-        "consignor_name",
-        "destination_station",
-        "consignee",
-        "consignee_name",
+        BookingOrder.name,
+        BookingOrder.source_station,
+        BookingOrder.consignor,
+        BookingOrder.consignor_name,
+        BookingOrder.destination_station,
+        BookingOrder.consignee,
+        BookingOrder.consignee_name,
     ]
 
-    values = {
-        "txt": "%%%s%%" % txt,
-        "start": start,
-        "page_len": page_len,
-    }
+    q = (
+        frappe.qb.from_(BookingOrder)
+        .where(BookingOrder.docstatus == 1)
+        .where(Criterion.any([x.like(f"%{txt}%") for x in fields]))
+        .where(BookingOrder.name.isin([x.get("booking_order") for x in booking_orders]))
+        .select(*fields)
+        .limit(page_len)
+        .offset(start)
+    )
 
-    conds = [
-        "docstatus = 1",
-        "({})".format(" OR ".join(["{} LIKE %(txt)s".format(x) for x in fields])),
-        "name IN %(booking_orders)s",
-    ]
-    if _type == "on_load":
-        booking_orders = [
-            x.get("booking_order")
-            for x in get_orders_for(station=filters.get("station"))
-        ]
-        if booking_orders:
-            return frappe.db.sql(
-                """
-                    SELECT {fields} FROM `tabBooking Order`
-                    WHERE {conds} LIMIT %(start)s, %(page_len)s
-                """.format(
-                    fields=", ".join(fields), conds=" AND ".join(conds)
-                ),
-                values=merge(values, {"booking_orders": booking_orders}),
-            )
-    if _type == "off_load":
-        booking_orders = [
-            x.get("booking_order")
-            for x in get_orders_for(shipping_order=filters.get("shipping_order"))
-        ]
-        if booking_orders:
-            return frappe.db.sql(
-                """
-                    SELECT {fields} FROM `tabBooking Order`
-                    WHERE {conds} LIMIT %(start)s, %(page_len)s
-                """.format(
-                    fields=", ".join(fields), conds=" AND ".join(conds)
-                ),
-                values=merge(values, {"booking_orders": booking_orders}),
-            )
-    return []
+    return q.run()
 
 
 @frappe.whitelist()
@@ -229,28 +211,33 @@ def make_sales_invoice(source_name, target_doc=None, posting_datetime=None):
         if not is_freight_invoice:
             return set_invoice_missing_values(source, target)
 
-        freight_rows = frappe.db.sql(
-            """
-                SELECT
-                    bofd.name AS bo_detail,
-                    lobo.no_of_packages,
-                    lobo.weight_actual,
-                    bofd.based_on,
-                    bofd.rate,
-                    bofd.item_description
-                FROM `tabLoading Operation Booking Order` AS lobo
-                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                    bofd.name = lobo.bo_detail
-                WHERE lobo.parent = %(loading_operation)s AND
-                    lobo.booking_order = %(booking_order)s
-                ORDER BY bofd.idx, lobo.idx
-            """,
-            values={
-                "loading_operation": loading_operation,
-                "booking_order": source_name,
-            },
-            as_dict=1,
+        BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
+        LoadingOperationBookingOrder = frappe.qb.DocType(
+            "Loading Operation Booking Order"
         )
+        q = (
+            frappe.qb.from_(LoadingOperationBookingOrder)
+            .left_join(BookingOrderFreightDetail)
+            .on(
+                BookingOrderFreightDetail.name == LoadingOperationBookingOrder.bo_detail
+            )
+            .where(
+                (LoadingOperationBookingOrder.parent == loading_operation)
+                & (LoadingOperationBookingOrder.booking_order == source_name)
+            )
+            .select(
+                BookingOrderFreightDetail.name.as_("bo_detail"),
+                LoadingOperationBookingOrder.no_of_packages,
+                LoadingOperationBookingOrder.weight_actual,
+                BookingOrderFreightDetail.based_on,
+                BookingOrderFreightDetail.rate,
+                BookingOrderFreightDetail.item_description,
+            )
+            .orderby(BookingOrderFreightDetail.idx)
+            .orderby(LoadingOperationBookingOrder.idx)
+        )
+
+        freight_rows = q.run(as_dict=1)
 
         target.gg_loading_operation = loading_operation
         target.items = []
@@ -393,90 +380,80 @@ def get_orders_for(station=None, shipping_order=None):
         qty = get_qty(row)
         return merge(row, {"qty": qty, "available": qty})
 
-    get_result = compose(list, map(set_qty), frappe.db.sql)
+    BookingLog = frappe.qb.DocType("Booking Log")
+    BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
+
+    q = (
+        frappe.qb.from_(BookingLog)
+        .left_join(BookingOrderFreightDetail)
+        .on(BookingOrderFreightDetail.name == BookingLog.bo_detail)
+        .select(
+            BookingLog.booking_order,
+            Max(BookingLog.loading_unit).as_("loading_unit"),
+            BookingLog.bo_detail,
+            BookingOrderFreightDetail.item_description.as_("description"),
+        )
+    )
 
     if station:
-        return get_result(
-            """
-                SELECT
-                    bl.booking_order,
-                    MAX(bl.loading_unit) AS loading_unit,
-                    SUM(bl.no_of_packages) AS no_of_packages,
-                    SUM(bl.weight_actual) AS weight_actual,
-                    bl.bo_detail,
-                    bofd.item_description AS description
-                FROM `tabBooking Log` AS bl
-                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                    bofd.name = bl.bo_detail
-                WHERE bl.station = %(station)s
-                GROUP BY bl.bo_detail HAVING
-                    SUM(bl.no_of_packages) > 0 OR SUM(bl.weight_actual) > 0
-            """,
-            values={"station": station},
-            as_dict=1,
+        q = (
+            q.where(BookingLog.station == station)
+            .select(
+                Sum(BookingLog.no_of_packages).as_("no_of_packages"),
+                Sum(BookingLog.weight_actual).as_("weight_actual"),
+            )
+            .groupby(BookingLog.bo_detail)
+            .having(
+                (Sum(BookingLog.no_of_packages) > 0)
+                | (Sum(BookingLog.weight_actual) > 0)
+            )
         )
+        return [set_qty(x) for x in q.run(as_dict=1)]
 
     if shipping_order:
-        return get_result(
-            """
-                SELECT
-                    bl.booking_order,
-                    MAX(bl.loading_unit) AS loading_unit,
-                    -SUM(bl.no_of_packages) AS no_of_packages,
-                    -SUM(bl.weight_actual) AS weight_actual,
-                    bl.bo_detail,
-                    bofd.item_description AS description
-                FROM `tabBooking Log` AS bl
-                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                    bofd.name = bl.bo_detail
-                WHERE bl.shipping_order = %(shipping_order)s
-                GROUP BY bl.bo_detail HAVING
-                    SUM(bl.no_of_packages) < 0 OR SUM(bl.weight_actual) < 0
-            """,
-            values={"shipping_order": shipping_order},
-            as_dict=1,
+        q = (
+            q.where(BookingLog.shipping_order == shipping_order)
+            .select(
+                -Sum(BookingLog.no_of_packages).as_("no_of_packages"),
+                -Sum(BookingLog.weight_actual).as_("weight_actual"),
+            )
+            .groupby(BookingLog.bo_detail)
+            .having(
+                (Sum(BookingLog.no_of_packages) < 0)
+                | (Sum(BookingLog.weight_actual) < 0)
+            )
         )
+        return [set_qty(x) for x in q.run(as_dict=1)]
 
     return []
 
 
 @frappe.whitelist()
 def get_order_details(bo_detail, station=None, shipping_order=None):
+    BookingLog = frappe.qb.DocType("Booking Log")
+    BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
+
+    q = (
+        frappe.qb.from_(BookingLog)
+        .left_join(BookingOrderFreightDetail)
+        .on(BookingOrderFreightDetail.name == BookingLog.bo_detail)
+        .where(BookingLog.bo_detail == bo_detail)
+        .select(BookingOrderFreightDetail.item_description.as_("description"))
+    )
+
     if station:
-        return frappe.db.sql(
-            """
-                SELECT
-                    SUM(bl.no_of_packages) AS no_of_packages,
-                    SUM(bl.weight_actual) AS weight_actual,
-                    bofd.item_description AS description
-                FROM `tabBooking Log` AS bl
-                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                    bofd.name = bl.bo_detail
-                WHERE
-                    bl.station = %(station)s AND
-                    bl.bo_detail = %(bo_detail)s
-            """,
-            values={"station": station, "bo_detail": bo_detail},
-            as_dict=1,
-        )[0]
+        q = q.where(BookingLog.station == station).select(
+            Sum(BookingLog.no_of_packages).as_("no_of_packages"),
+            Sum(BookingLog.weight_actual).as_("weight_actual"),
+        )
+        return q.run(as_dict=1)[0]
 
     if shipping_order:
-        return frappe.db.sql(
-            """
-                SELECT
-                    -SUM(bl.no_of_packages) AS no_of_packages,
-                    -SUM(bl.weight_actual) AS weight_actual,
-                    bofd.item_description AS description
-                FROM `tabBooking Log` AS bl
-                LEFT JOIN `tabBooking Order Freight Detail` AS bofd ON
-                    bofd.name = bl.bo_detail
-                WHERE
-                    bl.shipping_order = %(shipping_order)s AND
-                    bl.bo_detail = %(bo_detail)s
-            """,
-            values={"shipping_order": shipping_order, "bo_detail": bo_detail},
-            as_dict=1,
-        )[0]
+        q = q.where(BookingLog.shipping_order == shipping_order).select(
+            -Sum(BookingLog.no_of_packages).as_("no_of_packages"),
+            -Sum(BookingLog.weight_actual).as_("weight_actual"),
+        )
+        return q.run(as_dict=1)[0]
 
     return {}
 
@@ -518,17 +495,20 @@ def get_freight_rates():
         valmap(first),
         groupby("based_on"),
         map(lambda x: merge(x, {"rate": get_rate(x)})),
-        frappe.db.sql,
     )
 
-    return get_freight_items(
-        """
-            SELECT name AS item_code, stock_uom AS uom, gg_freight_based_on AS based_on
-            FROM `tabItem`
-            WHERE gg_freight_based_on IN ('Packages', 'Weight')
-        """,
-        as_dict=1,
+    Item = frappe.qb.DocType("Item")
+    q = (
+        frappe.qb.from_(Item)
+        .where(Item.gg_freight_based_on.isin(["Packages", "Weight"]))
+        .select(
+            Item.name.as_("item_code"),
+            Item.stock_uom.as_("uom"),
+            Item.gg_freight_based_on.as_("based_on"),
+        )
     )
+
+    return get_freight_items(q.run(as_dict=1))
 
 
 def get_loading_conversion_factor(qty, unit, no_of_packages, weight_actual):

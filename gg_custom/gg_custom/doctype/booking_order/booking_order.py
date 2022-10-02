@@ -5,6 +5,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.query_builder.functions import Sum
 from toolz.curried import compose, excepts, first, map, filter
 
 from gg_custom.api.booking_order import (
@@ -174,17 +175,18 @@ class BookingOrder(Document):
 
 
 def _get_dashboard_info(doc):
-    invoice = frappe.db.sql(
-        """
-            SELECT
-                SUM(grand_total) AS grand_total,
-                SUM(outstanding_amount) AS outstanding_amount
-            FROM `tabSales Invoice` WHERE
-                docstatus = 1 AND gg_booking_order = %(booking_order)s
-        """,
-        values={"booking_order": doc.name},
-        as_dict=1,
-    )[0]
+    SalesInvoice = frappe.qb.DocType("Sales Invoice")
+    q = (
+        frappe.qb.from_(SalesInvoice)
+        .where(
+            (SalesInvoice.docstatus == 1) & (SalesInvoice.gg_booking_order == doc.name)
+        )
+        .select(
+            Sum(SalesInvoice.grand_total, "grand_total"),
+            Sum(SalesInvoice.outstanding_amount, "outstanding_amount"),
+        )
+    )
+    invoice = q.run(as_dict=1)[0]
     return {
         "invoice": invoice,
         "history": get_history(doc.name),
