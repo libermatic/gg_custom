@@ -23,6 +23,19 @@ class BookingParty(Document):
     def validate(self):
         self.flags.is_new_doc = self.is_new()
 
+    def before_rename(self, old_name, new_name, merge=False):
+        from frappe.model.rename_doc import rename_doc
+
+        if merge and self.customer:
+            new_customer = frappe.db.get_value("Booking Party", new_name, "customer")
+            if not new_customer:
+                frappe.throw(
+                    "Cannot merge Booking Parties because this party has accounting "
+                    "entries while the new one will have none."
+                )
+
+            rename_doc("Customer", self.customer, new_customer, merge=True)
+
     def on_update(self):
         update_customer(self.name)
         if self.flags.is_new_doc and self.get("address_line1"):
