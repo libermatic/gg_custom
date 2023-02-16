@@ -34,7 +34,8 @@ class BookingParty(Document):
                     "entries while the new one will have none."
                 )
 
-            rename_doc("Customer", self.customer, new_customer, merge=True)
+            if self.customer != new_customer:
+                rename_doc("Customer", self.customer, new_customer, merge=True)
 
     def on_update(self):
         update_customer(self.name)
