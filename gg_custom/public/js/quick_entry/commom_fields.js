@@ -1,11 +1,6 @@
 export function get_fields() {
   return [
     {
-      label: __('GSTIN'),
-      fieldname: '_gstin',
-      fieldtype: 'Data',
-    },
-    {
       fieldtype: 'Section Break',
       label: __('Address Details'),
     },
@@ -13,6 +8,7 @@ export function get_fields() {
       label: __('Address Line 1'),
       fieldname: 'address_line1',
       fieldtype: 'Data',
+      mandatory_depends_on: 'eval:doc._gstin||doc._phone',
     },
     {
       label: __('Address Line 2'),
@@ -25,12 +21,19 @@ export function get_fields() {
       fieldtype: 'Data',
     },
     {
+      label: __('Phone'),
+      fieldname: '_phone',
+      fieldtype: 'Data',
+      options: 'Phone',
+    },
+    {
       fieldtype: 'Column Break',
     },
     {
       label: __('City'),
       fieldname: 'city',
       fieldtype: 'Data',
+      mandatory_depends_on: 'eval:doc._gstin||doc._phone',
     },
     {
       label: __('State'),
@@ -43,6 +46,11 @@ export function get_fields() {
       fieldtype: 'Link',
       options: 'Country',
       default: frappe.defaults.get_global_default('country'),
+    },
+    {
+      label: __('GSTIN'),
+      fieldname: '_gstin',
+      fieldtype: 'Data',
     },
   ];
 }

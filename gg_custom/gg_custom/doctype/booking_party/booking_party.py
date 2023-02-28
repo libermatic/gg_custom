@@ -23,7 +23,7 @@ class BookingParty(Document):
     def validate(self):
         self.flags.is_new_doc = self.is_new()
         if self.is_new():
-            if self.get("_gstin") and not (
+            if (self.get("_gstin") or self.get("_phone")) and not (
                 self.get("address_line1") and self.get("city")
             ):
                 frappe.throw(
@@ -59,6 +59,9 @@ class BookingParty(Document):
             if self.get("_gstin"):
                 frappe.db.set_value(address.doctype, address.name, "gstin", self._gstin)
                 frappe.db.set_value(self.doctype, self.name, "gstin", self._gstin)
+            if self.get("_phone"):
+                frappe.db.set_value(address.doctype, address.name, "phone", self._phone)
+                frappe.db.set_value(self.doctype, self.name, "phone", self._phone)
 
     @frappe.whitelist()
     def create_customer(self):
