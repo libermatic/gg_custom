@@ -2,6 +2,23 @@ import { sumBy } from './utils';
 
 export function loading_operation_booking_order() {
   return {
+    booking_order: async function (frm, cdt, cdn) {
+      const { booking_order, parentfield } = frappe.get_doc(cdt, cdn);
+      if (booking_order) {
+        const { freight = [] } = await frappe.db.get_doc(
+          'Booking Order',
+          booking_order
+        );
+        frm.set_df_property(
+          parentfield,
+          'options',
+          freight.map((x) => x.name),
+          frm.doc.name,
+          'bo_detail',
+          cdn
+        );
+      }
+    },
     loading_unit: set_qtys,
     no_of_packages: set_totals,
     weight_actual: set_totals,
@@ -30,12 +47,6 @@ export function loading_operation() {
         'booking_order',
         'off_loads',
         set_query_booking_order('off_load')
-      );
-      ['on_loads', 'off_loads'].forEach((parentfield) =>
-        frm.set_query('bo_detail', parentfield, (doc, cdt, cdn) => {
-          const { booking_order: parent } = frappe.get_doc(cdt, cdn);
-          return { filters: { parent } };
-        })
       );
     },
     refresh: function (frm) {
