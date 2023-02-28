@@ -22,6 +22,19 @@ class BookingParty(Document):
 
     def validate(self):
         self.flags.is_new_doc = self.is_new()
+        if self.is_new():
+            if self.get("_gstin") and not (
+                self.get("address_line1") and self.get("city")
+            ):
+                frappe.throw(
+                    "<em>Address Line 1</em>, <em>City</em>, <em>Country</em> "
+                    "are required."
+                )
+            if not (bool(self.get("address_line1")) == bool(self.get("city"))):
+                frappe.throw(
+                    "All or none of <em>Address Line 1</em>, <em>City</em>, "
+                    "<em>Country</em> are required."
+                )
 
     def before_rename(self, old_name, new_name, merge=False):
         from frappe.model.rename_doc import rename_doc
@@ -40,6 +53,8 @@ class BookingParty(Document):
     def on_update(self):
         update_customer(self.name)
         if self.flags.is_new_doc and self.get("address_line1"):
+            if not self.get("country"):
+                self.set("country", frappe.defaults.get_global_default("country"))
             address = make_address(self)
             if self.get("_gstin"):
                 frappe.db.set_value(address.doctype, address.name, "gstin", self._gstin)
