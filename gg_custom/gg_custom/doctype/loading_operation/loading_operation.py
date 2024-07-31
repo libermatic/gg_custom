@@ -138,7 +138,14 @@ class LoadingOperation(Document):
         self.save()
 
     def _validate_shipping_order(self):
-        """disable validation"""
+        if self.company != frappe.get_cached_value(
+            "Shipping Order", self.shipping_order, "company"
+        ):
+            frappe.throw(
+                frappe._(
+                    "Company mismatch between Loading Operation and Shipping Order"
+                )
+            )
         # status, current_station = frappe.db.get_value(
         #     "Shipping Order", self.shipping_order, ["status", "current_station"]
         # )
@@ -176,16 +183,18 @@ class LoadingOperation(Document):
             PaymentEntryReference = frappe.qb.DocType("Payment Entry Reference")
             PaymentEntry = frappe.qb.DocType("Payment Entry")
             SalesInvoice = frappe.qb.DocType("Sales Invoice")
-            paid_invoice_count = (frappe.qb.from_(PaymentEntryReference)
-                .left_join(PaymentEntry).on(PaymentEntry.name == PaymentEntryReference.parent)
-                .left_join(SalesInvoice).on(SalesInvoice.name == PaymentEntryReference.reference_name)
+            paid_invoice_count = (
+                frappe.qb.from_(PaymentEntryReference)
+                .left_join(PaymentEntry)
+                .on(PaymentEntry.name == PaymentEntryReference.parent)
+                .left_join(SalesInvoice)
+                .on(SalesInvoice.name == PaymentEntryReference.reference_name)
                 .where(
                     (PaymentEntry.docstatus == 1)
-                    & (PaymentEntryReference.reference_doctype == 'Sales Invoice')
+                    & (PaymentEntryReference.reference_doctype == "Sales Invoice")
                     & (SalesInvoice.gg_booking_order.isin(bos))
-                ).select(
-                    Count(PaymentEntryReference.reference_name)
                 )
+                .select(Count(PaymentEntryReference.reference_name))
             ).run()[0][0]
 
             if paid_invoice_count:
@@ -196,6 +205,17 @@ class LoadingOperation(Document):
                 )
 
     def _validate_booking_orders(self):
+        for row in self.on_loads + self.off_loads:
+            if self.company != frappe.get_cached_value(
+                "Booking Order", row.booking_order, "company"
+            ):
+                frappe.throw(
+                    frappe._(
+                        "Company mismatch between Loading Operation "
+                        f"and Booking Order: {row.booking_order}"
+                    )
+                )
+
         rows_with_zero_qty = [
             x.booking_order for x in self.on_loads + self.off_loads if x.qty <= 0
         ]
