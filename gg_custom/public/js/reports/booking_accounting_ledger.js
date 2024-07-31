@@ -30,6 +30,14 @@ export function booking_accounting_ledger() {
       },
       {
         fieldtype: 'Link',
+        options: 'Company',
+        fieldname: 'company',
+        label: 'Company',
+        reqd: 1,
+        default: frappe.user_defaults.company,
+      },
+      {
+        fieldtype: 'Link',
         options: 'Booking Party',
         fieldname: 'booking_party',
         label: 'Booking Party',

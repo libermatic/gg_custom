@@ -99,7 +99,9 @@ def _get_columns(filters):
 
 
 def _get_data(filters):
-    company = frappe.db.get_single_value("GG Custom Settings", "company")
+    company = filters.company or frappe.db.get_single_value(
+        "GG Custom Settings", "company"
+    )
     if not company:
         frappe.throw(frappe._("Setup incomplete in GG Custom Settings"))
 
@@ -245,14 +247,18 @@ def _get_data(filters):
             {
                 "booking_order": bo_name,
                 "paper_receipt_no": booking_order.get("paper_receipt_no"),
-                "description": make_description(row.get("voucher_no"))
-                if row.get("voucher_type") == "Sales Invoice"
-                else (row.remarks.split("\n")[0] if row.get("remarks") else ""),
+                "description": (
+                    make_description(row.get("voucher_no"))
+                    if row.get("voucher_type") == "Sales Invoice"
+                    else (row.remarks.split("\n")[0] if row.get("remarks") else "")
+                ),
                 "consignor": booking_order.get("consignor"),
                 "consignee": booking_order.get("consignee"),
-                "order_date": frappe.format_value(order_date, {"fieldtype": "Date"})
-                if order_date
-                else "",
+                "order_date": (
+                    frappe.format_value(order_date, {"fieldtype": "Date"})
+                    if order_date
+                    else ""
+                ),
                 "delivery_dates": make_delivery_date(bo_name),
             },
         )
