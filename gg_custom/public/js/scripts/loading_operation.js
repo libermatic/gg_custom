@@ -37,9 +37,9 @@ export function loading_operation() {
       frappe.db
         .get_single_value('GG Custom Settings', 'company')
         .then((x) => frm.set_value('company', x));
-      frm.set_query('shipping_order', ({ station }) => ({
+      frm.set_query('shipping_order', ({ station, company }) => ({
         query: 'gg_custom.api.shipping_order.query',
-        filters: { station, docstatus: 1 },
+        filters: { station, company, docstatus: 1 },
       }));
       frm.set_query(
         'booking_order',
@@ -189,7 +189,7 @@ function set_totals(frm) {
 }
 
 function set_query_booking_order(type) {
-  return ({ station, shipping_order }) => {
+  return ({ station, shipping_order, company }) => {
     if (!station || !shipping_order) {
       frappe.throw(
         __('Cannot fetch Booking Orders without Station or Shipping Order')
@@ -198,7 +198,7 @@ function set_query_booking_order(type) {
     }
     return {
       query: 'gg_custom.api.booking_order.query',
-      filters: { type, station, shipping_order },
+      filters: { type, station, shipping_order, company },
     };
   };
 }

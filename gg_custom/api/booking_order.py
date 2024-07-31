@@ -27,9 +27,11 @@ def query(doctype, txt, searchfield, start, page_len, filters):
     booking_orders = (
         get_orders_for(station=filters.get("station"))
         if _type == "on_load"
-        else get_orders_for(shipping_order=filters.get("shipping_order"))
-        if _type == "off_load"
-        else []
+        else (
+            get_orders_for(shipping_order=filters.get("shipping_order"))
+            if _type == "off_load"
+            else []
+        )
     )
 
     if not booking_orders:
@@ -55,6 +57,8 @@ def query(doctype, txt, searchfield, start, page_len, filters):
         .limit(page_len)
         .offset(start)
     )
+    if company := filters.get("company"):
+        q = q.where(BookingOrder.company == company)
 
     return q.run()
 
@@ -83,27 +87,32 @@ def get_history(name):
     get_shipping_logs = compose(
         concat,
         map(
-            lambda x: frappe.get_all(
-                "Shipping Log",
-                filters={
-                    "shipping_order": x[0].get("shipping_order"),
-                    "activity": ("in", ["Stopped", "Moving"]),
-                    "posting_datetime": (
-                        "between",
-                        [x[0].get("posting_datetime"), x[1].get("posting_datetime")],
-                    ),
-                },
-                fields=[
-                    "'Shipping Log' as doctype",
-                    "posting_datetime",
-                    "shipping_order",
-                    "station",
-                    "activity",
-                ],
-                order_by="posting_datetime",
+            lambda x: (
+                frappe.get_all(
+                    "Shipping Log",
+                    filters={
+                        "shipping_order": x[0].get("shipping_order"),
+                        "activity": ("in", ["Stopped", "Moving"]),
+                        "posting_datetime": (
+                            "between",
+                            [
+                                x[0].get("posting_datetime"),
+                                x[1].get("posting_datetime"),
+                            ],
+                        ),
+                    },
+                    fields=[
+                        "'Shipping Log' as doctype",
+                        "posting_datetime",
+                        "shipping_order",
+                        "station",
+                        "activity",
+                    ],
+                    order_by="posting_datetime",
+                )
+                if x[0].get("shipping_order")
+                else []
             )
-            if x[0].get("shipping_order")
-            else []
         ),
         sliding_window(2),
     )

@@ -40,6 +40,8 @@ def query(doctype, txt, searchfield, start, page_len, filters):
         .limit(page_len)
         .offset(start)
     )
+    if company := filters.get("company"):
+        q = q.where(ShippingOrder.company == company)
     station = filters.get("station")
     if station:
         q = q.where(
