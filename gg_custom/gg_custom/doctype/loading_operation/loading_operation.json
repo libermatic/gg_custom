@@ -12,6 +12,7 @@
   "column_break_3",
   "shipping_order",
   "vehicle",
+  "company",
   "amended_from",
   "on_load_sec",
   "on_loads",
@@ -148,11 +149,18 @@
    "fieldtype": "Int",
    "label": "Total Bookings Order Unloaded",
    "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2022-09-28 05:26:37.069798",
+ "modified": "2024-07-31 15:21:16.011313",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation",

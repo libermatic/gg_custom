@@ -34,6 +34,9 @@ export function loading_operation() {
       frm.ignore_doctypes_on_cancel_all = ['Sales Invoice'];
     },
     setup: function (frm) {
+      frappe.db
+        .get_single_value('GG Custom Settings', 'company')
+        .then((x) => frm.set_value('company', x));
       frm.set_query('shipping_order', ({ station }) => ({
         query: 'gg_custom.api.shipping_order.query',
         filters: { station, docstatus: 1 },
@@ -234,8 +237,8 @@ function set_qtys(frm, cdt, cdn) {
     loading_unit === 'Packages'
       ? no_of_packages
       : loading_unit === 'Weight'
-      ? weight_actual
-      : 0;
+        ? weight_actual
+        : 0;
   ['qty', 'available'].forEach((x) =>
     frappe.model.set_value(cdt, cdn, x, available)
   );

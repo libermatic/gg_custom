@@ -50,6 +50,9 @@ export function booking_order() {
         }));
       });
       set_charge_type_query(frm);
+      frappe.db
+        .get_single_value('GG Custom Settings', 'company')
+        .then((x) => frm.set_value('company', x));
     },
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {
@@ -166,8 +169,8 @@ function set_freight_amount(frm, cdt, cdn) {
     based_on === 'Packages'
       ? no_of_packages
       : based_on === 'Weight'
-      ? weight_charged
-      : 0;
+        ? weight_charged
+        : 0;
   frappe.model.set_value(cdt, cdn, 'amount', qty * rate);
 }
 

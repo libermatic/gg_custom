@@ -16,9 +16,14 @@ export function shipping_order() {
           ],
         },
       }));
-      frm.set_query('transporter', (doc) => ({ filters: { disabled: 0, is_transporter: 1 } }));
+      frm.set_query('transporter', (doc) => ({
+        filters: { disabled: 0, is_transporter: 1 },
+      }));
       frm.set_query('vehicle', (doc) => ({ filters: { disabled: 0 } }));
       frm.set_query('driver', (doc) => ({ filters: { status: 'Active' } }));
+      frappe.db
+        .get_single_value('GG Custom Settings', 'company')
+        .then((x) => frm.set_value('company', x));
     },
     refresh: function (frm) {
       if (frm.doc.docstatus === 1) {

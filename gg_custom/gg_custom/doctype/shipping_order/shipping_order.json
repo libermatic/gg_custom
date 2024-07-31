@@ -16,6 +16,7 @@
   "column_break_4",
   "driver",
   "driver_name",
+  "company",
   "amended_from",
   "journey_sec",
   "initial_station",
@@ -193,6 +194,13 @@
    "fieldtype": "Data",
    "label": "Transporter Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
   }
  ],
  "is_submittable": 1,
@@ -208,7 +216,7 @@
    "link_fieldname": "gg_shipping_order"
   }
  ],
- "modified": "2022-09-28 06:00:44.713382",
+ "modified": "2024-07-31 15:23:19.515058",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Shipping Order",

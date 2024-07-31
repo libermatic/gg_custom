@@ -12,6 +12,7 @@
   "status",
   "payment_status",
   "column_break_3",
+  "company",
   "amended_from",
   "order_sec",
   "source_station",
@@ -280,6 +281,13 @@
    "fieldname": "paper_receipt_no",
    "fieldtype": "Data",
    "label": "Paper Receipt No"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
   }
  ],
  "is_submittable": 1,
@@ -295,7 +303,7 @@
    "link_fieldname": "gg_booking_order"
   }
  ],
- "modified": "2022-09-29 01:13:38.690184",
+ "modified": "2024-07-31 14:46:45.968893",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",
