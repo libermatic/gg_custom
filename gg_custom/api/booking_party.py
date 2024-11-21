@@ -39,6 +39,8 @@ def make_payment_entry(source_name, target_doc=None):
             filters={
                 "docstatus": 1,
                 "customer": customer,
+                "company": frappe.defaults.get_user_default("company")
+                or frappe.defaults.get_global_default("company"),
                 "outstanding_amount": [">", 0],
             },
             order_by="posting_date, name",
@@ -79,18 +81,22 @@ def get_empty_payment_entry(party_type, party):
             "mode_of_payment": mode_of_payment,
             "party_type": party_type,
             "party": party,
-            "paid_from": party_account
-            if party_type == "Customer"
-            else company_account.account,
-            "paid_to": company_account.account
-            if party_type == "Customer"
-            else party_account,
-            "paid_from_account_currency": party_account_currency
-            if party_type == "Customer"
-            else company_account.account_currency,
-            "paid_to_account_currency": company_account.account_currency
-            if party_type == "Customer"
-            else party_account_currency,
+            "paid_from": (
+                party_account if party_type == "Customer" else company_account.account
+            ),
+            "paid_to": (
+                company_account.account if party_type == "Customer" else party_account
+            ),
+            "paid_from_account_currency": (
+                party_account_currency
+                if party_type == "Customer"
+                else company_account.account_currency
+            ),
+            "paid_to_account_currency": (
+                company_account.account_currency
+                if party_type == "Customer"
+                else party_account_currency
+            ),
             "paid_amount": 0,
             "received_amount": 0,
         }
