@@ -1,3 +1,5 @@
+import { createApp } from 'vue';
+
 import { set_charge_type_query, sumBy } from './utils';
 import Timeline from '../vue/Timeline.vue';
 
@@ -205,10 +207,9 @@ function render_dashboard(frm, dashboard_info) {
       'orange'
     );
   }
-  new Vue({
-    el: frm.dashboard.add_section('<div />', 'History').children()[0],
-    render: (h) => h(Timeline, { props }),
-  });
+  createApp(Timeline, props).mount(
+    frm.dashboard.add_section('<div />', 'History').children()[0]
+  );
 }
 
 function create_invoice(frm) {

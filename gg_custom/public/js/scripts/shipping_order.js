@@ -1,3 +1,5 @@
+import { createApp } from 'vue';
+
 import ShippingOrderLoad from '../vue/ShippingOrderLoad.vue';
 import Timeline from '../vue/Timeline.vue';
 
@@ -226,15 +228,13 @@ function render_dashboard(frm, dashboard_info) {
     );
   }
 
-  new Vue({
-    el: frm.dashboard.add_section('<div />', 'Current').children()[0],
-    render: (h) => h(ShippingOrderLoad, { props }),
-  });
+  createApp(ShippingOrderLoad, props).mount(
+    frm.dashboard.add_section('<div />', 'Current').children()[0]
+  );
 
-  new Vue({
-    el: frm.dashboard.add_section('<div />', 'History').children()[0],
-    render: (h) => h(Timeline, { props }),
-  });
+  createApp(Timeline, props).mount(
+    frm.dashboard.add_section('<div />', 'History').children()[0]
+  );
 
   frm.dashboard.transactions_area
     .find('.document-link[data-doctype="Booking Order"] > .btn-new')
