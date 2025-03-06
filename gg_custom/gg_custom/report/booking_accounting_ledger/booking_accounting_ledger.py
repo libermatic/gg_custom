@@ -123,6 +123,7 @@ def _get_data(filters):
                 "party_type": "Customer",
                 "party": [customer],
                 "group_by": frappe._("Group by Voucher (Consolidated)"),
+                "show_remarks": 1,
             }
         )
     )
