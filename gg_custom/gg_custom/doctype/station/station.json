@@ -16,8 +16,9 @@
    "unique": 1
   }
  ],
+ "grid_page_length": 50,
  "links": [],
- "modified": "2022-09-28 05:26:33.026655",
+ "modified": "2025-06-27 14:52:02.059521",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Station",
@@ -26,7 +27,7 @@
  "permissions": [
   {
    "read": 1,
-   "role": "All"
+   "role": "Desk User"
   },
   {
    "create": 1,
@@ -42,6 +43,7 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
