@@ -141,10 +141,10 @@ def get_history(name):
 
     def get_link(log):
         if log.get("doctype") == "Shipping Log":
-            return "#Form/Shipping Order/{}".format(log.get("shipping_order"))
+            return "/app/shipping-order/{}".format(log.get("shipping_order"))
 
         if log.get("doctype") == "Booking Log" and log.get("loading_operation"):
-            return "#Form/Loading Operation/{}".format(log.get("loading_operation"))
+            return "/app/loading-operation/{}".format(log.get("loading_operation"))
 
         return ""
 
