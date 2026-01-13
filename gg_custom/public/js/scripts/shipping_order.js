@@ -41,24 +41,28 @@ export function shipping_order() {
             .toggleClass('btn-primary', status === 'Stopped');
         }
         if (frm.doc.transporter) {
-          frm
-            .add_custom_button('Create Invoice', () =>
+          frm.add_custom_button(
+            'Create Invoice',
+            () =>
               frappe.model.open_mapped_doc({
                 method: 'gg_custom.api.shipping_order.make_purchase_invoice',
                 frm,
-              })
-            )
-            .addClass('btn-primary');
+              }),
+            'Billing'
+          );
         }
         const {
           dashboard_info: { invoice: { outstanding_amount = 0 } = {} } = {},
         } = frm.doc.__onload || {};
         if (outstanding_amount > 0) {
-          frm.add_custom_button('Create Payment', () =>
-            frappe.model.open_mapped_doc({
-              method: 'gg_custom.api.shipping_order.make_payment_entry',
-              frm,
-            })
+          frm.add_custom_button(
+            'Create Payment',
+            () =>
+              frappe.model.open_mapped_doc({
+                method: 'gg_custom.api.shipping_order.make_payment_entry',
+                frm,
+              }),
+            'Billing'
           );
         }
         if (status === 'Stopped') {
