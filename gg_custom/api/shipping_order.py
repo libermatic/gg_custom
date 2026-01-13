@@ -471,7 +471,7 @@ def get_shipping_order_invoice(shipping_order):
         result["freight"][based_on] = {
             "qty": qty,
             "amount": amount,
-            "rate": amount / qty,
+            "rate": amount / qty if qty else 0,
         }
 
     for charge in [x for x in inv.taxes if x.add_deduct_tax == "Deduct"]:
