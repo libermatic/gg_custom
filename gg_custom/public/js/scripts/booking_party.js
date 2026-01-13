@@ -39,6 +39,14 @@ export function booking_party() {
           }
         });
       }
+      if (!frm.doc.__islocal && frm.doc.customer) {
+        frm.add_custom_button('Create Quotation', async function () {
+          frappe.model.open_mapped_doc({
+            method: 'gg_custom.api.booking_party.make_quotation',
+            frm,
+          });
+        });
+      }
       if (!frm.doc.__islocal && frm.doc.__onload) {
         erpnext.utils.set_party_dashboard_indicators(frm);
         render_booking_order_links(frm);

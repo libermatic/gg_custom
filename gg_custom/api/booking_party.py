@@ -5,7 +5,10 @@ from erpnext.accounts.doctype.journal_entry.journal_entry import (
     get_default_bank_cash_account,
 )
 
-from gg_custom.api.booking_order import get_payment_entry_from_invoices
+from gg_custom.api.booking_order import (
+    get_freight_rates,
+    get_payment_entry_from_invoices,
+)
 
 
 def get_party_open_orders(party):
@@ -51,6 +54,43 @@ def make_payment_entry(source_name, target_doc=None):
         return get_empty_payment_entry("Customer", customer)
 
     return get_payment_entry_from_invoices("Sales Invoice", invoices)
+
+
+@frappe.whitelist()
+def make_quotation(source_name, target_doc=None):
+    customer = frappe.get_cached_value("Booking Party", source_name, "customer")
+    bo_charge_template = frappe.get_doc(
+        "Booking Order Charge Template", {"is_default": 1}
+    )
+    freight_rates = get_freight_rates()
+    qt = frappe.new_doc("Quotation")
+    qt.update(
+        {
+            "quotation_to": "Customer",
+            "party_name": customer,
+            "items": [],
+        }
+    )
+
+    for based_on, item in freight_rates.items():
+        row = {"item_code": item["item_code"]}
+        if based_on == "Packages":
+            row["description"] = "r"
+        elif based_on == "Weight":
+            row["description"] = "w"
+        qt.append("items", row)
+
+    if bo_charge_template:
+        for row in bo_charge_template.charges:
+            qt.append(
+                "items",
+                {
+                    "item_code": row.charge_type,
+                    "rate": row.charge_amount,
+                },
+            )
+    qt.set_missing_values()
+    return qt
 
 
 def get_empty_payment_entry(party_type, party):
