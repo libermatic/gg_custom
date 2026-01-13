@@ -275,6 +275,13 @@ def get_freight_summary_rows(shipping_order):
 
 @frappe.whitelist()
 def make_purchase_invoice(source_name, target_doc=None, posting_datetime=None):
+    if frappe.db.exists(
+        "Purchase Invoice", {"gg_shipping_order": source_name, "docstatus": 1}
+    ):
+        frappe.throw(
+            "Purchase Invoice already created. "
+            "Please cancel the previous one to create a new one."
+        )
     doc = frappe.get_doc("Shipping Order", source_name)
 
     def set_invoice_missing_values(source, target):
