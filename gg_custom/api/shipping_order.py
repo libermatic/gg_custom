@@ -443,7 +443,7 @@ def make_payment_entry(source_name, target_doc=None):
         frappe.throw(
             frappe._(
                 "Multiple invoices found for separate parties. "
-                "Please create Payment Entry manually from Sales Invoice."
+                "Please create Payment Entry manually from Purchase Invoice."
             )
         )
 
