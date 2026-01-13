@@ -1,17 +1,17 @@
 import frappe
+from frappe.contacts.doctype.address.address import get_company_address
 from frappe.query_builder import Criterion
-from frappe.query_builder.functions import Sum, GroupConcat
+from frappe.query_builder.functions import GroupConcat, Sum
 from toolz.curried import (
     compose,
-    merge,
-    valmap,
-    keymap,
-    keyfilter,
-    unique,
-    map,
     filter,
+    keyfilter,
+    keymap,
+    map,
+    merge,
+    unique,
+    valmap,
 )
-from frappe.contacts.doctype.address.address import get_company_address
 
 from gg_custom.api.booking_order import (
     get_freight_rates,
@@ -248,21 +248,19 @@ def get_freight_summary_rows(shipping_order):
                 "rate": 0,
             }
             for x in (
-                (
-                    frappe.qb.from_(BookingOrder)
-                    .left_join(BookingOrderCharge)
-                    .on(BookingOrderCharge.parent == BookingOrder.name)
-                    .where(BookingOrder.name.isin(first_loaded_booking_orders))
-                    .where(BookingOrderCharge.charge_amount > 0)
-                    .select(
-                        BookingOrder.name.as_("booking_order"),
-                        BookingOrder.consignor_name,
-                        BookingOrder.consignee_name,
-                        GroupConcat(BookingOrderCharge.charge_type, "item_description"),
-                        Sum(BookingOrderCharge.charge_amount, "amount"),
-                    )
-                    .groupby(BookingOrder.name)
+                frappe.qb.from_(BookingOrder)
+                .left_join(BookingOrderCharge)
+                .on(BookingOrderCharge.parent == BookingOrder.name)
+                .where(BookingOrder.name.isin(first_loaded_booking_orders))
+                .where(BookingOrderCharge.charge_amount > 0)
+                .select(
+                    BookingOrder.name.as_("booking_order"),
+                    BookingOrder.consignor_name,
+                    BookingOrder.consignee_name,
+                    GroupConcat(BookingOrderCharge.charge_type, "item_description"),
+                    Sum(BookingOrderCharge.charge_amount, "amount"),
                 )
+                .groupby(BookingOrder.name)
             ).run(as_dict=1)
         ]
         if first_loaded_booking_orders
