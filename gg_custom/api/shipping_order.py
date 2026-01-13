@@ -457,6 +457,8 @@ def get_shipping_order_invoice(shipping_order):
         "total_taxes_and_charges": inv.total_taxes_and_charges,
         "grand_total": inv.grand_total,
         "rounded_total": inv.rounded_total,
+        "outstanding_amount": inv.outstanding_amount,
+        "paid_amount": inv.rounded_total - inv.outstanding_amount,
         "freight": {},
         "charges": [],
     }
