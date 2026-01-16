@@ -24,6 +24,7 @@ fixtures = [
                     "Purchase Invoice",
                     "Item",
                     "Vehicle",
+                    "Quotation",
                 ],
             ),
         },
