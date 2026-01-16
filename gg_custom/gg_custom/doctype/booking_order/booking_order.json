@@ -36,6 +36,7 @@
   "weight_charged",
   "invoice_no",
   "goods_value",
+  "ewaybill",
   "charges_sec",
   "booking_order_charge_template",
   "auto_bill_to",
@@ -288,8 +289,14 @@
    "label": "Company",
    "options": "Company",
    "reqd": 1
+  },
+  {
+   "fieldname": "ewaybill",
+   "fieldtype": "Data",
+   "label": "E-Waybill"
   }
  ],
+ "grid_page_length": 50,
  "is_submittable": 1,
  "links": [
   {
@@ -303,7 +310,7 @@
    "link_fieldname": "gg_booking_order"
   }
  ],
- "modified": "2024-07-31 14:46:45.968893",
+ "modified": "2026-01-16 18:52:39.151541",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order",
@@ -340,6 +347,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "search_fields": "consignor_name,consignee_name",
  "sort_field": "modified",
  "sort_order": "DESC",
