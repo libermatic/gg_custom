@@ -2,10 +2,10 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.query_builder.functions import IfNull
-from erpnext.accounts.report.general_ledger.general_ledger import execute as get_report
 from erpnext.accounts.party import get_party_account
-from toolz.curried import groupby, valmap, first, compose, merge
+from erpnext.accounts.report.general_ledger.general_ledger import execute as get_report
+from frappe.query_builder.functions import IfNull
+from toolz.curried import compose, first, groupby, merge, valmap
 
 
 def execute(filters=None):
@@ -174,6 +174,8 @@ def _get_data(filters):
                 SalesInvoiceItem.qty,
                 SalesInvoiceItem.rate,
                 BookingOrderFreightDetail.based_on,
+                BookingOrderFreightDetail.no_of_packages,
+                BookingOrderFreightDetail.weight_charged,
                 (IfNull(SalesInvoiceItem.gg_bo_detail, "") != "").as_(
                     "is_freight_item"
                 ),
@@ -206,17 +208,30 @@ def _get_data(filters):
         )
 
         if item.get("is_freight_item"):
+            print(item)
             if item.get("based_on") == "Weight":
-                return "{} by weight @ {} - {}".format(
-                    item.get("qty"), rate, item.get("description")
+                return (
+                    f"{item.get('qty')} by weight @ {rate}"
+                    + (
+                        f" / Pkg: {item.get('no_of_packages')}"
+                        if item.get("no_of_packages")
+                        else ""
+                    )
+                    + f" - {item.get('description')}"
                 )
 
             if item.get("based_on") == "Packages":
-                return "{} packages @ {} - {}".format(
-                    item.get("qty"), rate, item.get("description")
+                return (
+                    f"{item.get('qty')} packages @ {rate}"
+                    + (
+                        f" / Wt: {item.get('weight_charged')}"
+                        if item.get("weight_charged")
+                        else ""
+                    )
+                    + f" - {item.get('description')}"
                 )
 
-        return "{} @ {}".format(item.get("description"), rate)
+        return f"{item.get('description')} @ {rate}"
 
     def make_description(si):
         return "<br />".join(
