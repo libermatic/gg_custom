@@ -132,6 +132,8 @@ def _get_data(filters):
 
     SalesInvoice = frappe.qb.DocType("Sales Invoice")
     BookingOrder = frappe.qb.DocType("Booking Order")
+    LoadingOperation = frappe.qb.DocType("Loading Operation")
+    ShippingOrder = frappe.qb.DocType("Shipping Order")
     invoices = [
         x.get("voucher_no")
         for x in gl_entries
@@ -185,6 +187,24 @@ def _get_data(filters):
         if invoices
         else {}
     )
+    vehicles = (
+        groupby(
+            "sales_invoice",
+            frappe.qb.from_(SalesInvoice)
+            .left_join(LoadingOperation)
+            .on(LoadingOperation.name == SalesInvoice.gg_loading_operation)
+            .left_join(ShippingOrder)
+            .on(ShippingOrder.name == LoadingOperation.shipping_order)
+            .where(SalesInvoice.name.isin(invoices))
+            .select(
+                SalesInvoice.name.as_("sales_invoice"),
+                ShippingOrder.vehicle,
+            )
+            .run(as_dict=1),
+        )
+        if invoices
+        else {}
+    )
 
     BookingLog = frappe.qb.DocType("Booking Log")
     get_delivery_dates = groupby("booking_order")
@@ -208,7 +228,6 @@ def _get_data(filters):
         )
 
         if item.get("is_freight_item"):
-            print(item)
             if item.get("based_on") == "Weight":
                 return (
                     f"{item.get('qty')} by weight @ {rate}"
@@ -234,13 +253,19 @@ def _get_data(filters):
         return f"{item.get('description')} @ {rate}"
 
     def make_description(si):
-        return "<br />".join(
+        msg = "<br />".join(
             [
                 make_message(x)
                 for x in sales_invoice_items.get(si, [])
                 if x.get("qty") and x.get("rate")
             ]
         )
+
+        if inv := vehicles.get(si):
+            if vehicle := [x["vehicle"] for x in inv if x.get("vehicle")]:
+                msg += f"<br /> on {', '.join(vehicle)}"
+
+        return msg
 
     def make_delivery_date(bo):
         return ", ".join(
