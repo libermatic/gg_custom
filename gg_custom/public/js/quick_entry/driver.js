@@ -1,4 +1,4 @@
-import { get_fields } from './commom_fields';
+import { get_fields } from './common_fields';
 
 export function driver(QuickEntryForm) {
   return class DriverQuickEntryForm extends QuickEntryForm {
