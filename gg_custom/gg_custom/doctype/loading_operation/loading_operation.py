@@ -103,7 +103,7 @@ class LoadingOperation(Document):
             for direction in ["on_load", "off_load"]:
                 field = "{}_{}".format(direction, param)
                 table = self.get("{}s".format(direction)) or []
-                self.set(field, sum([x.get(param) for x in table]))
+                self.set(field, sum(x.get(param) for x in table))
 
         self.on_load_no_of_bookings = len(self.on_loads)
         self.off_load_no_of_bookings = len(self.off_loads)
@@ -322,7 +322,7 @@ class LoadingOperation(Document):
         for x in self.on_loads:
             grouped_bos[x.booking_order].append(x.as_dict())
         for booking_order, items in grouped_bos.items():
-            if len(set([x.get("auto_bill_to") for x in items])) > 1:
+            if len({x.get("auto_bill_to") for x in items}) > 1:
                 frappe.throw(
                     frappe._(
                         "Invalid Auto Bill To selected in rows # {} for Booking Order {}".format(

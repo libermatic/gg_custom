@@ -166,8 +166,8 @@ class BookingOrder(Document):
                 _update_invoices(row)
 
     def set_totals(self):
-        self.freight_total = sum([x.amount for x in self.freight])
-        self.charge_total = sum([x.charge_amount for x in self.charges])
+        self.freight_total = sum(x.amount for x in self.freight)
+        self.charge_total = sum(x.charge_amount for x in self.charges)
         self.total_amount = self.freight_total + self.charge_total
 
     @frappe.whitelist()
@@ -214,7 +214,7 @@ class BookingOrder(Document):
                 "no_of_packages"
             ) and row.weight_actual == delivered.get("weight_actual")
 
-        if all([is_collected(x) for x in self.freight]):
+        if all(is_collected(x) for x in self.freight):
             self.status = "Collected"
             self.save()
 

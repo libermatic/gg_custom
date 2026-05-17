@@ -317,7 +317,7 @@ def get_payment_entry_from_invoices(invoice_type, invoices):
 
     pe = get_payment_entry(invoice_type, invoices[0].name)
     if len(invoices) > 1:
-        outstanding_amount = sum([x.outstanding_amount for x in invoices])
+        outstanding_amount = sum(x.outstanding_amount for x in invoices)
         pe.paid_amount = outstanding_amount
         pe.received_amount = outstanding_amount
         pe.references = []

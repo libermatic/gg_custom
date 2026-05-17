@@ -197,7 +197,7 @@ def get_freight_summary_rows(shipping_order):
         .orderby(LoadingOperationBookingOrder.idx)
     ).run(as_dict=1)
 
-    booking_orders = set([x.get("booking_order") for x in freight_rows])
+    booking_orders = {x.get("booking_order") for x in freight_rows}
 
     first_loaded_booking_orders = (
         [
@@ -458,8 +458,8 @@ def get_shipping_order_invoice(shipping_order):
     for based_on in ["Packages", "Weight"]:
         freight_item = freight_rates.get(based_on) or {}
         items = [x for x in inv.items if x.item_code == freight_item["item_code"]]
-        qty = sum([x.qty for x in items])
-        amount = sum([x.amount for x in items])
+        qty = sum(x.qty for x in items)
+        amount = sum(x.amount for x in items)
         result["freight"][based_on] = {
             "qty": qty,
             "amount": amount,

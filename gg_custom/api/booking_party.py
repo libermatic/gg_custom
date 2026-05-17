@@ -26,7 +26,7 @@ def get_party_open_orders(party):
 
     booking_orders = [
         frappe.get_cached_doc("Booking Order", name)
-        for name in set([x.gg_booking_order for x in sales_invoices if x])
+        for name in {x.gg_booking_order for x in sales_invoices if x}
     ]
 
     return {"booking_orders": booking_orders, "sales_invoices": sales_invoices}

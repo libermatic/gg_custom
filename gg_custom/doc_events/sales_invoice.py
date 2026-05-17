@@ -87,9 +87,9 @@ def _update_booking_order(si, is_charge=False, is_cancel=False):
         filters={"docstatus": 1, "gg_booking_order": si.gg_booking_order},
         fields=["name", "total", "outstanding_amount"],
     )
-    if sum([x.get("total") for x in invoices]) < bo.total_amount:
+    if sum(x.get("total") for x in invoices) < bo.total_amount:
         bo.payment_status = "Unbilled"
-    elif sum([x.get("outstanding_amount") for x in invoices]) == 0:
+    elif sum(x.get("outstanding_amount") for x in invoices) == 0:
         bo.payment_status = "Paid"
     else:
         bo.payment_status = "Unpaid"
