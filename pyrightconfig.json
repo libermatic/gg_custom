@@ -1,0 +1,9 @@
+{
+  "extraPaths": [
+    "../../env/lib/python3.11/site-packages",
+    "../frappe",
+    "../erpnext",
+  ],
+  "typeCheckingMode": "standard",
+  "reportAttributeAccessIssue": "none",
+}

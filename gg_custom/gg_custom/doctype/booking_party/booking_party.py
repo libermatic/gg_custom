@@ -13,6 +13,22 @@ from gg_custom.api.booking_party import update_customer
 
 
 class BookingParty(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from frappe.types import DF
+
+        booking_party_name: DF.Data
+        customer: DF.Link | None
+        disabled: DF.Check
+        gstin: DF.Data | None
+        naming_series: DF.Literal["BP.YY."]
+        phone: DF.Data | None
+        primary_address: DF.Link | None
+    # end: auto-generated types
     def onload(self):
         load_address_and_contact(self)
         if self.customer:

@@ -17,6 +17,48 @@ from gg_custom.api.booking_order import (
 
 
 class BookingOrder(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from frappe.types import DF
+        from gg_custom.gg_custom.doctype.booking_order_charge.booking_order_charge import BookingOrderCharge
+        from gg_custom.gg_custom.doctype.booking_order_freight_detail.booking_order_freight_detail import BookingOrderFreightDetail
+
+        amended_from: DF.Link | None
+        auto_bill_to: DF.Literal["", "Consignor", "Consignee"]
+        booking_datetime: DF.Datetime
+        booking_order_charge_template: DF.Link | None
+        charge_total: DF.Currency
+        charges: DF.Table[BookingOrderCharge]
+        company: DF.Link
+        consignee: DF.Link
+        consignee_address: DF.Link | None
+        consignee_address_display: DF.SmallText | None
+        consignee_name: DF.ReadOnly | None
+        consignor: DF.Link
+        consignor_address: DF.Link | None
+        consignor_address_display: DF.SmallText | None
+        consignor_name: DF.ReadOnly | None
+        destination_station: DF.Link
+        ewaybill: DF.Data | None
+        freight: DF.Table[BookingOrderFreightDetail]
+        freight_total: DF.Currency
+        goods_value: DF.Currency
+        invoice_no: DF.Data | None
+        naming_series: DF.Literal["BO.YY."]
+        no_of_packages: DF.Int
+        packing: DF.Data | None
+        paper_receipt_no: DF.Data | None
+        payment_status: DF.Literal["", "Unbilled", "Unpaid", "Paid"]
+        source_station: DF.Link
+        status: DF.Literal["", "Draft", "Booked", "In Progress", "Collected", "Cancelled"]
+        total_amount: DF.Currency
+        weight_actual: DF.Float
+        weight_charged: DF.Float
+    # end: auto-generated types
     def onload(self):
         if self.docstatus == 1:
             self.set_onload("dashboard_info", _get_dashboard_info(self))

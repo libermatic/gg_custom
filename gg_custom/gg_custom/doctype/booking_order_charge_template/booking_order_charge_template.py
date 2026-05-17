@@ -8,6 +8,19 @@ from frappe.model.document import Document
 
 
 class BookingOrderChargeTemplate(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from frappe.types import DF
+        from gg_custom.gg_custom.doctype.booking_order_charge.booking_order_charge import BookingOrderCharge
+
+        charges: DF.Table[BookingOrderCharge]
+        is_default: DF.Check
+        template_name: DF.Data
+    # end: auto-generated types
     def validate(self):
         if self.is_default:
             self._validate_default()

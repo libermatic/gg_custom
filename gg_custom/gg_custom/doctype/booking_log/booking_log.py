@@ -8,6 +8,26 @@ from frappe.model.document import Document
 
 
 class BookingLog(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from frappe.types import DF
+
+        activity: DF.Literal["", "Booked", "Loaded", "Unloaded", "Collected"]
+        bo_detail: DF.Data | None
+        booking_order: DF.Link | None
+        goods_value: DF.Currency
+        loading_operation: DF.Link | None
+        loading_unit: DF.Literal["", "Packages", "Weight"]
+        no_of_packages: DF.Int
+        posting_datetime: DF.Datetime | None
+        shipping_order: DF.Link | None
+        station: DF.Link | None
+        weight_actual: DF.Float
+    # end: auto-generated types
     def validate(self):
         existing_loading_unit = frappe.db.get_value(
             "Booking Log",

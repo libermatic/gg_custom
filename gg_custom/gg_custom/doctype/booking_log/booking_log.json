@@ -82,9 +82,10 @@
    "label": "BO Detail"
   }
  ],
+ "grid_page_length": 50,
  "in_create": 1,
  "links": [],
- "modified": "2022-09-28 05:25:21.897101",
+ "modified": "2026-05-17 18:04:38.909857",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Log",
@@ -108,6 +109,7 @@
    "role": "Booking Manager"
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

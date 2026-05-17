@@ -7,16 +7,48 @@ import frappe
 from frappe.model.document import Document
 from frappe.query_builder.functions import Sum
 from toolz.curried import (
-    unique,
-    pluck,
-    map,
     compose,
+    map,
+    pluck,
+    unique,
 )
 
 from gg_custom.api.shipping_order import get_history, get_order_contents
 
 
 class ShippingOrder(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from frappe.types import DF
+        from gg_custom.gg_custom.doctype.shipping_order_charge.shipping_order_charge import ShippingOrderCharge
+        from gg_custom.gg_custom.doctype.shipping_order_transit_station.shipping_order_transit_station import ShippingOrderTransitStation
+
+        amended_from: DF.Link | None
+        charges: DF.Table[ShippingOrderCharge]
+        company: DF.Link
+        current_station: DF.Link | None
+        driver: DF.Link
+        driver_name: DF.Data | None
+        end_datetime: DF.Datetime | None
+        eta: DF.Datetime | None
+        etd: DF.Datetime | None
+        final_station: DF.Link
+        initial_station: DF.Link
+        naming_series: DF.Literal["SO.YY."]
+        next_station: DF.Link | None
+        shipping_order_charge_template: DF.Link | None
+        start_datetime: DF.Datetime | None
+        status: DF.Literal["", "Draft", "In Transit", "Stopped", "Completed", "Cancelled"]
+        transit_stations: DF.TableMultiSelect[ShippingOrderTransitStation]
+        transporter: DF.Link | None
+        transporter_name: DF.Data | None
+        vehicle: DF.Link
+    # end: auto-generated types
+
     def onload(self):
         if self.docstatus == 1:
             self.set_onload("dashboard_info", _get_dashboard_info(self))

@@ -36,8 +36,9 @@
    "options": "Booking Order Charge"
   }
  ],
+ "grid_page_length": 50,
  "links": [],
- "modified": "2022-09-28 05:24:48.430771",
+ "modified": "2026-05-17 18:05:55.707121",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Booking Order Charge Template",
@@ -66,6 +67,7 @@
    "share": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

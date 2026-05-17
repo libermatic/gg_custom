@@ -17,6 +17,31 @@ from gg_custom.api.booking_order import (
 
 
 class LoadingOperation(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from frappe.types import DF
+        from gg_custom.gg_custom.doctype.loading_operation_booking_order.loading_operation_booking_order import LoadingOperationBookingOrder
+
+        amended_from: DF.Link | None
+        company: DF.Link
+        naming_series: DF.Literal["LO.YY."]
+        off_load_no_of_bookings: DF.Int
+        off_load_no_of_packages: DF.Int
+        off_load_weight_actual: DF.Float
+        off_loads: DF.Table[LoadingOperationBookingOrder]
+        on_load_no_of_bookings: DF.Int
+        on_load_no_of_packages: DF.Int
+        on_load_weight_actual: DF.Float
+        on_loads: DF.Table[LoadingOperationBookingOrder]
+        posting_datetime: DF.Datetime
+        shipping_order: DF.Link
+        station: DF.Link
+        vehicle: DF.Link | None
+    # end: auto-generated types
     def validate(self):
         if self._action == "submit" and not self.on_loads and not self.off_loads:
             frappe.throw(

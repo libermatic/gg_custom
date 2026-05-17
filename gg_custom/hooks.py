@@ -11,6 +11,8 @@ app_color = "grey"
 app_email = "info@libermatic.com"
 app_license = "MIT"
 
+export_python_type_annotations = True
+
 fixtures = [
     {
         "doctype": "Custom Field",
