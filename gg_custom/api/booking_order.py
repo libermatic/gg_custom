@@ -1,3 +1,5 @@
+from itertools import pairwise
+
 import frappe
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 from erpnext.stock.get_item_details import get_item_price
@@ -7,16 +9,6 @@ from frappe.contacts.doctype.address.address import (
 )
 from frappe.query_builder import Criterion
 from frappe.query_builder.functions import Max, Sum
-from toolz.curried import (
-    compose,
-    concat,
-    first,
-    groupby,
-    map,
-    merge,
-    sliding_window,
-    valmap,
-)
 
 
 @frappe.whitelist()
@@ -82,20 +74,22 @@ def get_history(name):
         group_by="posting_datetime,activity",
     )
 
-    get_shipping_logs = compose(
-        concat,
-        map(
-            lambda x: (
+    shipping_logs = []
+    for curr, next in pairwise(
+        booking_logs + [{"posting_datetime": frappe.utils.now()}]
+    ):
+        if curr.get("shipping_order"):
+            shipping_logs.extend(
                 frappe.get_all(
                     "Shipping Log",
                     filters={
-                        "shipping_order": x[0].get("shipping_order"),
+                        "shipping_order": curr.get("shipping_order"),
                         "activity": ("in", ["Stopped", "Moving"]),
                         "posting_datetime": (
                             "between",
                             [
-                                x[0].get("posting_datetime"),
-                                x[1].get("posting_datetime"),
+                                curr.get("posting_datetime"),
+                                next.get("posting_datetime"),
                             ],
                         ),
                     },
@@ -108,16 +102,7 @@ def get_history(name):
                     ],
                     order_by="posting_datetime",
                 )
-                if x[0].get("shipping_order")
-                else []
             )
-        ),
-        sliding_window(2),
-    )
-
-    shipping_logs = get_shipping_logs(
-        booking_logs + [{"posting_datetime": frappe.utils.now()}]
-    )
 
     def get_message(log):
         if log.get("doctype") == "Booking Log":
@@ -155,7 +140,7 @@ def get_history(name):
         }
 
     return sorted(
-        [get_event(x) for x in concat([booking_logs, shipping_logs])],
+        [get_event(x) for x in booking_logs + shipping_logs],
         key=lambda x: frappe.utils.get_datetime(x.get("datetime")),
     )
 
@@ -280,19 +265,17 @@ def make_sales_invoice(source_name, target_doc=None, posting_datetime=None):
         if is_freight_invoice:
             return common
 
-        return merge(
-            common,
-            {
-                "Booking Order Charge": {
-                    "doctype": "Sales Invoice Item",
-                    "field_map": {
-                        "charge_type": "item_code",
-                        "charge_amount": "rate",
-                        "item_description": "description",
-                    },
+        return {
+            **common,
+            "Booking Order Charge": {
+                "doctype": "Sales Invoice Item",
+                "field_map": {
+                    "charge_type": "item_code",
+                    "charge_amount": "rate",
+                    "item_description": "description",
                 },
             },
-        )
+        }
 
     return frappe.model.mapper.get_mapped_doc(
         "Booking Order", source_name, get_table_maps(), target_doc, postprocess
@@ -386,7 +369,7 @@ def get_orders_for(station=None, shipping_order=None):
 
     def set_qty(row):
         qty = get_qty(row)
-        return merge(row, {"qty": qty, "available": qty})
+        return {**row, "qty": qty, "available": qty}
 
     BookingLog = frappe.qb.DocType("Booking Log")
     BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
@@ -503,11 +486,13 @@ def get_freight_rates():
 
         return 0
 
-    get_freight_items = compose(
-        valmap(first),
-        groupby("based_on"),
-        map(lambda x: merge(x, {"rate": get_rate(x)})),
-    )
+    def get_freight_items(items):
+        grouped = {}
+        for item in items:
+            based_on = item["based_on"]
+            if based_on not in grouped:
+                grouped[based_on] = {**item, "rate": get_rate(item)}
+        return grouped
 
     Item = frappe.qb.DocType("Item")
     q = (
@@ -523,13 +508,13 @@ def get_freight_rates():
     return get_freight_items(q.run(as_dict=1))
 
 
-def get_loading_conversion_factor(qty, unit, no_of_packages, weight_actual):
+def get_loading_conversion_factor(qty, unit, no_of_packages, weight_actual) -> float:
     if unit == "Packages" and no_of_packages:
         return frappe.utils.flt(qty) / no_of_packages
     if unit == "Weight" and weight_actual:
         return frappe.utils.flt(qty) / weight_actual
 
-    return None
+    return 0
 
 
 @frappe.whitelist()
@@ -546,9 +531,9 @@ def get_deliverable(bo_detail, station):
 
     if result:
         if result.get("unit") == "Packages":
-            return merge(result, {"qty": result.get("no_of_packages")})
+            return {**result, "qty": result.get("no_of_packages")}
         if result.get("unit") == "Weight":
-            return merge(result, {"qty": result.get("weight_actual")})
+            return {**result, "qty": result.get("weight_actual")}
 
     return {"qty": 0, "unit": None}
 

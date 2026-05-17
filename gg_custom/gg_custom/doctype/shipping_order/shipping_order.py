@@ -6,11 +6,6 @@
 import frappe
 from frappe.model.document import Document
 from frappe.query_builder.functions import Sum
-from toolz.curried import (
-    compose,
-    map,
-    unique,
-)
 
 from gg_custom.api.shipping_order import get_history, get_order_contents
 
@@ -75,7 +70,7 @@ class ShippingOrder(Document):
                 )
             )
 
-        if len(list(unique([x.get("station") for x in self.transit_stations]))) != len(
+        if len(set(x.get("station") for x in self.transit_stations)) != len(
             self.transit_stations
         ):
             frappe.throw(frappe._("Same Transit Station selected multiple times."))
@@ -303,11 +298,13 @@ def _current_onboard_bookings(doc):
         )
         .select(LoadingOperationBookingOrder.booking_order)
     )
-    get_booking_orders = compose(
-        list,
-        map(lambda x: x[0]),
-        lambda x: q.where(LoadingOperationBookingOrder.parentfield == x).run(),
-    )
+
+    def get_booking_orders(field):
+        return [
+            x[0]
+            for x in q.where(LoadingOperationBookingOrder.parentfield == field).run()
+        ]
+
     return [
         x
         for x in get_booking_orders("on_loads")

@@ -1,11 +1,12 @@
 # Copyright (c) 2013, Libermatic and contributors
 # For license information, please see license.txt
 
+from collections import defaultdict
+
 import frappe
 from erpnext.accounts.party import get_party_account
 from erpnext.accounts.report.general_ledger.general_ledger import execute as get_report
 from frappe.query_builder.functions import IfNull
-from toolz.curried import compose, first, groupby, merge, valmap
 
 
 def execute(filters=None):
@@ -139,9 +140,10 @@ def _get_data(filters):
         for x in gl_entries
         if x.get("voucher_type") == "Sales Invoice"
     ]
-    get_booking_orders = compose(valmap(first), groupby("sales_invoice"))
-    booking_orders = (
-        get_booking_orders(
+
+    booking_orders = {}
+    if invoices:
+        for row in (
             frappe.qb.from_(SalesInvoice)
             .left_join(BookingOrder)
             .on(BookingOrder.name == SalesInvoice.gg_booking_order)
@@ -155,17 +157,16 @@ def _get_data(filters):
                 BookingOrder.booking_datetime.as_("order_datetime"),
             )
             .run(as_dict=1)
-        )
-        if invoices
-        else {}
-    )
+        ):
+            if (si := row["sales_invoice"]) not in booking_orders:
+                booking_orders[si] = row
 
     SalesInvoiceItem = frappe.qb.DocType("Sales Invoice Item")
     BookingOrderFreightDetail = frappe.qb.DocType("Booking Order Freight Detail")
-    orders = [v.get("name") for _, v in booking_orders.items()]
-    sales_invoice_items = (
-        groupby(
-            "sales_invoice",
+
+    sales_invoice_items = defaultdict(list)
+    if invoices:
+        for row in (
             frappe.qb.from_(SalesInvoiceItem)
             .left_join(BookingOrderFreightDetail)
             .on(BookingOrderFreightDetail.name == SalesInvoiceItem.gg_bo_detail)
@@ -182,14 +183,13 @@ def _get_data(filters):
                     "is_freight_item"
                 ),
             )
-            .run(as_dict=1),
-        )
-        if invoices
-        else {}
-    )
-    vehicles = (
-        groupby(
-            "sales_invoice",
+            .run(as_dict=1)
+        ):
+            sales_invoice_items[row["sales_invoice"]].append(row)
+
+    vehicles = defaultdict(list)
+    if invoices:
+        for row in (
             frappe.qb.from_(SalesInvoice)
             .left_join(LoadingOperation)
             .on(LoadingOperation.name == SalesInvoice.gg_loading_operation)
@@ -200,27 +200,24 @@ def _get_data(filters):
                 SalesInvoice.name.as_("sales_invoice"),
                 ShippingOrder.vehicle,
             )
-            .run(as_dict=1),
-        )
-        if invoices
-        else {}
-    )
+            .run(as_dict=1)
+        ):
+            vehicles[row["sales_invoice"]].append(row)
 
+    orders = [v.get("name") for _, v in booking_orders.items()]
     BookingLog = frappe.qb.DocType("Booking Log")
-    delivery_dates = (
-        groupby(
-            "booking_order",
+    delivery_dates = defaultdict(list)
+    if orders:
+        for row in (
             frappe.qb.from_(BookingLog)
             .where(
                 (BookingLog.activity == "Collected")
                 & (BookingLog.booking_order.isin(orders))
             )
             .select(BookingLog.booking_order, BookingLog.posting_datetime)
-            .run(as_dict=1),
-        )
-        if orders
-        else {}
-    )
+            .run(as_dict=1)
+        ):
+            delivery_dates[row["booking_order"]].append(row)
 
     def make_message(item):
         rate = frappe.utils.fmt_money(
@@ -283,29 +280,27 @@ def _get_data(filters):
         booking_order = booking_orders.get(row.get("voucher_no"), {})
         bo_name = booking_order.get("name")
         order_date = booking_order.get("order_datetime")
-        return merge(
-            row,
-            {
-                "booking_order": bo_name,
-                "paper_receipt_no": booking_order.get("paper_receipt_no"),
-                "description": (
-                    make_description(row.get("voucher_no"))
-                    if row.get("voucher_type") == "Sales Invoice"
-                    else (row.remarks.split("\n")[0] if row.get("remarks") else "")
-                ),
-                "consignor": booking_order.get("consignor"),
-                "consignee": booking_order.get("consignee"),
-                "order_date": (
-                    frappe.format_value(order_date, {"fieldtype": "Date"})
-                    if order_date
-                    else ""
-                ),
-                "delivery_dates": make_delivery_date(bo_name),
-            },
-        )
+        return {
+            **row,
+            "booking_order": bo_name,
+            "paper_receipt_no": booking_order.get("paper_receipt_no"),
+            "description": (
+                make_description(row.get("voucher_no"))
+                if row.get("voucher_type") == "Sales Invoice"
+                else (row.remarks.split("\n")[0] if row.get("remarks") else "")
+            ),
+            "consignor": booking_order.get("consignor"),
+            "consignee": booking_order.get("consignee"),
+            "order_date": (
+                frappe.format_value(order_date, {"fieldtype": "Date"})
+                if order_date
+                else ""
+            ),
+            "delivery_dates": make_delivery_date(bo_name),
+        }
 
     def make_ag_row(row, label):
-        return merge(row, {"voucher_type": label})
+        return {**row, "voucher_type": label}
 
     return (
         [make_ag_row(rows[0], "Opening")]

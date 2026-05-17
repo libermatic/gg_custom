@@ -3,10 +3,11 @@
 # Copyright (c) 2020, Libermatic and contributors
 # For license information, please see license.txt
 
+from collections import defaultdict
+
 import frappe
 from frappe.model.document import Document
 from frappe.query_builder.functions import Count
-from toolz.curried import compose, first, groupby, valmap
 
 from gg_custom.api.booking_order import (
     get_loading_conversion_factor,
@@ -14,6 +15,9 @@ from gg_custom.api.booking_order import (
     make_sales_invoice,
 )
 from gg_custom.doc_events.sales_invoice import validate_invoice
+from gg_custom.gg_custom.doctype.loading_operation_booking_order.loading_operation_booking_order import (
+    LoadingOperationBookingOrder,
+)
 
 
 class LoadingOperation(Document):
@@ -258,17 +262,26 @@ class LoadingOperation(Document):
         self._validate_dupe_bo("on_loads")
         self._validate_dupe_bo("off_loads")
 
-        get_map = compose(valmap(first), groupby("bo_detail"))
+        def get_invalid_qty(
+            orders: list[dict], loads: list[LoadingOperationBookingOrder]
+        ) -> list[str]:
+            invalids = []
+            for order in orders:
+                for row in loads:
+                    if order.get("bo_detail") == row.bo_detail:
+                        if (
+                            row.loading_unit == "Weight"
+                            and (row.qty > (order.get("weight_actual") or 0))
+                        ) or (
+                            row.loading_unit == "Packages"
+                            and (row.qty > (order.get("no_of_packages") or 0))
+                        ):
+                            invalids.append(row.booking_order)
+            return invalids
 
-        def check_qty(orders, row):
-            if row.get("loading_unit") == "Weight":
-                return row.qty > orders.get(row.bo_detail, {}).get("weight_actual", 0)
-            return row.qty > orders.get(row.bo_detail, {}).get("no_of_packages", 0)
-
-        on_loads_orders = get_map(get_orders_for(station=self.station))
-        on_load_rows_with_invalid_qty = [
-            x.booking_order for x in self.on_loads if check_qty(on_loads_orders, x)
-        ]
+        on_load_rows_with_invalid_qty = get_invalid_qty(
+            get_orders_for(station=self.station), self.on_loads
+        )
         if on_load_rows_with_invalid_qty:
             frappe.throw(
                 frappe._(
@@ -278,10 +291,9 @@ class LoadingOperation(Document):
                 )
             )
 
-        off_loads_orders = get_map(get_orders_for(shipping_order=self.shipping_order))
-        off_load_rows_with_invalid_qty = [
-            x.booking_order for x in self.off_loads if check_qty(off_loads_orders, x)
-        ]
+        off_load_rows_with_invalid_qty = get_invalid_qty(
+            get_orders_for(shipping_order=self.shipping_order), self.off_loads
+        )
         if off_load_rows_with_invalid_qty:
             frappe.throw(
                 frappe._(
@@ -306,9 +318,10 @@ class LoadingOperation(Document):
             )
 
     def _validate_invoice_params(self):
-        for booking_order, items in groupby(
-            "booking_order", [x.as_dict() for x in self.on_loads]
-        ).items():
+        grouped_bos = defaultdict(list)
+        for x in self.on_loads:
+            grouped_bos[x.booking_order].append(x.as_dict())
+        for booking_order, items in grouped_bos.items():
             if len(set([x.get("auto_bill_to") for x in items])) > 1:
                 frappe.throw(
                     frappe._(

@@ -1,5 +1,4 @@
 import frappe
-from toolz.curried import compose, filter, map, unique
 
 
 def on_submit(doc, method):
@@ -15,17 +14,18 @@ def on_cancel(doc, method):
 
 
 def _update_booking_orders(references):
-    get_booking_orders = compose(
-        map(lambda x: frappe.get_doc("Booking Order", x)),
-        filter(None),
-        unique,
-        map(
-            lambda x: frappe.get_cached_value(
-                "Sales Invoice", x.reference_name, "gg_booking_order"
+    bos = [
+        frappe.get_doc("Booking Order", x)
+        for x in set(
+            frappe.get_cached_value(
+                "Sales Invoice", si.reference_name, "gg_booking_order"
             )
-        ),
-    )
-    for bo in get_booking_orders(references):
+            for si in references
+        )
+        if x
+    ]
+
+    for bo in bos:
         invoices = frappe.get_all(
             "Sales Invoice",
             filters={"docstatus": 1, "gg_booking_order": bo.name},

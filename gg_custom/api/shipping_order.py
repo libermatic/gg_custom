@@ -2,13 +2,6 @@ import frappe
 from frappe.contacts.doctype.address.address import get_company_address
 from frappe.query_builder import Criterion
 from frappe.query_builder.functions import GroupConcat, Sum
-from toolz.curried import (
-    compose,
-    keyfilter,
-    keymap,
-    merge,
-    valmap,
-)
 
 from gg_custom.api.booking_order import (
     get_freight_rates,
@@ -380,18 +373,12 @@ def get_order_contents(doc):
     ).run(as_dict=1)[0]
 
     def get_values(_type):
-        fields = [f"{_type}_{x}" for x in params]
-        _get = compose(
-            valmap(lambda x: x or 0),
-            keymap(lambda x: x.replace("{}_".format(_type), "")),
-            keyfilter(lambda x: x in fields),
-        )
-        return _get(data)
+        return {x: data.get(f"{_type}_{x}") or 0 for x in params}
 
     on_load = get_values("on_load")
     off_load = get_values("off_load")
 
-    current = merge({}, *[{x: on_load[x] - off_load[x]} for x in params])
+    current = {x: on_load[x] - off_load[x] for x in params}
 
     return {
         "on_load": on_load,

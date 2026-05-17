@@ -1,8 +1,9 @@
 # Copyright (c) 2013, Libermatic and contributors
 # For license information, please see license.txt
 
+from collections import defaultdict
+
 import frappe
-from toolz.curried import groupby, merge
 
 
 def execute(filters=None):
@@ -87,9 +88,9 @@ def _get_data(filters):
         q = q.where(BookingLog.station == filters.station)
     bo_details = q.run(as_dict=1)
 
-    details = (
-        groupby(
-            "bo_detail",
+    details = defaultdict(list)
+    if bo_details:
+        for row in (
             frappe.qb.from_(BookingLog)
             .where(BookingLog.bo_detail.isin([x.bo_detail for x in bo_details]))
             .select(
@@ -99,23 +100,21 @@ def _get_data(filters):
                 BookingLog.weight_actual,
                 BookingLog.bo_detail,
             )
-            .run(as_dict=1),
-        )
-        if bo_details
-        else {}
-    )
+            .run(as_dict=1)
+        ):
+            details[row["bo_detail"]].append(row)
 
     def make_row(row):
         detail = details.get(row.get("bo_detail")) or []
-        return merge(
-            row,
-            {
-                "{}__{}".format(activity, qty): sum(
-                    [x.get(qty) for x in detail if x.get("activity") == activity]
+        return {
+            **row,
+            **{
+                f"{activity}__{qty}": sum(
+                    x.get(qty) for x in detail if x.get("activity") == activity
                 )
                 for activity in activities
                 for qty in ["no_of_packages", "weight_actual"]
             },
-        )
+        }
 
     return [make_row(x) for x in bo_details]

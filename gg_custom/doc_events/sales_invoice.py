@@ -1,11 +1,5 @@
 import frappe
 from frappe.query_builder.functions import Count, IfNull
-from toolz.curried import (
-    compose,
-    excepts,
-    filter,
-    first,
-)
 
 
 def validate(doc, method):
@@ -112,12 +106,8 @@ def _update_booking_order(si, is_charge=False, is_cancel=False):
 
 
 def _update_freight(bo, si):
-    get_freight_row = compose(
-        excepts(StopIteration, first, lambda _: None),
-        lambda name: filter(lambda x: x.name == name, bo.freight),
-    )
     for sii in [x for x in si.items if x.gg_update_freight]:
-        freight = get_freight_row(sii.gg_bo_detail)
+        freight = next((x for x in bo.freight if x.name == sii.gg_bo_detail), None)
         if freight:
             freight.based_on = frappe.get_cached_value(
                 "Item", sii.item_code, "gg_freight_based_on"
@@ -156,14 +146,12 @@ def _update_charges(bo):
 
 def _validate_freight_qty(doc):
     bo = frappe.get_cached_doc("Booking Order", doc.gg_booking_order)
-    get_freight_row = compose(
-        excepts(StopIteration, first, lambda _: None),
-        lambda x: filter(lambda row: row.name == x, bo.freight),
-    )
 
     for item in doc.items:
         if item.gg_bo_detail:
-            freight_row = get_freight_row(item.gg_bo_detail)
+            freight_row = next(
+                (x for x in bo.freight if x.name == item.gg_bo_detail), None
+            )
             if not freight_row:
                 return frappe._(
                     "Invalid Booking Order Freight Detail found in row #{} for {}".format(

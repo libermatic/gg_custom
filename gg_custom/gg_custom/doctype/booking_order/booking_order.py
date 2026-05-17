@@ -6,7 +6,6 @@
 import frappe
 from frappe.model.document import Document
 from frappe.query_builder.functions import Sum
-from toolz.curried import compose, excepts, filter, first
 
 from gg_custom.api.booking_order import (
     get_deliverable,
@@ -177,11 +176,7 @@ class BookingOrder(Document):
         if qty > deliverable.get("qty"):
             frappe.throw(frappe._("Cannot deliver more than {} units".format(qty)))
 
-        get_row = compose(
-            excepts(StopIteration, first, lambda _: {}),
-            filter(lambda x: x.get("name") == bo_detail),
-        )
-        row = get_row(self.freight)
+        row = next((x for x in self.freight if x.name == bo_detail), {})
         if not row:
             frappe.throw(frappe._("Invalid item"))
 
@@ -191,8 +186,8 @@ class BookingOrder(Document):
         if not conversion_factor:
             frappe.throw(frappe._("Invalid conversion factor"))
 
-        no_of_packages = row.get("no_of_packages") * conversion_factor
-        weight_actual = row.get("weight_actual") * conversion_factor
+        no_of_packages = float(row.get("no_of_packages")) * conversion_factor
+        weight_actual = float(row.get("weight_actual")) * conversion_factor
 
         _posting_datetime = posting_datetime or frappe.utils.now()
         frappe.get_doc(
