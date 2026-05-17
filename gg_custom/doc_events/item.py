@@ -15,4 +15,3 @@ def validate(doc, method):
                     )
                 )
             )
-

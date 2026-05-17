@@ -2,10 +2,9 @@ import frappe
 from frappe.query_builder.functions import Count, IfNull
 from toolz.curried import (
     compose,
-    first,
     excepts,
-    map,
     filter,
+    first,
 )
 
 

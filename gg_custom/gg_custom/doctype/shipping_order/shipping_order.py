@@ -9,7 +9,6 @@ from frappe.query_builder.functions import Sum
 from toolz.curried import (
     compose,
     map,
-    pluck,
     unique,
 )
 
@@ -24,8 +23,13 @@ class ShippingOrder(Document):
 
     if TYPE_CHECKING:
         from frappe.types import DF
-        from gg_custom.gg_custom.doctype.shipping_order_charge.shipping_order_charge import ShippingOrderCharge
-        from gg_custom.gg_custom.doctype.shipping_order_transit_station.shipping_order_transit_station import ShippingOrderTransitStation
+
+        from gg_custom.gg_custom.doctype.shipping_order_charge.shipping_order_charge import (
+            ShippingOrderCharge,
+        )
+        from gg_custom.gg_custom.doctype.shipping_order_transit_station.shipping_order_transit_station import (
+            ShippingOrderTransitStation,
+        )
 
         amended_from: DF.Link | None
         charges: DF.Table[ShippingOrderCharge]
@@ -42,7 +46,9 @@ class ShippingOrder(Document):
         next_station: DF.Link | None
         shipping_order_charge_template: DF.Link | None
         start_datetime: DF.Datetime | None
-        status: DF.Literal["", "Draft", "In Transit", "Stopped", "Completed", "Cancelled"]
+        status: DF.Literal[
+            "", "Draft", "In Transit", "Stopped", "Completed", "Cancelled"
+        ]
         transit_stations: DF.TableMultiSelect[ShippingOrderTransitStation]
         transporter: DF.Link | None
         transporter_name: DF.Data | None
@@ -246,16 +252,14 @@ class ShippingOrder(Document):
 
 
 def _update_booking_orders(shipping_order):
-    for bo in pluck(
-        "name",
-        frappe.get_all(
-            "Booking Order",
-            filters={
-                "docstatus": 1,
-                "status": ("in", ["Loaded", "In Transit"]),
-                "last_shipping_order": shipping_order.name,
-            },
-        ),
+    for bo in frappe.get_all(
+        "Booking Order",
+        filters={
+            "docstatus": 1,
+            "status": ("in", ["Loaded", "In Transit"]),
+            "last_shipping_order": shipping_order.name,
+        },
+        pluck="name",
     ):
         doc = frappe.get_cached_doc("Booking Order", bo)
         doc.status = "In Transit"

@@ -1,23 +1,21 @@
 import frappe
-from frappe.query_builder import Criterion
-from frappe.query_builder.functions import Sum, Max
-from frappe.contacts.doctype.address.address import (
-    get_company_address,
-    get_address_display,
-)
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 from erpnext.stock.get_item_details import get_item_price
+from frappe.contacts.doctype.address.address import (
+    get_address_display,
+    get_company_address,
+)
+from frappe.query_builder import Criterion
+from frappe.query_builder.functions import Max, Sum
 from toolz.curried import (
     compose,
-    merge,
-    unique,
-    sliding_window,
     concat,
-    groupby,
-    valmap,
     first,
+    groupby,
     map,
-    filter,
+    merge,
+    sliding_window,
+    valmap,
 )
 
 
@@ -167,6 +165,7 @@ def make_sales_invoice(source_name, target_doc=None, posting_datetime=None):
     if not frappe.flags.args:
         frappe.throw(frappe._("args missing while trying to create Sales Invoice"))
 
+    assert frappe.flags.args is not None
     bill_to = frappe.flags.args.get("bill_to")
     taxes_and_charges = frappe.flags.args.get("taxes_and_charges")
     is_freight_invoice = frappe.flags.args.get("is_freight_invoice")
@@ -318,7 +317,7 @@ def make_payment_entry(source_name, target_doc=None):
     if not invoices:
         frappe.throw(frappe._("No outstanding invoices to create payment"))
 
-    if len(list(unique([x.customer for x in invoices]))) != 1:
+    if len(set(x.customer for x in invoices)) != 1:
         frappe.throw(
             frappe._(
                 "Multiple invoices found for separate parties. "
@@ -470,12 +469,16 @@ def get_order_details(bo_detail, station=None, shipping_order=None):
 @frappe.whitelist()
 def update_party_details(name):
     doc = frappe.get_cached_value(
-        "Booking Order", name, ["consignor", "consignee"], as_dict=1
+        "Booking Order",
+        name,
+        ["consignor", "consignee"],  # pyright: ignore[reportArgumentType]
     )
 
     for field in ["consignor", "consignee"]:
         party_name, address_name = frappe.get_cached_value(
-            "Booking Party", doc.get(field), ["booking_party_name", "primary_address"]
+            "Booking Party",
+            doc.get(field),
+            ["booking_party_name", "primary_address"],  # pyright: ignore[reportArgumentType]
         )
         address_display = get_address_display(address_name)
         frappe.db.set_value(
@@ -490,7 +493,7 @@ def update_party_details(name):
 
 
 def get_freight_rates():
-    price_list = frappe.get_cached_value("Selling Settings", None, "selling_price_list")
+    price_list = frappe.get_single_value("Selling Settings", "selling_price_list")
 
     def get_rate(item):
         args = {"price_list": price_list, "uom": item.get("uom"), "batch_no": None}

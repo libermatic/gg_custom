@@ -60,7 +60,8 @@ def make_payment_entry(source_name, target_doc=None):
 def make_quotation(source_name, target_doc=None):
     customer = frappe.get_cached_value("Booking Party", source_name, "customer")
     bo_charge_template = frappe.get_doc(
-        "Booking Order Charge Template", {"is_default": 1}
+        "Booking Order Charge Template",
+        {"is_default": 1},  # pyright: ignore[reportArgumentType]
     )
     freight_rates = get_freight_rates()
     qt = frappe.new_doc("Quotation")

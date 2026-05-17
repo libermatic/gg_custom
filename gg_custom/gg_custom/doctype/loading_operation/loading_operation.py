@@ -3,17 +3,17 @@
 # Copyright (c) 2020, Libermatic and contributors
 # For license information, please see license.txt
 
-from gg_custom.doc_events.sales_invoice import validate_invoice
 import frappe
 from frappe.model.document import Document
 from frappe.query_builder.functions import Count
-from toolz.curried import compose, valmap, first, groupby
+from toolz.curried import compose, first, groupby, valmap
 
 from gg_custom.api.booking_order import (
-    get_orders_for,
     get_loading_conversion_factor,
+    get_orders_for,
     make_sales_invoice,
 )
+from gg_custom.doc_events.sales_invoice import validate_invoice
 
 
 class LoadingOperation(Document):
@@ -24,7 +24,10 @@ class LoadingOperation(Document):
 
     if TYPE_CHECKING:
         from frappe.types import DF
-        from gg_custom.gg_custom.doctype.loading_operation_booking_order.loading_operation_booking_order import LoadingOperationBookingOrder
+
+        from gg_custom.gg_custom.doctype.loading_operation_booking_order.loading_operation_booking_order import (
+            LoadingOperationBookingOrder,
+        )
 
         amended_from: DF.Link | None
         company: DF.Link
@@ -41,6 +44,7 @@ class LoadingOperation(Document):
         shipping_order: DF.Link
         station: DF.Link
         vehicle: DF.Link | None
+
     # end: auto-generated types
     def validate(self):
         if self._action == "submit" and not self.on_loads and not self.off_loads:
@@ -94,7 +98,7 @@ class LoadingOperation(Document):
         for param in ["no_of_packages", "weight_actual"]:
             for direction in ["on_load", "off_load"]:
                 field = "{}_{}".format(direction, param)
-                table = self.get("{}s".format(direction))
+                table = self.get("{}s".format(direction)) or []
                 self.set(field, sum([x.get(param) for x in table]))
 
         self.on_load_no_of_bookings = len(self.on_loads)
@@ -154,10 +158,8 @@ class LoadingOperation(Document):
             if row.name in to_remove:
                 self.on_loads.remove(row)
 
-        for param in ["no_of_packages", "weight_actual"]:
-            self.set(
-                "on_load_{}".format(param), sum([x.get(param) for x in self.on_loads])
-            )
+        self.on_load_no_of_packages = sum(x.no_of_packages for x in self.on_loads)
+        self.on_load_weight_actual = sum(x.weight_actual for x in self.on_loads)
         self.on_load_no_of_bookings = len(self.on_loads)
         self.flags.ignore_validate_update_after_submit = True
         self.save()
@@ -290,20 +292,16 @@ class LoadingOperation(Document):
             )
 
     def _validate_dupe_bo(self, field):
-        rows = [x.bo_detail for x in self.get(field, [])]
+        bos = self.get(field) or []
+        rows = [x.bo_detail for x in bos]
         dupes = [x for x in set(rows) if len([y for y in rows if y == x]) > 1]
         if dupes:
+            idxs = ", ".join(
+                [frappe.utils.cstr(row.idx) for row in bos if row.bo_detail in dupes]
+            )
             frappe.throw(
                 frappe._(
-                    "Duplicate Booking Orders with same Freight Detail found in rows # {}".format(
-                        ", ".join(
-                            [
-                                frappe.utils.cstr(row.idx)
-                                for row in self.get(field)
-                                if row.bo_detail in dupes
-                            ]
-                        )
-                    )
+                    f"Duplicate Booking Orders with same Freight Detail found in rows # {idxs}"
                 )
             )
 

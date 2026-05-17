@@ -6,13 +6,13 @@
 import frappe
 from frappe.model.document import Document
 from frappe.query_builder.functions import Sum
-from toolz.curried import compose, excepts, first, map, filter
+from toolz.curried import compose, excepts, filter, first
 
 from gg_custom.api.booking_order import (
-    get_history,
-    make_sales_invoice,
-    get_loading_conversion_factor,
     get_deliverable,
+    get_history,
+    get_loading_conversion_factor,
+    make_sales_invoice,
 )
 
 
@@ -24,8 +24,13 @@ class BookingOrder(Document):
 
     if TYPE_CHECKING:
         from frappe.types import DF
-        from gg_custom.gg_custom.doctype.booking_order_charge.booking_order_charge import BookingOrderCharge
-        from gg_custom.gg_custom.doctype.booking_order_freight_detail.booking_order_freight_detail import BookingOrderFreightDetail
+
+        from gg_custom.gg_custom.doctype.booking_order_charge.booking_order_charge import (
+            BookingOrderCharge,
+        )
+        from gg_custom.gg_custom.doctype.booking_order_freight_detail.booking_order_freight_detail import (
+            BookingOrderFreightDetail,
+        )
 
         amended_from: DF.Link | None
         auto_bill_to: DF.Literal["", "Consignor", "Consignee"]
@@ -54,10 +59,13 @@ class BookingOrder(Document):
         paper_receipt_no: DF.Data | None
         payment_status: DF.Literal["", "Unbilled", "Unpaid", "Paid"]
         source_station: DF.Link
-        status: DF.Literal["", "Draft", "Booked", "In Progress", "Collected", "Cancelled"]
+        status: DF.Literal[
+            "", "Draft", "Booked", "In Progress", "Collected", "Cancelled"
+        ]
         total_amount: DF.Currency
         weight_actual: DF.Float
         weight_charged: DF.Float
+
     # end: auto-generated types
     def onload(self):
         if self.docstatus == 1:

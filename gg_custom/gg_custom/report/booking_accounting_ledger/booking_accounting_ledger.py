@@ -207,16 +207,16 @@ def _get_data(filters):
     )
 
     BookingLog = frappe.qb.DocType("Booking Log")
-    get_delivery_dates = groupby("booking_order")
     delivery_dates = (
-        get_delivery_dates(
+        groupby(
+            "booking_order",
             frappe.qb.from_(BookingLog)
             .where(
                 (BookingLog.activity == "Collected")
                 & (BookingLog.booking_order.isin(orders))
             )
             .select(BookingLog.booking_order, BookingLog.posting_datetime)
-            .run(as_dict=1)
+            .run(as_dict=1),
         )
         if orders
         else {}

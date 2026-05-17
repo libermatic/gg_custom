@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
-from toolz.curried import groupby, compose, concat, concatv, merge
+from toolz.curried import groupby, merge
 
 
 def execute(filters=None):
@@ -15,53 +15,51 @@ activities = ["Booked", "Loaded", "Unloaded", "Collected"]
 
 
 def _get_columns(filters):
-    join = compose(list, concatv)
-    return join(
-        [
-            {
-                "fieldtype": "Data",
-                "fieldname": "item_description",
-                "label": "Description",
-                "width": 240,
-            },
-            {
-                "fieldtype": "Link",
-                "fieldname": "booking_order",
-                "options": "Booking Order",
-                "label": "Booking Order",
-                "width": 120,
-            },
-            {
-                "fieldtype": "Data",
-                "fieldname": "consignor_name",
-                "label": "Consignor Name",
-                "width": 180,
-            },
-            {
-                "fieldtype": "Data",
-                "fieldname": "consignee_name",
-                "label": "Consignee Name",
-                "width": 180,
-            },
-        ],
-        concat(
+    columns = [
+        {
+            "fieldtype": "Data",
+            "fieldname": "item_description",
+            "label": "Description",
+            "width": 240,
+        },
+        {
+            "fieldtype": "Link",
+            "fieldname": "booking_order",
+            "options": "Booking Order",
+            "label": "Booking Order",
+            "width": 120,
+        },
+        {
+            "fieldtype": "Data",
+            "fieldname": "consignor_name",
+            "label": "Consignor Name",
+            "width": 180,
+        },
+        {
+            "fieldtype": "Data",
+            "fieldname": "consignee_name",
+            "label": "Consignee Name",
+            "width": 180,
+        },
+    ]
+    for activity in activities:
+        columns.extend(
             [
                 {
                     "fieldtype": "Int",
-                    "fieldname": "{}__no_of_packages".format(x),
-                    "label": "{} Packages".format(x),
+                    "fieldname": f"{activity}__no_of_packages",
+                    "label": f"{activity} Packages",
                     "width": 90,
                 },
                 {
                     "fieldtype": "Float",
-                    "fieldname": "{}__weight_actual".format(x),
-                    "label": "{} Weight".format(x),
+                    "fieldname": f"{activity}__weight_actual",
+                    "label": f"{activity} Weight",
                     "width": 90,
                 },
             ]
-            for x in activities
-        ),
-    )
+        )
+    return columns
 
 
 def _get_data(filters):

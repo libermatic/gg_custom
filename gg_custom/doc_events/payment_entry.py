@@ -1,5 +1,5 @@
 import frappe
-from toolz.curried import compose, unique, map, filter
+from toolz.curried import compose, filter, map, unique
 
 
 def on_submit(doc, method):
@@ -38,4 +38,3 @@ def _update_booking_orders(references):
         else:
             bo.payment_status = "Unpaid"
         bo.save()
-

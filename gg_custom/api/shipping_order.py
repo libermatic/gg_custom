@@ -4,12 +4,9 @@ from frappe.query_builder import Criterion
 from frappe.query_builder.functions import GroupConcat, Sum
 from toolz.curried import (
     compose,
-    filter,
     keyfilter,
     keymap,
-    map,
     merge,
-    unique,
     valmap,
 )
 
@@ -84,13 +81,14 @@ def get_history(name):
             off_load = log.get("off_load_no_of_packages")
             msg = (
                 " and ".join(
-                    filter(
-                        None,
-                        [
-                            on_load and "Loaded {} packages".format(on_load),
-                            off_load and "Unloaded {} packages".format(off_load),
-                        ],
-                    )
+                    [
+                        x
+                        for x in [
+                            f"Loaded {on_load} packages" if on_load else None,
+                            f"Unloaded {off_load} packages" if off_load else None,
+                        ]
+                        if x
+                    ]
                 )
                 or "Operation"
             )
@@ -269,7 +267,7 @@ def get_freight_summary_rows(shipping_order):
 
     return sorted(
         [{**x, "amount": get_amount(x)} for x in freight_rows + charges_rows],
-        key=lambda x: x.get("booking_order"),
+        key=lambda x: x["booking_order"],
     )
 
 
@@ -320,7 +318,7 @@ def make_purchase_invoice(source_name, target_doc=None, posting_datetime=None):
 
     def postprocess(source, target):
         freight_rates = get_freight_rates()
-        loads = get_order_contents(doc).get("on_load")
+        loads = get_order_contents(doc).get("on_load") or {}
         target.items = []
         for based_on in ["Packages", "Weight"]:
             freight_item = freight_rates.get(based_on) or {}
@@ -382,7 +380,7 @@ def get_order_contents(doc):
     ).run(as_dict=1)[0]
 
     def get_values(_type):
-        fields = list(map(lambda x: "{}_{}".format(_type, x), params))
+        fields = [f"{_type}_{x}" for x in params]
         _get = compose(
             valmap(lambda x: x or 0),
             keymap(lambda x: x.replace("{}_".format(_type), "")),
@@ -439,7 +437,7 @@ def make_payment_entry(source_name, target_doc=None):
     if not invoices:
         frappe.throw(frappe._("No outstanding invoices to create payment"))
 
-    if len(list(unique([x.supplier for x in invoices]))) != 1:
+    if len(set(x.supplier for x in invoices)) != 1:
         frappe.throw(
             frappe._(
                 "Multiple invoices found for separate parties. "

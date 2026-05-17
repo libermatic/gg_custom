@@ -6,4 +6,5 @@
   ],
   "typeCheckingMode": "standard",
   "reportAttributeAccessIssue": "none",
+  "reportArgumentType": "none",
 }

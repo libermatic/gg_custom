@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import frappe
-
 from erpnext.accounts.report.accounts_receivable_summary.accounts_receivable_summary import (
     execute as accounts_receivable_summary,
 )
@@ -50,7 +49,7 @@ def _get_data(report):
                 "Booking Party",
                 fields=["name", "customer"],
                 filters={"customer": ("in", [x.get("party") for x in rows])},
-                order_by="modified asc"
+                order_by="modified asc",
             )
         }
         if rows

@@ -1,6 +1,5 @@
 import frappe
 from frappe.query_builder import Criterion
-from toolz.curried import merge
 
 
 @frappe.whitelist()
