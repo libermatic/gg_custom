@@ -14,7 +14,6 @@ class LoadingOperationBookingOrder(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		auto_bill_to: DF.Literal["", "Consignor", "Consignee"]
 		available: DF.Int
 		bo_detail: DF.Literal[None]
 		booking_order: DF.Link

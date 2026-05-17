@@ -1,5 +1,4 @@
 import frappe
-from frappe.query_builder.functions import Count, IfNull
 
 
 def validate(doc, method):
@@ -10,43 +9,18 @@ def validate_invoice(doc, throw=True):
     if doc.flags.skip_validation:
         return None
 
-    def get_error_type():
-        if doc.gg_loading_operation:
-            existing = frappe.db.exists(
-                "Sales Invoice",
-                {
-                    "name": ("!=", doc.name),
-                    "docstatus": 1,
-                    "gg_booking_order": doc.gg_booking_order,
-                    "gg_loading_operation": doc.gg_loading_operation,
-                },
-            )
-            if existing:
-                return "freight"
-        else:
-            SalesInvoice = frappe.qb.DocType("Sales Invoice")
-            existing = (
-                frappe.qb.from_(SalesInvoice)
-                .where(SalesInvoice.docstatus == 1)
-                .where(
-                    (SalesInvoice.name != doc.name)
-                    & (SalesInvoice.gg_booking_order == doc.gg_booking_order)
-                    & (IfNull(SalesInvoice.gg_loading_operation, "") == "")
-                )
-                .select(Count(SalesInvoice.name))
-            ).run()[0][0]
-            if existing:
-                return "charges"
-        return None
-
     if doc.gg_booking_order:
-        error_type = get_error_type()
-        if error_type:
+        existing = frappe.db.exists(
+            "Sales Invoice",
+            {
+                "name": ("!=", doc.name),
+                "docstatus": 1,
+                "gg_booking_order": doc.gg_booking_order,
+            },
+        )
+        if existing:
             msg = frappe._(
-                "Sales Invoice for {} already exists for {}. ".format(
-                    error_type,
-                    frappe.get_desk_link("Booking Order", doc.gg_booking_order),
-                )
+                f"Sales Invoice already exists for {frappe.get_desk_link('Booking Order', doc.gg_booking_order)}. "
                 + "If you want to proceed, please cancel the previous Invoice."
             )
             if throw:
@@ -54,30 +28,20 @@ def validate_invoice(doc, throw=True):
 
             return msg
 
-        if doc.flags.validate_loading and doc.gg_loading_operation:
-            msg = _validate_freight_qty(doc)
-            if msg:
-                if throw:
-                    frappe.throw(msg)
-
-                return msg
-
     return None
 
 
 def on_submit(doc, method):
     if doc.gg_booking_order:
-        _update_booking_order(doc, is_charge=not doc.gg_loading_operation)
+        _update_booking_order(doc)
 
 
 def on_cancel(doc, method):
     if doc.gg_booking_order:
-        _update_booking_order(
-            doc, is_charge=not doc.gg_loading_operation, is_cancel=True
-        )
+        _update_booking_order(doc, is_cancel=True)
 
 
-def _update_booking_order(si, is_charge=False, is_cancel=False):
+def _update_booking_order(si, is_cancel=False):
     bo = frappe.get_cached_doc("Booking Order", si.gg_booking_order)
     if bo.docstatus == 2:
         return
@@ -95,10 +59,8 @@ def _update_booking_order(si, is_charge=False, is_cancel=False):
         bo.payment_status = "Unpaid"
 
     if not is_cancel:
-        if is_charge:
-            _update_charges(bo)
-        else:
-            _update_freight(bo, si)
+        _update_charges(bo)
+        _update_freight(bo, si)
         bo.set_totals()
         bo.flags.ignore_validate_update_after_submit = True
 
@@ -126,7 +88,6 @@ def _update_charges(bo):
         filters=[
             ["docstatus", "=", 1],
             ["gg_booking_order", "=", bo.name],
-            ["ifnull(gg_loading_operation, '')", "=", ""],
         ],
     )
     bo.charges = []
@@ -142,47 +103,3 @@ def _update_charges(bo):
     )
     for row in charges:
         bo.append("charges", row)
-
-
-def _validate_freight_qty(doc):
-    bo = frappe.get_cached_doc("Booking Order", doc.gg_booking_order)
-
-    for item in doc.items:
-        if item.gg_bo_detail:
-            freight_row = next(
-                (x for x in bo.freight if x.name == item.gg_bo_detail), None
-            )
-            if not freight_row:
-                return frappe._(
-                    "Invalid Booking Order Freight Detail found in row #{} for {}".format(
-                        item.idx, frappe.get_desk_link("Sales Invoice", doc.name)
-                    )
-                )
-
-            total_qty = (
-                frappe.get_all(
-                    "Sales Invoice Item",
-                    filters={"docstatus": 1, "gg_bo_detail": item.gg_bo_detail},
-                    fields=["sum(qty)"],
-                    as_list=1,
-                )[0][0]
-                or 0
-            )
-            if frappe.utils.flt(total_qty + item.qty, precision=3) > _get_freight_qty(
-                freight_row
-            ):
-                return frappe._(
-                    "Total Qty will exceed Freight Qty declared in {}".format(
-                        frappe.get_desk_link("Booking Order", doc.gg_booking_order),
-                    )
-                )
-
-    return None
-
-
-def _get_freight_qty(freight_row):
-    if freight_row.based_on == "Packages":
-        return frappe.utils.flt(freight_row.no_of_packages, precision=3)
-    if freight_row.based_on == "Weight":
-        return frappe.utils.flt(freight_row.weight_actual, precision=3)
-    return 0.0

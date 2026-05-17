@@ -14,8 +14,7 @@
   "consignee",
   "consignee_name",
   "no_of_packages",
-  "weight_actual",
-  "auto_bill_to"
+  "weight_actual"
  ],
  "fields": [
   {
@@ -94,18 +93,12 @@
    "label": "Description",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "fieldname": "auto_bill_to",
-   "fieldtype": "Select",
-   "label": "Auto Bill To",
-   "options": "\nConsignor\nConsignee"
   }
  ],
  "grid_page_length": 50,
  "istable": 1,
  "links": [],
- "modified": "2026-05-17 18:07:20.753949",
+ "modified": "2026-05-18 03:26:58.711239",
  "modified_by": "Administrator",
  "module": "GG Custom",
  "name": "Loading Operation Booking Order",

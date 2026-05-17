@@ -133,7 +133,6 @@ def _get_data(filters):
 
     SalesInvoice = frappe.qb.DocType("Sales Invoice")
     BookingOrder = frappe.qb.DocType("Booking Order")
-    LoadingOperation = frappe.qb.DocType("Loading Operation")
     ShippingOrder = frappe.qb.DocType("Shipping Order")
     invoices = [
         x.get("voucher_no")
@@ -187,19 +186,25 @@ def _get_data(filters):
         ):
             sales_invoice_items[row["sales_invoice"]].append(row)
 
+    BookingLog = frappe.qb.DocType("Booking Log")
+
     vehicles = defaultdict(list)
     if invoices:
         for row in (
             frappe.qb.from_(SalesInvoice)
-            .left_join(LoadingOperation)
-            .on(LoadingOperation.name == SalesInvoice.gg_loading_operation)
+            .left_join(BookingLog)
+            .on(BookingLog.booking_order == SalesInvoice.gg_booking_order)
             .left_join(ShippingOrder)
-            .on(ShippingOrder.name == LoadingOperation.shipping_order)
-            .where(SalesInvoice.name.isin(invoices))
+            .on(ShippingOrder.name == BookingLog.shipping_order)
+            .where(
+                (SalesInvoice.name.isin(invoices))
+                & (IfNull(ShippingOrder.vehicle, "") != "")
+            )
             .select(
                 SalesInvoice.name.as_("sales_invoice"),
                 ShippingOrder.vehicle,
             )
+            .distinct()
             .run(as_dict=1)
         ):
             vehicles[row["sales_invoice"]].append(row)

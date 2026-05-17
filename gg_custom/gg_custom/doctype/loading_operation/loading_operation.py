@@ -3,7 +3,6 @@
 # Copyright (c) 2020, Libermatic and contributors
 # For license information, please see license.txt
 
-from collections import defaultdict
 
 import frappe
 from frappe.model.document import Document
@@ -12,9 +11,7 @@ from frappe.query_builder.functions import Count
 from gg_custom.api.booking_order import (
     get_loading_conversion_factor,
     get_orders_for,
-    make_sales_invoice,
 )
-from gg_custom.doc_events.sales_invoice import validate_invoice
 from gg_custom.gg_custom.doctype.loading_operation_booking_order.loading_operation_booking_order import (
     LoadingOperationBookingOrder,
 )
@@ -61,7 +58,6 @@ class LoadingOperation(Document):
 
         self._validate_shipping_order()
         self._validate_booking_orders()
-        self._validate_invoice_params()
 
     @frappe.whitelist()
     def get_on_loads(self):
@@ -110,7 +106,6 @@ class LoadingOperation(Document):
 
     def on_submit(self):
         _create_logs_and_set_statuses(self)
-        _create_sales_invoices(self)
 
     def before_cancel(self):
         self._validate_shipping_order()
@@ -118,9 +113,7 @@ class LoadingOperation(Document):
         self._validate_paid_booking_orders()
 
     def on_cancel(self):
-        self.ignore_linked_doctypes = ["Sales Invoice"]
         _remove_logs_and_set_statuses(self)
-        _cancel_sales_invoices(self)
 
     @frappe.whitelist()
     def remove_booking_orders(self, booking_orders):
@@ -137,25 +130,6 @@ class LoadingOperation(Document):
                 as_list=1,
             ):
                 frappe.delete_doc("Booking Log", name, ignore_permissions=True)
-
-            for (name,) in frappe.get_all(
-                "Sales Invoice Item",
-                fields=["parent"],
-                filters={
-                    "docstatus": 1,
-                    "gg_bo_detail": row.get("bo_detail"),
-                },
-                as_list=1,
-            ):
-                if (
-                    frappe.get_cached_value(
-                        "Sales Invoice", name, "gg_loading_operation"
-                    )
-                    == self.name
-                ):
-                    invoice = frappe.get_doc("Sales Invoice", name)
-                    invoice.flags.ignore_permissions = True
-                    invoice.cancel()
 
         to_remove = [x.get("name") for x in booking_orders]
         for row in self.on_loads:
@@ -177,20 +151,6 @@ class LoadingOperation(Document):
                     "Company mismatch between Loading Operation and Shipping Order"
                 )
             )
-        # status, current_station = frappe.db.get_value(
-        #     "Shipping Order", self.shipping_order, ["status", "current_station"]
-        # )
-        # if status != "Stopped" or current_station != self.station:
-        #     frappe.throw(
-        #         frappe._(
-        #             "Operation can only be performed for a Shipping Order {} at {}".format(
-        #                 frappe.bold("stopped"),
-        #                 frappe.get_desk_link("Station", current_station)
-        #                 if current_station
-        #                 else frappe.bold("Station"),
-        #             )
-        #         )
-        #     )
 
     def _validate_collected_booking_orders(self):
         for bo_name in set(x.booking_order for x in self.on_loads + self.off_loads):
@@ -317,39 +277,6 @@ class LoadingOperation(Document):
                 )
             )
 
-    def _validate_invoice_params(self):
-        grouped_bos = defaultdict(list)
-        for x in self.on_loads:
-            grouped_bos[x.booking_order].append(x.as_dict())
-        for booking_order, items in grouped_bos.items():
-            if len({x.get("auto_bill_to") for x in items}) > 1:
-                frappe.throw(
-                    frappe._(
-                        "Invalid Auto Bill To selected in rows # {} for Booking Order {}".format(
-                            ", ".join([frappe.utils.cstr(x.get("idx")) for x in items]),
-                            booking_order,
-                        )
-                    )
-                )
-
-        errors = []
-        for item in [x for x in self.on_loads if x.auto_bill_to]:
-            frappe.flags.args = {
-                "bill_to": item.auto_bill_to.lower(),
-                "taxes_and_charges": None,
-                "is_freight_invoice": 1,
-                "loading_operation": self.name,
-            }
-            invoice = make_sales_invoice(
-                item.booking_order, posting_datetime=self.posting_datetime
-            )
-            invoice.flags.validate_loading = True
-            msg = validate_invoice(invoice, throw=False)
-            if msg:
-                errors.append(msg)
-        if errors:
-            frappe.throw(errors)
-
 
 def _create_logs_and_set_statuses(doc):
     def create_log(load):
@@ -414,39 +341,3 @@ def _remove_logs_and_set_statuses(doc):
         ):
             bo.status = "Booked"
             bo.save(ignore_permissions=True)
-
-
-def _create_sales_invoices(doc):
-    booking_orders = set(
-        [(x.booking_order, x.auto_bill_to) for x in doc.on_loads if x.auto_bill_to]
-    )
-    for booking_order, auto_bill_to in booking_orders:
-        frappe.flags.args = {
-            "bill_to": auto_bill_to.lower(),
-            "taxes_and_charges": None,
-            "is_freight_invoice": 1,
-            "loading_operation": doc.name,
-        }
-        invoice = make_sales_invoice(
-            booking_order, posting_datetime=doc.posting_datetime
-        )
-        invoice.flags.skip_validation = True
-        invoice.insert(ignore_permissions=True)
-        invoice.submit()
-
-
-def _cancel_sales_invoices(doc):
-    for (name,) in frappe.get_all(
-        "Sales Invoice",
-        filters={"docstatus": 1, "gg_loading_operation": doc.name},
-        as_list=1,
-    ):
-        invoice = frappe.get_doc("Sales Invoice", name)
-        invoice.flags.ignore_permissions = True
-        invoice.cancel()
-        frappe.delete_doc(
-            "Sales Invoice",
-            name,
-            flags={"ignore_links": True},
-            ignore_permissions=True,
-        )

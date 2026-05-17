@@ -233,24 +233,6 @@ function create_invoice(frm) {
         default: 'consignor',
       },
       {
-        fieldtype: 'Check',
-        fieldname: 'is_freight_invoice',
-        label: __('Is Freight Invoice'),
-      },
-      {
-        fieldtype: 'Link',
-        fieldname: 'loading_operation',
-        label: __('Loading Operation'),
-        options: 'Loading Operation',
-        depends_on: 'is_freight_invoice',
-        get_query: function () {
-          return {
-            query: 'gg_custom.api.loading_operation.query',
-            filters: { booking_order: frm.doc.name },
-          };
-        },
-      },
-      {
         fieldtype: 'Link',
         fieldname: 'taxes_and_charges',
         label: __('Sales Taxes and Charges Template'),
