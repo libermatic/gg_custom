@@ -31,6 +31,18 @@ fixtures = [
             ),
         },
     },
+    {
+        "doctype": "Property Setter",
+        "filters": {
+            "name": (
+                "in",
+                [
+                    "Driver-transporter-allow_in_quick_entry",
+                    "Driver-license_number-allow_in_quick_entry",
+                ],
+            )
+        },
+    },
 ]
 
 # Includes in <head>
@@ -121,6 +133,10 @@ doc_events = {
         "on_cancel": "gg_custom.doc_events.payment_entry.on_cancel",
     },
     "Item": {"validate": "gg_custom.doc_events.item.validate"},
+    "Driver": {
+        "validate": "gg_custom.doc_events.driver.validate",
+        "after_insert": "gg_custom.doc_events.driver.after_insert",
+    },
 }
 
 # Scheduled Tasks
