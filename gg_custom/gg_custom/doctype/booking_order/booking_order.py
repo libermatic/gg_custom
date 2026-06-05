@@ -91,6 +91,22 @@ class BookingOrder(Document):
                     )
                 )
 
+        rate_field = frappe.get_meta("Booking Order Freight Detail").get_field("rate")
+        rate_prec = rate_field.precision if rate_field else 2
+        for row in self.freight:
+            qty = 0
+            if row.based_on == "Packages":
+                qty = row.no_of_packages
+            elif row.based_on == "Weight":
+                qty = row.weight_charged
+            if qty:
+                row.rate = frappe.utils.flt(row.amount / qty, rate_prec)
+            if round(row.rate * qty, 2) != round(row.amount, 2):
+                frappe.throw(
+                    "Rounding Error: "
+                    f"Please check <strong>Rate</strong> or <strong>Amount</strong> in Freight Details row #{row.idx}"
+                )
+
     def before_insert(self):
         self.status = "Draft"
 

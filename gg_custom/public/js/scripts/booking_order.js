@@ -25,8 +25,15 @@ export function booking_order_freight_detail() {
       frappe.model.set_value(cdt, cdn, 'weight_charged', weight_actual);
     },
     weight_charged: set_total('weight_charged'),
-    rate: set_freight_amount,
+    rate: function (frm, cdt, cdn) {
+      const { rate = 0 } = frappe.get_doc(cdt, cdn);
+      const qty = get_freight_qty(frm, cdt, cdn);
+      frappe.model.set_value(cdt, cdn, 'amount', rate * qty);
+    },
     amount: function (frm, cdt, cdn) {
+      const { amount = 0 } = frappe.get_doc(cdt, cdn);
+      const qty = get_freight_qty(frm, cdt, cdn);
+      frappe.model.set_value(cdt, cdn, 'rate', qty > 0 ? amount / qty : 0);
       const freight_total = sumBy('amount', frm.doc.freight);
       frm.set_value({ freight_total });
     },
@@ -160,12 +167,11 @@ async function update_party_details(frm) {
   frm.reload_doc();
 }
 
-function set_freight_amount(frm, cdt, cdn) {
+function get_freight_qty(frm, cdt, cdn) {
   const {
     based_on,
     no_of_packages = 0,
     weight_charged = 0,
-    rate = 0,
   } = frappe.get_doc(cdt, cdn);
   const qty =
     based_on === 'Packages'
@@ -173,7 +179,12 @@ function set_freight_amount(frm, cdt, cdn) {
       : based_on === 'Weight'
         ? weight_charged
         : 0;
-  frappe.model.set_value(cdt, cdn, 'amount', qty * rate);
+  return qty;
+}
+
+function reset_rate_and_amount(frm, cdt, cdn) {
+  frappe.model.set_value(cdt, cdn, 'rate', 0);
+  frappe.model.set_value(cdt, cdn, 'amount', 0);
 }
 
 function set_total(field) {
@@ -184,7 +195,7 @@ function set_total(field) {
       (field === 'no_of_packages' && based_on === 'Packages') ||
       (field === 'weight_charged' && based_on === 'Weight')
     ) {
-      set_freight_amount(frm, cdt, cdn);
+      reset_rate_and_amount(frm, cdt, cdn);
     }
   };
 }
