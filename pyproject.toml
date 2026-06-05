@@ -4,7 +4,7 @@ authors = [
     { name = "Libermatic LLP", email = "info@libermatic.com"}
 ]
 description = "Customizations for GG"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = []
