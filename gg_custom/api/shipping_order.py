@@ -311,7 +311,6 @@ def make_purchase_invoice(source_name, target_doc=None, posting_datetime=None):
 
     def postprocess(source, target):
         freight_rates = get_freight_rates()
-        loads = get_order_contents(doc).get("on_load") or {}
         target.items = []
         for based_on in ["Packages", "Weight"]:
             freight_item = freight_rates.get(based_on) or {}
@@ -320,9 +319,7 @@ def make_purchase_invoice(source_name, target_doc=None, posting_datetime=None):
                 {
                     "item_code": freight_item.get("item_code"),
                     "price_list_rate": freight_item.get("rate"),
-                    "qty": loads.get(
-                        "no_of_packages" if based_on == "Packages" else "weight_actual"
-                    ),
+                    "qty": 0,
                     "rate": 0,
                     "stock_uom": freight_item.get("uom"),
                     "uom": freight_item.get("uom"),
