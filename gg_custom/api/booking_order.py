@@ -209,7 +209,7 @@ def make_sales_invoice(source_name, target_doc=None, posting_datetime=None):
                     "stock_uom": freight_item.get("uom"),
                     "uom": freight_item.get("uom"),
                     "description": row.get("item_description"),
-                    "gg_bo_detail": row.get("bo_detail"),
+                    "gg_bo_detail": row.get("name"),
                 },
             )
         for row in source.charges:

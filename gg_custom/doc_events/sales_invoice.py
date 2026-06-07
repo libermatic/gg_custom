@@ -93,7 +93,10 @@ def _update_charges(bo):
     bo.charges = []
     charges = frappe.get_all(
         "Sales Invoice Item",
-        filters={"parent": ("in", [x.get("name") for x in invoices])},
+        filters={
+            "parent": ("in", [x.get("name") for x in invoices]),
+            "gg_bo_detail": ("is", "not set"),
+        },
         fields=[
             "item_code as charge_type",
             "amount as charge_amount",
