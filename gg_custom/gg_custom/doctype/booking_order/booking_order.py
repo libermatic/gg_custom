@@ -4,6 +4,7 @@
 # For license information, please see license.txt
 
 import frappe
+from erpnext.accounts.utils import get_currency_precision
 from frappe.model.document import Document
 from frappe.query_builder.functions import Sum
 
@@ -92,7 +93,9 @@ class BookingOrder(Document):
                 )
 
         rate_field = frappe.get_meta("Booking Order Freight Detail").get_field("rate")
-        rate_prec = rate_field.precision if rate_field else 2
+        rate_prec = (
+            int(rate_field.precision) if rate_field else get_currency_precision()
+        )
         for row in self.freight:
             qty = 0
             if row.based_on == "Packages":
@@ -101,7 +104,7 @@ class BookingOrder(Document):
                 qty = row.weight_charged
             if qty:
                 row.rate = frappe.utils.flt(row.amount / qty, rate_prec)
-            if round(row.rate * qty, 2) != round(row.amount, 2):
+            if round(row.rate * qty, rate_prec) != round(row.amount, rate_prec):
                 frappe.throw(
                     "Rounding Error: "
                     f"Please check <strong>Rate</strong> or <strong>Amount</strong> in Freight Details row #{row.idx}"
